@@ -1,0 +1,52 @@
+{
+  "extends": ["airbnb", "airbnb/hooks", "prettier"],
+  "parser": "@babel/eslint-parser",
+  "parserOptions": {
+    "requireConfigFile": false,
+    "babelOptions": {
+      "babelrc": false,
+      "configFile": false
+    }
+  },
+  "env": {
+    "browser": true,
+    "node": true,
+    "es6": true
+  },
+  "rules": {
+    "max-len": ["error", { "code": 120 }],
+    "no-param-reassign": ["error", { "props": false }],
+    "no-plusplus": "off",
+    "no-shadow": "off",
+    "global-require": "off",
+    "no-nested-ternary": "off",
+    "jsx-a11y/anchor-is-valid": "off",
+    "import/no-extraneous-dependencies": "off",
+    "jsx-eslint/eslint-plugin-jsx-a11y": "off",
+    "jsx-a11y/no-static-element-interactions": "off",
+    "jsx-a11y/label-has-associated-control": "off",
+    "jsx-a11y/no-noninteractive-element-interactions": "off",
+    "class-methods-use-this": "off",
+    "no-underscore-dangle": "off",
+    "react/prefer-stateless-function": "off",
+    "react/require-default-props": "off",
+    "react/forbid-prop-types": "off",
+    "camelcase": "off",
+    "no-console": "off",
+    "indent": "off",
+    "linebreak-style": "off",
+    "jsx-a11y/click-events-have-key-events": "off",
+    "prettier/prettier": [
+      "error",
+      {
+        "trailingComma": "es5",
+        "singleQuote": true,
+        "printWidth": 120,
+        "tabWidth": 2,
+        "semi": true,
+        "endOfLine": "auto"
+      }
+    ]
+  },
+  "plugins": ["prettier", "react", "react-hooks", "import"]
+}
