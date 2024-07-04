@@ -1,7 +1,7 @@
 {
   // Theme
   "workbench.colorTheme": "Dracula",
-  
+
   "files.autoSave": "afterDelay",
   "files.autoSaveDelay": 1000,
   "editor.defaultFormatter": "esbenp.prettier-vscode",
@@ -11,11 +11,7 @@
     "source.fixAll.tslint": "explicit",
     "source.organizeImports": "explicit"
   },
-  "eslint.validate": ["javascript"],
-  "[javascript]": {
-    "editor.formatOnSave": true,
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
-  },
+  "eslint.validate": ["javascript", "javascriptreact"],
   "prettier.requireConfig": true,
   "terminal.integrated.profiles.windows": {
     "Git Bash": {
