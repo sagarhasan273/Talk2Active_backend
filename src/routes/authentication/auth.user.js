@@ -4,6 +4,7 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('../../Utils/jwtUtils');
 const User = require('../../models/User');
+const uniqueUserId = require('../../Utils/uniqueUserId');
 
 // Register Route
 router.post('/register', async (req, res) => {
@@ -15,13 +16,16 @@ router.post('/register', async (req, res) => {
             return res.status(409).json({ message: "User already exists" });
         }
 
+        const userId = await uniqueUserId(User);
+
         // Create New User
         user = new User({
+            userId,
             firstName,
             lastName,
             name: `${firstName} ${lastName}`,
             email,
-            password
+            password,
         });
 
         // Hash Password
@@ -38,13 +42,18 @@ router.post('/register', async (req, res) => {
                 firstName: user.firstName,
                 lastName: user.lastName,
                 name: user.name,
-                email: user.email
+                email: user.email,
+                userId: user.userId,
+                activeStatus: user.activeStatus,
+                followers: user.followers,
+                friends: user.friends,
+                following: user.followers,
+                createdAt: user.createdAt,
+                theme: user.theme
             }
         };
 
-        console.log(user);
-
-        const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '5h' });
+        const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '720h' });
 
         return res.json({ data: { accessToken: token, user: payload.user }, status: true, message: 'Sign up Successful.' });
     } catch (err) {
@@ -61,7 +70,7 @@ router.post('/login', async (req, res) => {
         const user = await User.findOne({ email });
 
         if (!user) {
-            return res.status(400).json({ message: 'Invalid credentials!' });
+            return res.json({ status: false, message: 'Password Incurrect!' });
         }
 
         // Check password
@@ -77,7 +86,15 @@ router.post('/login', async (req, res) => {
                 firstName: user.firstName,
                 lastName: user.lastName,
                 name: user.name,
-                email: user.email
+                email: user.email,
+                userId: user.userId,
+                activeStatus: user.activeStatus,
+                followers: user.followers,
+                friends: user.friends,
+                following: user.followers,
+                createdAt: user.createdAt,
+                theme: user.theme
+                
             }
         };
 
