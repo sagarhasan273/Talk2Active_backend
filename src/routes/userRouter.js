@@ -6,7 +6,7 @@ const router = express.Router();
 
 router.get('/', async (req, res) => {
     const token = req.header('Authorization').replace('Bearer ', '');
-    
+
     if (!token) {
         return res.status(401).json({ message: 'No token, authorization denied!' });
     }
@@ -16,7 +16,6 @@ router.get('/', async (req, res) => {
         const user = await User.findById(decoded.user._id).select('-password');
         return res.json({status: true, message: 'Welcome to Talk2Active.', data: { user }});
     } catch (err) {
-        console.error(err.message);
         return res.status(401).json({ message: 'Token is not valid.' });
     }
 });
