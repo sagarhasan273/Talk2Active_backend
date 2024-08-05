@@ -20,4 +20,6 @@ router.get('/', async (req, res) => {
     }
 });
 
+router.use('/profile', require('./profile'));
+
 module.exports = router;
