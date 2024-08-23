@@ -21,5 +21,6 @@ router.get('/', async (req, res) => {
 });
 
 router.use('/profile', require('./profile'));
+router.use('/feeds', require('./feeds'));
 
 module.exports = router;
