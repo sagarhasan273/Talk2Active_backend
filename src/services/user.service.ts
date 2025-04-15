@@ -1,6 +1,6 @@
-import { DatabaseError } from '../database';
-import { User, UserWithoutPassword } from '../models/user-model';
-import { UserRepository } from '../repositories/user-repository';
+import { DatabaseError } from 'src/database';
+import { User, UserWithoutPassword } from 'src/models/user.model';
+import { UserRepository } from 'src/repositories/user.repository';
 
 export class UserService {
   private userRepository = new UserRepository();
@@ -15,6 +15,20 @@ export class UserService {
         throw new DatabaseError(error as Error, 'User already exists');
       }
       throw new DatabaseError(error as Error, 'Failed to create user');
+    }
+  }
+
+  public async getUserByEmail(
+    email: string,
+    password: string
+  ): Promise<UserWithoutPassword | null> {
+    try {
+      return await this.userRepository.getUserByEmail(email, password);
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('duplicate key error')) {
+        throw new DatabaseError(error as Error, "User doesn't exist");
+      }
+      throw new DatabaseError(error as Error, 'Failed to get user by email');
     }
   }
 

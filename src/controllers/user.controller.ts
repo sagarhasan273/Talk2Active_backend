@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { UserService } from '../services/user-service';
+import { UserService } from 'src/services/user.service';
 
 export class UserController {
   private userService = new UserService();
@@ -11,6 +11,23 @@ export class UserController {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
       res.status(500).json({ message: errorMessage });
+    }
+  }
+
+  public async getUserByEmail(req: Request, res: Response): Promise<void> {
+    try {
+      const { email, password } = req.body;
+      const user = await this.userService.getUserByEmail(email, password);
+      if (!user) {
+        res.status(401).json({ message: 'Invalid email or password' });
+        return;
+      }
+      res.status(200).json(user);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+      if (errorMessage === 'User already exists') {
+        res.status(409).json({ message: errorMessage });
+      }
     }
   }
 

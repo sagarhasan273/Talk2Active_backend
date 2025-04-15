@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import { Db } from 'mongodb';
-import { getDatabase } from '../database';
+import { getDatabase } from 'src/database';
 
 declare module 'express' {
   interface Request {

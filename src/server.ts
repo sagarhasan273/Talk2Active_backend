@@ -1,8 +1,8 @@
 import express from 'express';
-import { closeDatabaseConnection } from './database';
-import { databaseMiddleware } from './middlewares/database-middleware';
-import { UserRoutes } from './routes/user-routes';
-import logger from './utils/logger';
+import { closeDatabaseConnection } from 'src/database';
+import { databaseMiddleware } from 'src/middlewares/database.middleware';
+import { UserRoutes } from 'src/routes/user-routes';
+import logger from 'src/utils/logger';
 
 const app = express();
 

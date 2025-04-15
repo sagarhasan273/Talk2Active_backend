@@ -1,12 +1,24 @@
-[2025-04-15 00:50:59] [32minfo[39m: Application started successfully.
-[2025-04-15 00:51:34] [32minfo[39m: Application started successfully.
-[2025-04-15 06:26:59] [32minfo[39m: Server is running on port 5000
-[2025-04-15 06:27:24] [32minfo[39m: Server is running on port 5000
-[2025-04-15 23:40:27] [32minfo[39m: Server is running on port 5000
-[2025-04-15 23:54:55] [32minfo[39m: Server is running on port 5000
-[2025-04-15 23:55:19] [32minfo[39m: Server is running on port 5000
-[2025-04-15 23:57:56] [32minfo[39m: Connected to the database.
-[2025-04-16 00:02:23] [32minfo[39m: Server is running on port 5000
-[2025-04-16 00:05:07] [32minfo[39m: Server is running on port 5000
-[2025-04-16 00:14:25] [32minfo[39m: Server is running on port 5000
-[2025-04-16 00:14:41] [32minfo[39m: Connected to the database.
+[2025-04-16 01:43:57] [32minfo[39m: Server is running on port 5000
+[2025-04-16 01:49:31] [32minfo[39m: Server is running on port 5000
+[2025-04-16 01:57:09] [32minfo[39m: Server is running on port 5000
+[2025-04-16 02:00:57] [32minfo[39m: Server is running on port 5000
+[2025-04-16 02:01:09] [32minfo[39m: Server is running on port 5000
+[2025-04-16 02:01:19] [32minfo[39m: Server is running on port 5000
+[2025-04-16 02:04:36] [32minfo[39m: Connected to the database.
+[2025-04-16 02:08:43] [32minfo[39m: Server is running on port 5000
+[2025-04-16 02:08:46] [32minfo[39m: Connected to the database.
+[2025-04-16 02:08:57] [32minfo[39m: Server is running on port 5000
+[2025-04-16 02:09:09] [32minfo[39m: Server is running on port 5000
+[2025-04-16 02:09:18] [32minfo[39m: Server is running on port 5000
+[2025-04-16 02:09:26] [32minfo[39m: Server is running on port 5000
+[2025-04-16 02:09:27] [32minfo[39m: Connected to the database.
+[2025-04-16 02:09:58] [32minfo[39m: Server is running on port 5000
+[2025-04-16 02:10:00] [32minfo[39m: Connected to the database.
+[2025-04-16 02:10:34] [32minfo[39m: Server is running on port 5000
+[2025-04-16 02:10:36] [32minfo[39m: Connected to the database.
+[2025-04-16 02:11:27] [32minfo[39m: Database connection closed.
+[2025-04-16 02:11:44] [32minfo[39m: Server is running on port 5000
+[2025-04-16 02:11:58] [32minfo[39m: Connected to the database.
+[2025-04-16 02:15:53] [32minfo[39m: Server is running on port 5000
+[2025-04-16 02:16:36] [32minfo[39m: Server is running on port 5000
+[2025-04-16 02:16:46] [32minfo[39m: Connected to the database.

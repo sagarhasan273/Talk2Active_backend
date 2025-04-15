@@ -1,2 +1,2 @@
-require('./database');
-require('./server');
+require('src/database');
+require('src/server');
