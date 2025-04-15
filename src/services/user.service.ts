@@ -1,5 +1,5 @@
 import { DatabaseError } from 'src/database';
-import { User, UserWithoutPassword } from 'src/models/user.model';
+import { User, UserWithoutPassword, UserWithToken } from 'src/models/user.model';
 import { UserRepository } from 'src/repositories/user.repository';
 
 export class UserService {
@@ -7,7 +7,7 @@ export class UserService {
 
   public async createUser(
     user: Omit<User, '_id' | 'createAt' | 'updateAt'>
-  ): Promise<UserWithoutPassword> {
+  ): Promise<UserWithToken> {
     try {
       return await this.userRepository.createUser(user);
     } catch (error) {
@@ -18,10 +18,7 @@ export class UserService {
     }
   }
 
-  public async getUserByEmail(
-    email: string,
-    password: string
-  ): Promise<UserWithoutPassword | null> {
+  public async getUserByEmail(email: string, password: string): Promise<UserWithToken | null> {
     try {
       return await this.userRepository.getUserByEmail(email, password);
     } catch (error) {
@@ -32,9 +29,9 @@ export class UserService {
     }
   }
 
-  public async getUserById(id: string): Promise<UserWithoutPassword | null> {
+  public async getUser(token: string): Promise<UserWithoutPassword | null> {
     try {
-      return await this.userRepository.getUserById(id);
+      return await this.userRepository.getUser(token);
     } catch (error) {
       throw new DatabaseError(error as Error, 'Failed to get user by ID');
     }

@@ -1,7 +1,8 @@
 import { ObjectId } from 'mongodb';
-import { User, UserWithoutPassword } from 'src/models/user.model';
+import { User, UserWithoutPassword, UserWithToken } from 'src/models/user.model';
 
 import { getDatabase } from 'src/database';
+import { JwtService } from 'src/services/auth/jwt.service';
 import { PasswordService } from 'src/services/auth/password.service';
 
 export class UserRepository {
@@ -14,9 +15,11 @@ export class UserRepository {
 
   public async createUser(
     user: Omit<User, '_id' | 'createAt' | 'updateAt'>
-  ): Promise<UserWithoutPassword> {
+  ): Promise<UserWithToken> {
     const collection = await this.getCollection();
+
     const passwordHash = await PasswordService.hashPassword(user.password);
+
     const now = new Date();
     const newUser = {
       ...user,
@@ -24,15 +27,18 @@ export class UserRepository {
       createAt: now,
       updateAt: now,
     };
+
     const result = await collection.insertOne(newUser);
+    if (!result.acknowledged) throw new Error('Failed to create user');
+
     const { password, ...userWithoutPassword } = { ...newUser, _id: result.insertedId };
-    return userWithoutPassword;
+
+    const token = JwtService.generateToken(user as User);
+
+    return { user: userWithoutPassword, token: token };
   }
 
-  public async getUserByEmail(
-    email: string,
-    password: string
-  ): Promise<UserWithoutPassword | null> {
+  public async getUserByEmail(email: string, password: string): Promise<UserWithToken | null> {
     const collection = await this.getCollection();
     const user = await collection.findOne({ email });
     if (!user) return null;
@@ -41,12 +47,25 @@ export class UserRepository {
     if (!isPasswordValid) return null;
 
     const { password: undefined, ...userWithoutPassword } = user;
-    return userWithoutPassword;
+    if (!userWithoutPassword) return null;
+
+    const token = JwtService.generateToken(user as User);
+    if (!token) return null;
+
+    return { user: userWithoutPassword, token };
   }
 
-  public async getUserById(id: string): Promise<UserWithoutPassword | null> {
+  public async getUser(token: string): Promise<UserWithoutPassword | null> {
     const collection = await this.getCollection();
-    const user = await collection.findOne({ _id: new ObjectId(id) });
+
+    const decodedToken = JwtService.decodeToken(token);
+    if (!decodedToken) return null;
+
+    const userId = decodedToken.id;
+    if (!userId) return null;
+
+    const user = await collection.findOne({ _id: new ObjectId(userId) });
+
     if (!user) return null;
 
     const { password, ...userWithoutPassword } = user;

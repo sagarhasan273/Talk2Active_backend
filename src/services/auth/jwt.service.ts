@@ -1,0 +1,21 @@
+import jwt from 'jsonwebtoken';
+
+import { User } from 'src/models/user.model';
+
+export class JwtService {
+  private static readonly SECRET = process.env.JWT_SECRET || 'secret';
+  private static readonly EXPIRES_IN = '1h';
+
+  public static generateToken(user: User): string {
+    const payload = { id: user._id, email: user.email };
+    return jwt.sign(payload, this.SECRET, { expiresIn: this.EXPIRES_IN });
+  }
+
+  public static verifyToken(token: string): any {
+    return jwt.verify(token, this.SECRET);
+  }
+
+  public static decodeToken(token: string): any {
+    return jwt.decode(token);
+  }
+}

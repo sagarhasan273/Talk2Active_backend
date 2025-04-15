@@ -11,3 +11,8 @@ export interface User {
 }
 
 export type UserWithoutPassword = Omit<User, 'password'>;
+
+export type UserWithToken = {
+  user: UserWithoutPassword;
+  token: string;
+};

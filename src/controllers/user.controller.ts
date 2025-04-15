@@ -31,9 +31,15 @@ export class UserController {
     }
   }
 
-  public async getUserById(req: Request, res: Response): Promise<void> {
+  public async getUser(req: Request, res: Response): Promise<void> {
     try {
-      const user = await this.userService.getUserById(req.params.id);
+      const authHeader = req.headers['authorization']; // 🔑 Use lowercase 'authorization'
+      const token = authHeader?.split(' ')[1];
+      if (!token) {
+        res.status(401).json({ message: 'Unauthorized' });
+        return;
+      }
+      const user = await this.userService.getUser(token);
       if (!user) {
         res.status(404).json({ message: 'User not found' });
         return;
