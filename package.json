@@ -2,26 +2,32 @@
   "name": "typescript-express-app",
   "version": "1.0.0",
   "description": "A simple TypeScript Express application",
-  "main": "src/app.js",
+  "main": "src/app.ts",
   "scripts": {
-    "start": "node src/app.js",
+    "start": "node src/app.ts",
     "build": "tsc",
-    "dev": "nodemon --exec ts-node src/app.ts"
+    "dev": "nodemon --exec ts-node -r tsconfig-paths/register src/app.ts"
   },
   "dependencies": {
-    "dotenv": "^16.4.7",
+    "@types/mongodb": "^4.0.6",
+    "dotenv": "^16.5.0",
     "express": "^5.1.0",
+    "mongodb": "^6.15.0",
+    "winston": "^3.17.0",
     "zod": "^3.24.2"
   },
   "devDependencies": {
     "@types/express": "^5.0.1",
     "@types/node": "^22.14.0",
+    "@types/winston": "^2.4.4",
     "@typescript-eslint/eslint-plugin": "^8.29.1",
     "@typescript-eslint/parser": "^8.29.1",
     "eslint": "^9.24.0",
     "eslint-config-prettier": "^10.1.1",
     "prettier": "^3.5.3",
+    "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
+    "tsconfig-paths": "^4.2.0",
     "typescript": "^5.8.3"
   }
 }

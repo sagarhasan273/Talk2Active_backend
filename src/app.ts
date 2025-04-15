@@ -1,2 +1,2 @@
-console.log('Hello, world!');
-console.log('This is a TypeScript application.');
+require('./database');
+require('./server');
