@@ -16,7 +16,7 @@
   "terminal.integrated.profiles.windows": {
     "Git Bash": {
       "source": "Git Bash",
-      "path": "D:\\Install Apps\\Git\\bin\\bash.exe",
+      "path": "C:\\Program Files\\Git\\bin\\bash.exe",
       "icon": "terminal-bash"
     }
   },

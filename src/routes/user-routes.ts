@@ -1,4 +1,5 @@
 import { UserController } from 'src/controllers/user.controller';
+import { authMiddleware } from 'src/middlewares/auth.middleware';
 import { BaseRouter } from './base-router';
 
 export class UserRoutes extends BaseRouter {
@@ -6,7 +7,7 @@ export class UserRoutes extends BaseRouter {
 
   protected routes(): void {
     this.router.post('/auth/sign-in', (req, res) => this.userController.getUserByEmail(req, res));
-    this.router.get('/u/me', (req, res) => this.userController.getUser(req, res));
+    this.router.get('/u/me', authMiddleware, (req, res) => this.userController.getUser(req, res));
     this.router.post('/auth/sign-up', (req, res) => this.userController.createUser(req, res));
   }
 }

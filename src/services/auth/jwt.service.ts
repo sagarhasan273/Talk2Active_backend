@@ -4,7 +4,7 @@ import { User } from 'src/models/user.model';
 
 export class JwtService {
   private static readonly SECRET = process.env.JWT_SECRET || 'secret';
-  private static readonly EXPIRES_IN = '1h';
+  private static readonly EXPIRES_IN = '24h';
 
   public static generateToken(user: User): string {
     const payload = { id: user._id, email: user.email };
