@@ -2,25 +2,29 @@ import cors from 'cors';
 import express from 'express';
 import { closeDatabaseConnection } from 'src/database';
 import { databaseMiddleware } from 'src/middlewares/database.middleware';
-import { UserRoutes } from 'src/routes/user-routes';
+import { InventoryRouter } from 'src/routes/inventory.router';
+import { UserRoutes } from 'src/routes/user.routes';
 import logger from 'src/utils/logger';
 
 const app = express();
 
 app.use(
   cors({
-    origin: 'http://localhost:8081',
-    credentials: true, // if you're using cookies or auth headers
+    origin: ['http://192.168.68.106:8081', 'http://localhost:8081'],
+    credentials: true,
   })
-); // Enable CORS for all routes
+);
 
 app.use(express.json());
-app.use(databaseMiddleware); // Use the database middleware for all routes
+app.use(databaseMiddleware);
 
 const userRouters = new UserRoutes().router;
-app.use('/user', userRouters); // Use the user router for user-related routes
+const inventoryRouters = new InventoryRouter().router;
 
-const PORT = process.env.PORT || 5000;
+app.use('/user', userRouters);
+app.use('/inventory', inventoryRouters);
+
+const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 5001;
 const server = app.listen(PORT, () => {
   logger.info(`Server is running on port ${PORT}`);
 });
@@ -28,7 +32,7 @@ const server = app.listen(PORT, () => {
 // Handle graceful shutdown
 process.on('SIGTERM', async () => {
   logger.info('SIGTERM signal received: closing HTTP server');
-  await closeDatabaseConnection(); // Close the database connection
+  await closeDatabaseConnection();
   server.close(() => {
     logger.info('HTTP server closed');
   });

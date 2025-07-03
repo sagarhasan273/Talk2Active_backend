@@ -2,8 +2,8 @@
   "compilerOptions": {
     "target": "ES2020",
     "module": "CommonJS",
-    "baseUrl": ".",
-    "paths": {
+    "baseUrl": "./",
+    "paths": { 
       "*": ["*"]
     },
     "outDir": "./dist",

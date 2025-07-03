@@ -9,9 +9,12 @@
   },
   "dependencies": {
     "@types/mongodb": "^4.0.6",
+    "cloudinary": "^2.7.0",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
     "mongodb": "^6.15.0",
+    "multer": "^2.0.1",
+    "sharp": "^0.34.2",
     "winston": "^3.17.0",
     "zod": "^3.24.2"
   },
@@ -20,7 +23,9 @@
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.1",
     "@types/jsonwebtoken": "^9.0.9",
+    "@types/multer": "^2.0.0",
     "@types/node": "^22.14.0",
+    "@types/sharp": "^0.31.1",
     "@types/winston": "^2.4.4",
     "@typescript-eslint/eslint-plugin": "^8.29.1",
     "@typescript-eslint/parser": "^8.29.1",

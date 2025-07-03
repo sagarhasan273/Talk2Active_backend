@@ -1,2 +1,2 @@
-require('src/database');
 require('src/server');
+require('src/database');
