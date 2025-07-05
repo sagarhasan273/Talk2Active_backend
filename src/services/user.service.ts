@@ -6,6 +6,14 @@ import { ReturnResponseType } from 'src/types/base.types';
 export class UserService {
   private userRepository = new UserRepository();
 
+  public async getUserById(id: string): Promise<UserWithoutPassword | null> {
+    try {
+      return await this.userRepository.getUserById(id);
+    } catch (error) {
+      throw new DatabaseError(error as Error, 'Failed to get user by ID');
+    }
+  }
+
   public async createUser(
     user: Omit<User, '_id' | 'createAt' | 'updateAt'>
   ): Promise<UserWithToken> {

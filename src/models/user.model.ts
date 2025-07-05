@@ -27,7 +27,6 @@ export interface User {
   password: string;
   createdAt: Date;
   updatedAt: Date;
-  profileStatus?: string;
 }
 
 export type UserWithoutPassword = Omit<User, 'password'>;

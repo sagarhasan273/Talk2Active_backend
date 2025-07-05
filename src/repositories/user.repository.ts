@@ -14,6 +14,18 @@ export class UserRepository {
     return db.collection<User>(UserRepository.collectionName);
   }
 
+  public async getUserById(id: string): Promise<UserWithoutPassword | null> {
+    const collection = await this.getCollection();
+    if (!id) return null;
+
+    const user = await collection.findOne({ _id: new ObjectId(id) });
+
+    if (!user) return null;
+
+    const { password, ...userWithoutPassword } = user;
+    return userWithoutPassword;
+  }
+
   public async createUser(
     user: Omit<User, '_id' | 'createAt' | 'updateAt'>
   ): Promise<UserWithToken> {
@@ -48,7 +60,7 @@ export class UserRepository {
     const { _id, ...updatableFields } = user;
 
     await collection.updateOne(
-      { _id },
+      { _id: new ObjectId(_id) },
       {
         $set: {
           ...updatableFields,
@@ -56,7 +68,6 @@ export class UserRepository {
         },
       }
     );
-
     return { message: 'Profile updated successfully', status: true };
   }
 

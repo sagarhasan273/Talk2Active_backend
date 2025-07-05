@@ -9,6 +9,9 @@ export class UserRoutes extends BaseRouter {
     this.router.post('/auth/sign-in', (req, res) => this.userController.getUserByEmail(req, res));
     this.router.post('/auth/sign-up', (req, res) => this.userController.createUser(req, res));
     this.router.get('/u/me', authMiddleware, (req, res) => this.userController.getUser(req, res));
+    this.router.get('/profile/:id', authMiddleware, (req, res) =>
+      this.userController.getUserById(req, res)
+    );
     this.router.post('/profile/update', authMiddleware, (req, res) =>
       this.userController.updateUser(req, res)
     );

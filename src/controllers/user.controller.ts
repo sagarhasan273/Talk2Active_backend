@@ -4,6 +4,23 @@ import { UserService } from 'src/services/user.service';
 export class UserController {
   private userService = new UserService();
 
+  public async getUserById(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const user = await this.userService.getUserById(id);
+      if (!user) {
+        res.status(401).json({ message: 'Invalid email or password' });
+        return;
+      }
+      res.status(200).json({ user, status: true });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+      if (errorMessage === 'User already exists') {
+        res.status(409).json({ message: errorMessage });
+      }
+    }
+  }
+
   public async createUser(req: Request, res: Response): Promise<void> {
     try {
       const user = await this.userService.createUser(req.body);
