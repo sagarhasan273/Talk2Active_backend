@@ -4,6 +4,7 @@ import { User, UserWithoutPassword, UserWithToken } from 'src/models/user.model'
 import { getDatabase } from 'src/database';
 import { JwtService } from 'src/services/auth/jwt.service';
 import { PasswordService } from 'src/services/auth/password.service';
+import { ReturnResponseType } from 'src/types/base.types';
 
 export class UserRepository {
   private static collectionName = 'users';
@@ -36,6 +37,27 @@ export class UserRepository {
     const token = JwtService.generateToken(user as User);
 
     return { user: userWithoutPassword, token: token };
+  }
+
+  public async updateUser(
+    user: Omit<User, 'createdAt' | 'updatedAt'>
+  ): Promise<ReturnResponseType> {
+    const collection = await this.getCollection();
+
+    if (!user._id) throw new Error('User ID is required');
+    const { _id, ...updatableFields } = user;
+
+    await collection.updateOne(
+      { _id },
+      {
+        $set: {
+          ...updatableFields,
+          updatedAt: new Date(),
+        },
+      }
+    );
+
+    return { message: 'Profile updated successfully', status: true };
   }
 
   public async getUserByEmail(email: string, password: string): Promise<UserWithToken | null> {

@@ -20,5 +20,10 @@
       "icon": "terminal-bash"
     }
   },
-  "terminal.integrated.defaultProfile.windows": "Git Bash"
+  "terminal.integrated.defaultProfile.windows": "Git Bash",
+  "diffEditor.experimental.useTrueInlineView": false,
+  "diffEditor.experimental.showMoves": false,
+  "editor.fontSize": 13,
+  "editor.wordWrap": "wordWrapColumn",
+  "editor.wordWrapColumn": 90
 }
