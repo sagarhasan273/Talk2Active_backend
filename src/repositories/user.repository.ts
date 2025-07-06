@@ -5,6 +5,7 @@ import { getDatabase } from 'src/database';
 import { JwtService } from 'src/services/auth/jwt.service';
 import { PasswordService } from 'src/services/auth/password.service';
 import { ReturnResponseType } from 'src/types/base.types';
+import { generateUserId } from 'src/utils/generate.userId';
 
 export class UserRepository {
   private static collectionName = 'users';
@@ -33,10 +34,20 @@ export class UserRepository {
 
     const passwordHash = await PasswordService.hashPassword(user.password);
 
+    const userId = generateUserId();
     const now = new Date();
     const newUser = {
       ...user,
+      userId,
       password: passwordHash,
+      status: 'online' as 'online',
+      verified: false,
+      accountActive: true,
+      followersCount: 0,
+      followingCount: 0,
+      postCount: 0,
+      joinDate: now,
+      lastActive: now,
       createAt: now,
       updateAt: now,
     };

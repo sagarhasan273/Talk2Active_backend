@@ -1,5 +1,5 @@
 import { DatabaseError } from 'src/database';
-import { User, UserWithoutPassword, UserWithToken } from 'src/models/user.model';
+import { User, UserSchema, UserWithoutPassword, UserWithToken } from 'src/models/user.model';
 import { UserRepository } from 'src/repositories/user.repository';
 import { ReturnResponseType } from 'src/types/base.types';
 
@@ -18,7 +18,8 @@ export class UserService {
     user: Omit<User, '_id' | 'createAt' | 'updateAt'>
   ): Promise<UserWithToken> {
     try {
-      return await this.userRepository.createUser(user);
+      const validatedData = UserSchema.parse(user);
+      return await this.userRepository.createUser(validatedData);
     } catch (error) {
       if (error instanceof Error && error.message.includes('duplicate key error')) {
         throw new DatabaseError(error as Error, 'User already exists');
