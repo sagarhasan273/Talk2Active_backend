@@ -25,5 +25,6 @@
   "diffEditor.experimental.showMoves": false,
   "editor.fontSize": 13,
   "editor.wordWrap": "wordWrapColumn",
-  "editor.wordWrapColumn": 90
+  "editor.wordWrapColumn": 120,
+  "editor.minimap.enabled": false
 }

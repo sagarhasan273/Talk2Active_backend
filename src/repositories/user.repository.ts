@@ -1,10 +1,11 @@
 import { ObjectId } from 'mongodb';
-import { User, UserWithoutPassword, UserWithToken } from 'src/models/user.model';
+import { CreateUserType, User, UserWithoutPassword, UserWithToken } from 'src/types/user.type';
 
 import { getDatabase } from 'src/database';
+import { UserSchema } from 'src/models/user.model';
 import { JwtService } from 'src/services/auth/jwt.service';
 import { PasswordService } from 'src/services/auth/password.service';
-import { ReturnResponseType } from 'src/types/base.types';
+import { ReturnResponseType } from 'src/types/base.type';
 import { generateUserId } from 'src/utils/generate.userId';
 
 export class UserRepository {
@@ -27,30 +28,28 @@ export class UserRepository {
     return userWithoutPassword;
   }
 
-  public async createUser(
-    user: Omit<User, '_id' | 'createAt' | 'updateAt'>
-  ): Promise<UserWithToken> {
+  public async createUser(user: CreateUserType): Promise<UserWithToken> {
     const collection = await this.getCollection();
 
     const passwordHash = await PasswordService.hashPassword(user.password);
 
     const userId = generateUserId();
-    const now = new Date();
-    const newUser = {
+
+    const newUser = UserSchema.parse({
       ...user,
       userId,
+      profilePhoto: null,
+      coverPhoto: null,
       password: passwordHash,
-      status: 'online' as 'online',
-      verified: false,
-      accountActive: true,
-      followersCount: 0,
-      followingCount: 0,
-      postCount: 0,
-      joinDate: now,
-      lastActive: now,
-      createAt: now,
-      updateAt: now,
-    };
+      joinDate: undefined,
+      lastActive: undefined,
+      status: undefined,
+      verified: undefined,
+      accountActive: undefined,
+      followersCount: undefined,
+      followingCount: undefined,
+      postCount: undefined,
+    });
 
     const result = await collection.insertOne(newUser);
     if (!result.acknowledged) throw new Error('Failed to create user');
@@ -62,9 +61,7 @@ export class UserRepository {
     return { user: userWithoutPassword, token: token };
   }
 
-  public async updateUser(
-    user: Omit<User, 'createdAt' | 'updatedAt'>
-  ): Promise<ReturnResponseType> {
+  public async updateUser(user: User): Promise<ReturnResponseType> {
     const collection = await this.getCollection();
 
     if (!user._id) throw new Error('User ID is required');

@@ -20,7 +20,7 @@ export const UserSchema = zod
       ])
       .optional(),
     userId: zod.string().regex(/^USR\d{6}\d{4}$/, {
-      message: 'User ID must follow the format USRYYYYMMDDCOUNTER',
+      message: 'User ID must follow the format USRYYMMDDCOUNTER',
     }),
     username: zod
       .string()
@@ -33,9 +33,25 @@ export const UserSchema = zod
       .string()
       .email({ message: 'Invalid email address' })
       .min(1, { message: 'Email is required' }),
-    profilePhoto: zod.string().url({ message: 'Invalid URL for profile photo' }).optional(),
-    coverPhoto: zod.string().url({ message: 'Invalid URL for cover photo' }).optional(),
-    bio: zod.string().max(500, { message: 'Bio cannot exceed 500 characters' }).optional(),
+    profilePhoto: zod
+      .string()
+      .url({ message: 'Invalid URL for profile photo' })
+      .default(
+        'https://res.cloudinary.com/dsuefoemt/image/upload/v1751924077/user_profile/qqwgetbag5dxudclf8ku.jpg'
+      )
+      .optional(),
+    coverPhoto: zod
+      .string()
+      .url({ message: 'Invalid URL for cover photo' })
+      .default(
+        'https://res.cloudinary.com/dsuefoemt/image/upload/v1751924037/user_profile/dj5rabde31zaowxq7dwn.jpg'
+      )
+      .optional(),
+    bio: zod
+      .string()
+      .max(500, { message: 'Bio cannot exceed 500 characters' })
+      .default('')
+      .optional(),
     name: zod
       .string()
       .min(2, { message: 'Full name must be at least 2 characters' })
@@ -52,13 +68,17 @@ export const UserSchema = zod
       .date()
       .max(new Date(), { message: 'Date of birth cannot be in the future' })
       .optional(),
-    gender: zod.enum(['male', 'female', 'other', 'prefer-not-to-say', '']).optional(),
+    gender: zod
+      .enum(['male', 'female', 'other', 'prefer-not-to-say', ''])
+      .default('prefer-not-to-say')
+      .optional(),
     joinDate: zod
       .union([
         zod.string().datetime(), // ISO 8601 string
         zod.date(),
       ])
       .transform((val) => new Date(val))
+      .default(new Date())
       .optional(),
     lastActive: zod
       .union([
@@ -66,25 +86,21 @@ export const UserSchema = zod
         zod.date(),
       ])
       .transform((val) => new Date(val))
+      .default(new Date())
       .optional(), // Should be set server-side
-    createdAt: zod
-      .union([zod.string().datetime(), zod.date()])
-      .transform((val) => new Date(val))
+    status: zod
+      .enum(['online', 'offline', 'busy', 'brb', 'afk', 'zzz'])
+      .default('online')
       .optional(),
-
-    updatedAt: zod
-      .union([zod.string().datetime(), zod.date()])
-      .transform((val) => new Date(val))
-      .optional(),
-    status: zod.enum(['online', 'offline', 'busy', 'brb', 'afk', 'zzz']).optional(),
-    verified: zod.boolean().optional(),
-    accountActive: zod.boolean().optional(),
-    followersCount: zod.number().int().nonnegative().optional(),
-    followingCount: zod.number().int().nonnegative().optional(),
-    postCount: zod.number().int().nonnegative().optional(),
+    verified: zod.boolean().default(false).optional(),
+    accountActive: zod.boolean().default(true).optional(),
+    followersCount: zod.number().int().nonnegative().default(0).optional(),
+    followingCount: zod.number().int().nonnegative().default(0).optional(),
+    postCount: zod.number().int().nonnegative().default(0).optional(),
     location: zod
       .string()
       .max(100, { message: 'Location cannot exceed 100 characters' })
+      .default('')
       .optional(),
     website: zod.string().url({ message: 'Invalid website URL' }).or(zod.literal('')).optional(),
     socialLinks: zod
@@ -114,13 +130,17 @@ export const UserSchema = zod
   })
   .strict();
 
+export const CreateUserSchema = UserSchema.pick({
+  name: true,
+  username: true,
+  email: true,
+}).extend({
+  password: zod
+    .string()
+    .min(1, { message: 'Password is required' })
+    .min(8, { message: 'Password must be at least 8 characters!' }),
+});
+
 export const UpdateUserSchema = UserSchema.required({
   _id: true,
 });
-
-export type User = zod.infer<typeof UserSchema>;
-export type UserWithoutPassword = Omit<User, 'password'>;
-export type UserWithToken = {
-  user: UserWithoutPassword;
-  token: string;
-};

@@ -1,7 +1,8 @@
 import { DatabaseError } from 'src/database';
-import { User, UserSchema, UserWithoutPassword, UserWithToken } from 'src/models/user.model';
+import { CreateUserSchema } from 'src/models/user.model';
 import { UserRepository } from 'src/repositories/user.repository';
-import { ReturnResponseType } from 'src/types/base.types';
+import { ReturnResponseType } from 'src/types/base.type';
+import { CreateUserType, User, UserWithoutPassword, UserWithToken } from 'src/types/user.type';
 
 export class UserService {
   private userRepository = new UserRepository();
@@ -14,11 +15,9 @@ export class UserService {
     }
   }
 
-  public async createUser(
-    user: Omit<User, '_id' | 'createAt' | 'updateAt'>
-  ): Promise<UserWithToken> {
+  public async createUser(user: CreateUserType): Promise<UserWithToken> {
     try {
-      const validatedData = UserSchema.parse(user);
+      const validatedData = CreateUserSchema.parse(user);
       return await this.userRepository.createUser(validatedData);
     } catch (error) {
       if (error instanceof Error && error.message.includes('duplicate key error')) {
@@ -28,9 +27,7 @@ export class UserService {
     }
   }
 
-  public async updateUser(
-    user: Omit<User, '_id' | 'createAt' | 'updateAt'>
-  ): Promise<ReturnResponseType> {
+  public async updateUser(user: User): Promise<ReturnResponseType> {
     try {
       return await this.userRepository.updateUser(user);
     } catch (error) {
