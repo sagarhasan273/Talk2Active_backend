@@ -25,6 +25,9 @@
   "diffEditor.experimental.showMoves": false,
   "editor.fontSize": 13,
   "editor.wordWrap": "wordWrapColumn",
-  "editor.wordWrapColumn": 120,
-  "editor.minimap.enabled": false
+  "editor.wordWrapColumn": 100,
+  "editor.minimap.enabled": false,
+  "[typescript]": {
+    "editor.defaultFormatter": "vscode.typescript-language-features"
+  }
 }

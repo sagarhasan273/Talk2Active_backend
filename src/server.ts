@@ -10,7 +10,7 @@ const app = express();
 
 app.use(
   cors({
-    origin: ['http://192.168.68.102:8081', 'http://localhost:8081'],
+    origin: ['http://192.168.68.101:8081', 'http://localhost:8081'],
     credentials: true,
   })
 );
@@ -19,10 +19,12 @@ app.use(express.json());
 app.use(databaseMiddleware);
 
 const userRouters = new UserRoutes().router;
-const inventoryRouters = new InventoryRouter().router;
-
 app.use('/user', userRouters);
+
+const inventoryRouters = new InventoryRouter().router;
 app.use('/inventory', inventoryRouters);
+
+
 
 const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 5001;
 const server = app.listen(PORT, () => {

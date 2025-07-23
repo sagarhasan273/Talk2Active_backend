@@ -1,13 +1,14 @@
 import { Request, Response } from 'express';
+import { CreateUserSchema, LogInUserSchema } from 'src/schemas/user.shema';
 import { UserService } from 'src/services/user.service';
 
 export class UserController {
-  private userService = new UserService();
+  private service = new UserService();
 
   public async getUserById(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
-      const user = await this.userService.getUserById(id);
+      const user = await this.service.getUserById(id);
       if (!user) {
         res.status(401).json({ message: 'Invalid email or password' });
         return;
@@ -23,7 +24,12 @@ export class UserController {
 
   public async createUser(req: Request, res: Response): Promise<void> {
     try {
-      const user = await this.userService.createUser(req.body);
+      const validatedData = CreateUserSchema.parse(req.body);
+      if (!validatedData) {
+        res.status(400).json({ status: false, message: 'Invalid user data' });
+        return;
+      }
+      const user = await this.service.createUser(validatedData);
       res.status(201).json(user);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
@@ -33,7 +39,7 @@ export class UserController {
 
   public async updateUser(req: Request, res: Response): Promise<void> {
     try {
-      const user = await this.userService.updateUser(req.body);
+      const user = await this.service.updateUser(req.body);
       res.status(201).json(user);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
@@ -41,10 +47,14 @@ export class UserController {
     }
   }
 
-  public async getUserByEmail(req: Request, res: Response): Promise<void> {
+  public async logInUser(req: Request, res: Response): Promise<void> {
     try {
-      const { email, password } = req.body;
-      const user = await this.userService.getUserByEmail(email, password);
+      const validatedInput = LogInUserSchema.parse(req.body);
+      if (!validatedInput) {
+        res.status(400).json({ message: 'Email and password are required' });
+        return;
+      }
+      const user = await this.service.logInUser(validatedInput);
       if (!user) {
         res.status(401).json({ message: 'Invalid email or password' });
         return;
@@ -66,12 +76,12 @@ export class UserController {
         res.status(401).json({ message: 'Unauthorized' });
         return;
       }
-      const user = await this.userService.getUser(token);
+      const user = await this.service.getUser(token);
       if (!user) {
         res.status(404).json({ message: 'User not found' });
         return;
       }
-      res.status(200).json(user);
+      res.status(200).json({ user, status: true });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
       res.status(500).json({ message: errorMessage });

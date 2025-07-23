@@ -1,0 +1,66 @@
+[2025-07-14 02:17:31] [31merror[39m: Database connection error: connect ECONNREFUSED ::1:27017, connect ECONNREFUSED 127.0.0.1:27017
+MongoServerSelectionError: connect ECONNREFUSED ::1:27017, connect ECONNREFUSED 127.0.0.1:27017
+    at Topology.selectServer (M:\Workplace\Talk2Active_backend\node_modules\mongodb\src\sdam\topology.ts:628:30)
+    at async Topology._connect (M:\Workplace\Talk2Active_backend\node_modules\mongodb\src\sdam\topology.ts:468:22)
+    at async Topology.connect (M:\Workplace\Talk2Active_backend\node_modules\mongodb\src\sdam\topology.ts:405:7)
+    at async topologyConnect (M:\Workplace\Talk2Active_backend\node_modules\mongodb\src\mongo_client.ts:620:9)
+    at async MongoClient._connect (M:\Workplace\Talk2Active_backend\node_modules\mongodb\src\mongo_client.ts:632:7)
+    at async MongoClient.connect (M:\Workplace\Talk2Active_backend\node_modules\mongodb\src\mongo_client.ts:544:7)
+    at async connectToDatabase (M:\Workplace\Talk2Active_backend\src\database.ts:15:5)
+    at async getDatabase (M:\Workplace\Talk2Active_backend\src\database.ts:38:5)
+    at async databaseMiddleware (M:\Workplace\Talk2Active_backend\src\middlewares\database.middleware.ts:13:16)
+[2025-07-14 02:17:41] [31merror[39m: Database connection error: connect ECONNREFUSED ::1:27017, connect ECONNREFUSED 127.0.0.1:27017
+MongoServerSelectionError: connect ECONNREFUSED ::1:27017, connect ECONNREFUSED 127.0.0.1:27017
+    at Topology.selectServer (M:\Workplace\Talk2Active_backend\node_modules\mongodb\src\sdam\topology.ts:628:30)
+    at async Topology._connect (M:\Workplace\Talk2Active_backend\node_modules\mongodb\src\sdam\topology.ts:468:22)
+    at async Topology.connect (M:\Workplace\Talk2Active_backend\node_modules\mongodb\src\sdam\topology.ts:405:7)
+    at async topologyConnect (M:\Workplace\Talk2Active_backend\node_modules\mongodb\src\mongo_client.ts:620:9)
+    at async MongoClient._connect (M:\Workplace\Talk2Active_backend\node_modules\mongodb\src\mongo_client.ts:632:7)
+    at async MongoClient.connect (M:\Workplace\Talk2Active_backend\node_modules\mongodb\src\mongo_client.ts:544:7)
+    at async connectToDatabase (M:\Workplace\Talk2Active_backend\src\database.ts:15:5)
+    at async getDatabase (M:\Workplace\Talk2Active_backend\src\database.ts:38:5)
+    at async databaseMiddleware (M:\Workplace\Talk2Active_backend\src\middlewares\database.middleware.ts:13:16)
+[2025-07-14 02:18:35] [31merror[39m: Database connection error: connect ECONNREFUSED ::1:27017, connect ECONNREFUSED 127.0.0.1:27017
+MongoServerSelectionError: connect ECONNREFUSED ::1:27017, connect ECONNREFUSED 127.0.0.1:27017
+    at Topology.selectServer (M:\Workplace\Talk2Active_backend\node_modules\mongodb\src\sdam\topology.ts:628:30)
+    at async Topology._connect (M:\Workplace\Talk2Active_backend\node_modules\mongodb\src\sdam\topology.ts:468:22)
+    at async Topology.connect (M:\Workplace\Talk2Active_backend\node_modules\mongodb\src\sdam\topology.ts:405:7)
+    at async topologyConnect (M:\Workplace\Talk2Active_backend\node_modules\mongodb\src\mongo_client.ts:620:9)
+    at async MongoClient._connect (M:\Workplace\Talk2Active_backend\node_modules\mongodb\src\mongo_client.ts:632:7)
+    at async MongoClient.connect (M:\Workplace\Talk2Active_backend\node_modules\mongodb\src\mongo_client.ts:544:7)
+    at async connectToDatabase (M:\Workplace\Talk2Active_backend\src\database.ts:15:5)
+    at async getDatabase (M:\Workplace\Talk2Active_backend\src\database.ts:38:5)
+    at async databaseMiddleware (M:\Workplace\Talk2Active_backend\src\middlewares\database.middleware.ts:13:16)
+[2025-07-14 02:18:51] [31merror[39m: Database connection error: connect ECONNREFUSED ::1:27017, connect ECONNREFUSED 127.0.0.1:27017
+MongoServerSelectionError: connect ECONNREFUSED ::1:27017, connect ECONNREFUSED 127.0.0.1:27017
+    at Topology.selectServer (M:\Workplace\Talk2Active_backend\node_modules\mongodb\src\sdam\topology.ts:628:30)
+    at async Topology._connect (M:\Workplace\Talk2Active_backend\node_modules\mongodb\src\sdam\topology.ts:468:22)
+    at async Topology.connect (M:\Workplace\Talk2Active_backend\node_modules\mongodb\src\sdam\topology.ts:405:7)
+    at async topologyConnect (M:\Workplace\Talk2Active_backend\node_modules\mongodb\src\mongo_client.ts:620:9)
+    at async MongoClient._connect (M:\Workplace\Talk2Active_backend\node_modules\mongodb\src\mongo_client.ts:632:7)
+    at async MongoClient.connect (M:\Workplace\Talk2Active_backend\node_modules\mongodb\src\mongo_client.ts:544:7)
+    at async connectToDatabase (M:\Workplace\Talk2Active_backend\src\database.ts:15:5)
+    at async getDatabase (M:\Workplace\Talk2Active_backend\src\database.ts:38:5)
+    at async databaseMiddleware (M:\Workplace\Talk2Active_backend\src\middlewares\database.middleware.ts:13:16)
+[2025-07-14 02:19:28] [31merror[39m: Database connection error: connect ECONNREFUSED ::1:27017, connect ECONNREFUSED 127.0.0.1:27017
+MongoServerSelectionError: connect ECONNREFUSED ::1:27017, connect ECONNREFUSED 127.0.0.1:27017
+    at Topology.selectServer (M:\Workplace\Talk2Active_backend\node_modules\mongodb\src\sdam\topology.ts:628:30)
+    at async Topology._connect (M:\Workplace\Talk2Active_backend\node_modules\mongodb\src\sdam\topology.ts:468:22)
+    at async Topology.connect (M:\Workplace\Talk2Active_backend\node_modules\mongodb\src\sdam\topology.ts:405:7)
+    at async topologyConnect (M:\Workplace\Talk2Active_backend\node_modules\mongodb\src\mongo_client.ts:620:9)
+    at async MongoClient._connect (M:\Workplace\Talk2Active_backend\node_modules\mongodb\src\mongo_client.ts:632:7)
+    at async MongoClient.connect (M:\Workplace\Talk2Active_backend\node_modules\mongodb\src\mongo_client.ts:544:7)
+    at async connectToDatabase (M:\Workplace\Talk2Active_backend\src\database.ts:15:5)
+    at async getDatabase (M:\Workplace\Talk2Active_backend\src\database.ts:38:5)
+    at async databaseMiddleware (M:\Workplace\Talk2Active_backend\src\middlewares\database.middleware.ts:13:16)
+[2025-07-14 02:19:45] [31merror[39m: Database connection error: connect ECONNREFUSED ::1:27017, connect ECONNREFUSED 127.0.0.1:27017
+MongoServerSelectionError: connect ECONNREFUSED ::1:27017, connect ECONNREFUSED 127.0.0.1:27017
+    at Topology.selectServer (M:\Workplace\Talk2Active_backend\node_modules\mongodb\src\sdam\topology.ts:628:30)
+    at async Topology._connect (M:\Workplace\Talk2Active_backend\node_modules\mongodb\src\sdam\topology.ts:468:22)
+    at async Topology.connect (M:\Workplace\Talk2Active_backend\node_modules\mongodb\src\sdam\topology.ts:405:7)
+    at async topologyConnect (M:\Workplace\Talk2Active_backend\node_modules\mongodb\src\mongo_client.ts:620:9)
+    at async MongoClient._connect (M:\Workplace\Talk2Active_backend\node_modules\mongodb\src\mongo_client.ts:632:7)
+    at async MongoClient.connect (M:\Workplace\Talk2Active_backend\node_modules\mongodb\src\mongo_client.ts:544:7)
+    at async connectToDatabase (M:\Workplace\Talk2Active_backend\src\database.ts:15:5)
+    at async getDatabase (M:\Workplace\Talk2Active_backend\src\database.ts:38:5)
+    at async databaseMiddleware (M:\Workplace\Talk2Active_backend\src\middlewares\database.middleware.ts:13:16)

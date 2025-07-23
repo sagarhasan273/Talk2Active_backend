@@ -1,24 +1,16 @@
 import { DatabaseError } from 'src/database';
-import { CreateUserSchema } from 'src/models/user.model';
+
 import { UserRepository } from 'src/repositories/user.repository';
 import { ReturnResponseType } from 'src/types/base.type';
-import { CreateUserType, User, UserWithoutPassword, UserWithToken } from 'src/types/user.type';
+import { CreateUserInput, LogInUserInput, UserType, UserWithoutPassword, UserWithToken } from 'src/types/user.type';
 
 export class UserService {
-  private userRepository = new UserRepository();
+  private repository = new UserRepository();
 
-  public async getUserById(id: string): Promise<UserWithoutPassword | null> {
+  public async createUser(input: CreateUserInput): Promise<UserType> {
     try {
-      return await this.userRepository.getUserById(id);
-    } catch (error) {
-      throw new DatabaseError(error as Error, 'Failed to get user by ID');
-    }
-  }
 
-  public async createUser(user: CreateUserType): Promise<UserWithToken> {
-    try {
-      const validatedData = CreateUserSchema.parse(user);
-      return await this.userRepository.createUser(validatedData);
+      return await this.repository.createUser(input);
     } catch (error) {
       if (error instanceof Error && error.message.includes('duplicate key error')) {
         throw new DatabaseError(error as Error, 'User already exists');
@@ -27,9 +19,9 @@ export class UserService {
     }
   }
 
-  public async updateUser(user: User): Promise<ReturnResponseType> {
+  public async updateUser(input: UserType): Promise<ReturnResponseType> {
     try {
-      return await this.userRepository.updateUser(user);
+      return await this.repository.updateUser(input);
     } catch (error) {
       if (error instanceof Error && error.message.includes('duplicate key error')) {
         throw new DatabaseError(error as Error, 'User already exists');
@@ -38,9 +30,9 @@ export class UserService {
     }
   }
 
-  public async getUserByEmail(email: string, password: string): Promise<UserWithToken | null> {
+  public async getUserById(id: string): Promise<UserWithoutPassword> {
     try {
-      return await this.userRepository.getUserByEmail(email, password);
+      return await this.repository.getUserById(id);
     } catch (error) {
       if (error instanceof Error && error.message.includes('duplicate key error')) {
         throw new DatabaseError(error as Error, "User doesn't exist");
@@ -49,9 +41,20 @@ export class UserService {
     }
   }
 
-  public async getUser(token: string): Promise<UserWithoutPassword | null> {
+  public async logInUser(input: LogInUserInput): Promise<UserWithToken> {
     try {
-      return await this.userRepository.getUser(token);
+      return await this.repository.logInUser(input);
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('duplicate key error')) {
+        throw new DatabaseError(error as Error, "User doesn't exist");
+      }
+      throw new DatabaseError(error as Error, 'Failed to get user by email');
+    }
+  }
+
+  public async getUser(token: string): Promise<UserWithoutPassword> {
+    try {
+      return await this.repository.getUser(token);
     } catch (error) {
       throw new DatabaseError(error as Error, 'Failed to get user by ID');
     }

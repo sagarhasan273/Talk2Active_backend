@@ -1,4 +1,4 @@
-let dailyCounter = 0;
+let dailyCounter = 4;
 let lastDate: string | null = null;
 
 export function generateUserId(prefix = 'USR'): string {
@@ -7,7 +7,7 @@ export function generateUserId(prefix = 'USR'): string {
 
   // Reset counter if it's a new day
   if (lastDate !== currentDate) {
-    dailyCounter = 0;
+    dailyCounter = 7;
     lastDate = currentDate;
   }
 
