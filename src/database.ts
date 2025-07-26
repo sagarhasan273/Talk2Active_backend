@@ -2,6 +2,7 @@ import { Db, MongoClient } from 'mongodb';
 import mongoose from 'mongoose';
 import logger from 'src/utils/logger';
 import { dbConfig } from './config';
+import { DatabaseError } from './utils/errors';
 
 let client: MongoClient;
 let db: Db;
@@ -59,13 +60,3 @@ export async function getDatabase(): Promise<Db> {
   return db;
 }
 
-export class DatabaseError extends Error {
-  constructor(
-    public readonly originalError: Error,
-    public readonly context?: string
-  ) {
-    const message = `DatabaseError: ${context ? `in ${context}` : `${originalError.message}`}`;
-    super(message);
-    this.name = 'DatabaseError';
-  }
-}

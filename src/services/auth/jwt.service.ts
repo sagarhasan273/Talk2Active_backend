@@ -7,7 +7,7 @@ export class JwtService {
   private static readonly EXPIRES_IN = '24h';
 
   public static generateToken(user: UserType): string {
-    const payload = { id: user._id, email: user.email };
+    const payload = { id: user.id, email: user.email };
     return jwt.sign(payload, this.SECRET, { expiresIn: this.EXPIRES_IN });
   }
 

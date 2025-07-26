@@ -6,7 +6,7 @@ export class UserRoutes extends BaseRouter {
   private userController = new UserController();
 
   protected routes(): void {
-    this.router.post('/auth/sign-in', (req, res) => this.userController.logInUser(req, res));
+    this.router.post('/auth/sign-in', (req, res, next) => this.userController.logInUser(req, res));
     this.router.post('/auth/sign-up', (req, res) => this.userController.createUser(req, res));
     this.router.get('/u/me', authMiddleware, (req, res) => this.userController.getUser(req, res));
     this.router.get('/profile/:id', authMiddleware, (req, res) =>
@@ -14,6 +14,9 @@ export class UserRoutes extends BaseRouter {
     );
     this.router.post('/profile/update', authMiddleware, (req, res) =>
       this.userController.updateUser(req, res)
+    );
+    this.router.post('/account/update', authMiddleware, (req, res) =>
+      this.userController.updateUserAccount(req, res)
     );
   }
 }

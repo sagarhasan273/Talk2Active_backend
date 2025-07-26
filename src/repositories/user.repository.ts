@@ -1,5 +1,5 @@
 import { ObjectId } from 'mongodb';
-import { CreateUserInput, LogInUserInput, UserType, UserWithoutPassword, UserWithToken } from 'src/types/user.type';
+import { CreateUserInput, LogInUserInput, UserAccountUpdateInput, UserType, UserWithoutPassword } from 'src/types/user.type';
 
 import mongoose from 'mongoose';
 import { connectToDatabase } from 'src/database';
@@ -7,19 +7,18 @@ import { UserModel } from 'src/models/user.model';
 import { JwtService } from 'src/services/auth/jwt.service';
 import { PasswordService } from 'src/services/auth/password.service';
 import { ReturnResponseType } from 'src/types/base.type';
+import { DatabaseError } from 'src/utils/errors';
 import { generateUserId } from 'src/utils/generate.userId';
 
 export class UserRepository {
 
-  public async getUserById(id: string): Promise<UserWithoutPassword> {
-    if (!id) throw new Error('User ID is required');
+  public async logInUser(input: LogInUserInput): Promise<UserType> {
+    const { email } = input;
 
-    const user = await UserModel.findOne({ _id: new ObjectId(id) });
+    const user = await UserModel.findOne({ email });
+    if (!user) throw new DatabaseError(new Error("User doesn't exist"));
 
-    if (!user) throw new Error('User not found');
-
-    const { password, ...userWithoutPassword } = user.toJSON();
-    return userWithoutPassword;
+    return user.toJSON();
   }
 
   /**
@@ -61,17 +60,27 @@ export class UserRepository {
       console.error('Error creating user:', error);
       throw error;
     }
-
-
   }
+
+  public async getUserById(id: string): Promise<UserWithoutPassword> {
+    if (!id) throw new Error('User ID is required');
+
+    const user = await UserModel.findOne({ _id: new ObjectId(id) });
+
+    if (!user) throw new Error('User not found');
+
+    const { password, ...userWithoutPassword } = user.toJSON();
+    return userWithoutPassword;
+  }
+
 
   public async updateUser(input: UserType): Promise<ReturnResponseType> {
 
-    if (!input._id) throw new Error('User ID is required');
-    const { _id, ...updatableFields } = input;
+    if (!input.id) throw new Error('User ID is required');
+    const { id, ...updatableFields } = input;
 
     await UserModel.updateOne(
-      { _id: new ObjectId(_id) },
+      { _id: new ObjectId(id) },
       {
         $set: {
           ...updatableFields,
@@ -82,42 +91,6 @@ export class UserRepository {
     return { message: 'Profile updated successfully', status: true };
   }
 
-  public async updateUserAccount(input: UserType): Promise<ReturnResponseType> {
-
-
-    if (!input._id) throw new Error('User ID is required');
-    const { _id, ...updatableFields } = input;
-
-    await UserModel.updateOne(
-      { _id: new ObjectId(_id) },
-      {
-        $set: {
-          ...updatableFields,
-          updatedAt: new Date(),
-        },
-      }
-    );
-    return { message: 'Profile updated successfully', status: true };
-  }
-
-  public async logInUser(input: LogInUserInput): Promise<UserWithToken> {
-    const { email, password } = input;
-    if (!email || !password) throw new Error('Email and password are required');
-
-    const user = await UserModel.findOne({ email });
-    if (!user) throw new Error("User doesn't exist");
-
-    const isPasswordValid = await PasswordService.verifyPassword(password, user.password);
-    if (!isPasswordValid) throw new Error('Invalid email or password');
-
-    const { password: undefined, ...userWithoutPassword } = user.toJSON();
-    if (!userWithoutPassword) throw new Error('User not found');
-
-    const token = JwtService.generateToken(user as UserType);
-    if (!token) throw new Error('Failed to generate token');
-
-    return { user: userWithoutPassword, token };
-  }
 
   public async getUser(token: string): Promise<UserWithoutPassword> {
 
@@ -132,5 +105,42 @@ export class UserRepository {
 
     const { password, ...userWithoutPassword } = user.toJSON();
     return userWithoutPassword;
+  }
+
+  public async updateUserAccount(input: UserAccountUpdateInput): Promise<ReturnResponseType> {
+    if (!input.id) throw new Error('User ID is required');
+
+    const { id, userId, password, newPassword, ...updatableFields } = input;
+
+
+    const user = await UserModel.findOne({ _id: new ObjectId(id), userId }).select('+password');
+    if (!user) throw new Error('User not found');
+
+    if (!password || !newPassword) throw new Error('Password and new password are required');
+
+    const isPasswordValid = await PasswordService.verifyPassword(password, user.password);
+
+    if (!isPasswordValid) throw new Error('Current password is incorrect.');
+
+    // Hash password
+    const hashedPassword = await PasswordService.hashPassword(newPassword);
+
+    const updatedUser = await UserModel.findOneAndUpdate(
+      { _id: new ObjectId(id) },
+      {
+        $set: {
+          ...updatableFields,
+          password: hashedPassword,
+          updatedAt: new Date(),
+        },
+      },
+      { new: true }
+    );
+
+    console.log('Updated User:', updatedUser);
+
+    if (!updatedUser) throw new Error('Failed to update user account');
+
+    return { message: 'Profile updated successfully', status: true };
   }
 }

@@ -5,6 +5,8 @@ import { databaseMiddleware } from 'src/middlewares/database.middleware';
 import { InventoryRouter } from 'src/routes/inventory.router';
 import { UserRoutes } from 'src/routes/user.routes';
 import logger from 'src/utils/logger';
+import { errorMiddleware } from './middlewares/error.middleware';
+import { getLocalIp } from './utils/system';
 
 const app = express();
 
@@ -17,18 +19,19 @@ app.use(
 
 app.use(express.json());
 app.use(databaseMiddleware);
+app.use(errorMiddleware);
 
-const userRouters = new UserRoutes().router;
-app.use('/user', userRouters);
+const userRouters = new UserRoutes();
+app.use('/user', userRouters.router);
 
-const inventoryRouters = new InventoryRouter().router;
-app.use('/inventory', inventoryRouters);
+const inventoryRouters = new InventoryRouter();
+app.use('/inventory', inventoryRouters.router);
 
 
 
 const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 5001;
 const server = app.listen(PORT, () => {
-  logger.info(`Server is running on port ${PORT}`);
+  logger.info(`Server is running at http://${getLocalIp()}:${PORT}`);
 });
 
 // Handle graceful shutdown

@@ -94,7 +94,7 @@ const UserModalSchema = new Schema<UserType & Document>({
       ret.id = ret._id.toString();
       if ('_id' in ret) delete ret._id;
       if ('__v' in ret) delete ret.__v;
-      if ('password' in ret) delete ret.password;
+      // if ('password' in ret) delete ret.password;
     }
   }
 });

@@ -1,24 +1,30 @@
 import { Request, Response } from 'express';
-import { CreateUserSchema, LogInUserSchema } from 'src/schemas/user.shema';
+import { CreateUserSchema, LogInUserSchema, UserAccountUpdateSchema } from 'src/schemas/user.shema';
 import { UserService } from 'src/services/user.service';
+import { AppError } from 'src/utils/errors';
 
 export class UserController {
   private service = new UserService();
 
-  public async getUserById(req: Request, res: Response): Promise<void> {
+  public async logInUser(req: Request, res: Response): Promise<void> {
     try {
-      const { id } = req.params;
-      const user = await this.service.getUserById(id);
+      const validatedInput = LogInUserSchema.parse(req.body);
+      if (!validatedInput) {
+        throw new AppError('Email and password are required', 400);
+      }
+
+      const user = await this.service.logInUser(validatedInput);
       if (!user) {
-        res.status(401).json({ message: 'Invalid email or password' });
+        throw new AppError('Invalid email or password', 401);
+      }
+
+      res.status(200).json({ data: user, status: true });
+    } catch (error) {
+      if (error instanceof AppError) {
+        res.status(error.statusCode).json({ message: error.message, status: false });
         return;
       }
-      res.status(200).json({ user, status: true });
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
-      if (errorMessage === 'User already exists') {
-        res.status(409).json({ message: errorMessage });
-      }
+      res.status(500).json({ message: 'An error occurred while logging in', status: false });
     }
   }
 
@@ -37,6 +43,24 @@ export class UserController {
     }
   }
 
+  public async getUserById(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const user = await this.service.getUserById(id);
+      if (!user) {
+        res.status(401).json({ message: 'Invalid email or password' });
+        return;
+      }
+      res.status(200).json({ user, status: true });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+      if (errorMessage === 'User already exists') {
+        res.status(409).json({ message: errorMessage });
+      }
+    }
+  }
+
+
   public async updateUser(req: Request, res: Response): Promise<void> {
     try {
       const user = await this.service.updateUser(req.body);
@@ -47,26 +71,6 @@ export class UserController {
     }
   }
 
-  public async logInUser(req: Request, res: Response): Promise<void> {
-    try {
-      const validatedInput = LogInUserSchema.parse(req.body);
-      if (!validatedInput) {
-        res.status(400).json({ message: 'Email and password are required' });
-        return;
-      }
-      const user = await this.service.logInUser(validatedInput);
-      if (!user) {
-        res.status(401).json({ message: 'Invalid email or password' });
-        return;
-      }
-      res.status(200).json(user);
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
-      if (errorMessage === 'User already exists') {
-        res.status(409).json({ message: errorMessage });
-      }
-    }
-  }
 
   public async getUser(req: Request, res: Response): Promise<void> {
     try {
@@ -82,6 +86,21 @@ export class UserController {
         return;
       }
       res.status(200).json({ user, status: true });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+      res.status(500).json({ message: errorMessage });
+    }
+  }
+
+  public async updateUserAccount(req: Request, res: Response): Promise<void> {
+    try {
+      const validatedData = UserAccountUpdateSchema.parse(req.body);
+      if (!validatedData) {
+        res.status(400).json({ status: false, message: 'Invalid user data' });
+        return;
+      }
+      const user = await this.service.updateUserAccount(req.body);
+      res.status(201).json(user);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
       res.status(500).json({ message: errorMessage });

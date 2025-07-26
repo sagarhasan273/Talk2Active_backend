@@ -28,7 +28,7 @@ export const SocialLinksSchema = zod.object({
 
 // Main User Schema
 export const UserSchema = zod.object({
-    _id: objectIdSchema.optional(),
+    id: objectIdSchema,
     userId: zod.string().regex(/^USR\d{6}\d{4}$/, {
         message: 'User ID must follow the format USRYYMMDDCOUNTER',
     }),
@@ -100,6 +100,14 @@ export const LogInUserSchema = UserSchema.pick({
 });
 
 export const UpdateUserSchema = UserSchema.partial().required({
-    _id: true,
+    id: true,
 });
 
+export const UserAccountUpdateSchema = UserSchema.pick({
+    id: true,
+    userId: true,
+    username: true,
+}).extend({
+    password: zod.string().min(8, { message: 'Password must be at least 8 characters' }),
+    newPassword: zod.string().min(8, { message: 'New password must be at least 8 characters' })
+})
