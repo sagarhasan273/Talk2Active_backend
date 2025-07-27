@@ -1,35 +1,33 @@
 import { ObjectId } from 'mongodb';
 import { CreateUserInput, LogInUserInput, UserAccountUpdateInput, UserType, UserWithoutPassword } from 'src/types/user.type';
 
-import mongoose from 'mongoose';
-import { connectToDatabase } from 'src/database';
 import { UserModel } from 'src/models/user.model';
 import { JwtService } from 'src/services/auth/jwt.service';
 import { PasswordService } from 'src/services/auth/password.service';
 import { ReturnResponseType } from 'src/types/base.type';
-import { DatabaseError } from 'src/utils/errors';
+import { AppError } from 'src/utils/errors';
 import { generateUserId } from 'src/utils/generate.userId';
 
 export class UserRepository {
 
   public async logInUser(input: LogInUserInput): Promise<UserType> {
-    const { email } = input;
+    try {
+      const { email } = input;
 
-    const user = await UserModel.findOne({ email });
-    if (!user) throw new DatabaseError(new Error("User doesn't exist"));
+      const user = await UserModel.findOne({ email });
+      if (!user) throw new AppError("User doesn't exist!", 404, 'User Repository');
 
-    return user.toJSON();
+      return user;
+    } catch (error) {
+      throw error;
+    }
   }
 
   /**
    * Create a new user
    */
   public async createUser(input: CreateUserInput): Promise<UserType> {
-    await connectToDatabase();
     try {
-      if (mongoose.connection.readyState !== 1) {
-        throw new Error('Database not connected');
-      }
       const existingUser = await UserModel.findOne({
         $or: [
           { email: input.email },
@@ -37,16 +35,18 @@ export class UserRepository {
         ]
       });
 
-
       if (existingUser) {
-        throw new Error('User already exists with that email or username');
+        throw new AppError('User already exists! You can log in instead.', 409, 'User Repository');
       }
 
-      // Create the new user
       // Hash password
       const hashedPassword = await PasswordService.hashPassword(input.password);
 
       const userId = generateUserId();
+      if (!userId) {
+        throw new AppError('Failed to generate user ID', 500, 'User Repository');
+      }
+
       // Create user
       const user = await UserModel.create({
         ...input,
@@ -57,7 +57,6 @@ export class UserRepository {
 
       return user.toJSON();
     } catch (error) {
-      console.error('Error creating user:', error);
       throw error;
     }
   }

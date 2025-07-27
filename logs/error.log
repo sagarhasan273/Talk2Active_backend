@@ -1,0 +1,98 @@
+[2025-07-27 05:51:55] [31merror[39m: Error in createUser repository: DatabaseError: in UserRepository
+DatabaseError: DatabaseError: in UserRepository
+    at UserRepository.createUser (D:\Workplace\Talk2Active_backend\src\repositories\user.repository.ts:42:15)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async UserService.createUser (D:\Workplace\Talk2Active_backend\src\services\user.service.ts:44:14)
+    at async UserController.createUser (D:\Workplace\Talk2Active_backend\src\controllers\user.controller.ts:44:20)
+[2025-07-27 05:53:07] [31merror[39m: Error in createUser repository: DatabaseError: in UserRepository
+DatabaseError: DatabaseError: in UserRepository
+    at UserRepository.createUser (D:\Workplace\Talk2Active_backend\src\repositories\user.repository.ts:42:15)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async UserService.createUser (D:\Workplace\Talk2Active_backend\src\services\user.service.ts:44:14)
+    at async UserController.createUser (D:\Workplace\Talk2Active_backend\src\controllers\user.controller.ts:44:20)
+[2025-07-27 05:53:29] [31merror[39m: Error in createUser repository: DatabaseError: in UserRepository
+DatabaseError: DatabaseError: in UserRepository
+    at UserRepository.createUser (D:\Workplace\Talk2Active_backend\src\repositories\user.repository.ts:42:15)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async UserService.createUser (D:\Workplace\Talk2Active_backend\src\services\user.service.ts:44:14)
+    at async UserController.createUser (D:\Workplace\Talk2Active_backend\src\controllers\user.controller.ts:44:20)
+[2025-07-27 05:54:16] [31merror[39m: Error in createUser repository:
+[2025-07-27 05:54:34] [31merror[39m: Error in createUser repository: DatabaseError: in UserRepository
+DatabaseError: DatabaseError: in UserRepository
+    at UserRepository.createUser (D:\Workplace\Talk2Active_backend\src\repositories\user.repository.ts:42:15)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async UserService.createUser (D:\Workplace\Talk2Active_backend\src\services\user.service.ts:44:14)
+    at async UserController.createUser (D:\Workplace\Talk2Active_backend\src\controllers\user.controller.ts:44:20)
+[2025-07-27 05:58:04] [31merror[39m: Error in createUser repository:
+[2025-07-27 05:59:45] [31merror[39m: DatabaseError: in UserRepository
+DatabaseError: DatabaseError: in UserRepository
+    at UserRepository.createUser (D:\Workplace\Talk2Active_backend\src\repositories\user.repository.ts:42:15)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async UserService.createUser (D:\Workplace\Talk2Active_backend\src\services\user.service.ts:44:14)
+    at async UserController.createUser (D:\Workplace\Talk2Active_backend\src\controllers\user.controller.ts:44:20)
+[2025-07-27 06:02:21] [31merror[39m: DatabaseError: User already exists!
+DatabaseError: DatabaseError: User already exists!
+    at UserRepository.createUser (D:\Workplace\Talk2Active_backend\src\repositories\user.repository.ts:42:15)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async UserService.createUser (D:\Workplace\Talk2Active_backend\src\services\user.service.ts:44:14)
+    at async UserController.createUser (D:\Workplace\Talk2Active_backend\src\controllers\user.controller.ts:44:20)
+[2025-07-27 06:03:41] [31merror[39m: DatabaseError: User already exists!
+DatabaseError: DatabaseError: User already exists!
+    at UserRepository.createUser (D:\Workplace\Talk2Active_backend\src\repositories\user.repository.ts:42:15)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async UserService.createUser (D:\Workplace\Talk2Active_backend\src\services\user.service.ts:44:14)
+    at async UserController.createUser (D:\Workplace\Talk2Active_backend\src\controllers\user.controller.ts:44:20)
+[2025-07-27 06:05:13] [31merror[39m: DatabaseError: User already exists!
+DatabaseError: DatabaseError: User already exists!
+    at UserRepository.createUser (D:\Workplace\Talk2Active_backend\src\repositories\user.repository.ts:42:15)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async UserService.createUser (D:\Workplace\Talk2Active_backend\src\services\user.service.ts:44:14)
+    at async UserController.createUser (D:\Workplace\Talk2Active_backend\src\controllers\user.controller.ts:44:20)
+[2025-07-27 06:07:22] [31merror[39m: DatabaseError: User already exists! You can log in instead.
+DatabaseError: DatabaseError: User already exists! You can log in instead.
+    at UserRepository.createUser (D:\Workplace\Talk2Active_backend\src\repositories\user.repository.ts:42:15)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async UserService.createUser (D:\Workplace\Talk2Active_backend\src\services\user.service.ts:44:14)
+    at async UserController.createUser (D:\Workplace\Talk2Active_backend\src\controllers\user.controller.ts:44:20)
+[2025-07-27 06:13:45] [31merror[39m: DatabaseError: User already exists! You can log in instead.
+DatabaseError: DatabaseError: User already exists! You can log in instead.
+    at UserRepository.createUser (D:\Workplace\Talk2Active_backend\src\repositories\user.repository.ts:42:15)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async UserService.createUser (D:\Workplace\Talk2Active_backend\src\services\user.service.ts:44:14)
+    at async UserController.createUser (D:\Workplace\Talk2Active_backend\src\controllers\user.controller.ts:45:20)
+[2025-07-27 06:13:45] [31merror[39m: DatabaseError: User already exists! You can log in instead.
+[2025-07-27 06:13:45] [31merror[39m: An error occurred while creating the user
+[2025-07-27 06:13:52] [31merror[39m: DatabaseError: User already exists! You can log in instead.
+DatabaseError: DatabaseError: User already exists! You can log in instead.
+    at UserRepository.createUser (D:\Workplace\Talk2Active_backend\src\repositories\user.repository.ts:42:15)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async UserService.createUser (D:\Workplace\Talk2Active_backend\src\services\user.service.ts:44:14)
+    at async UserController.createUser (D:\Workplace\Talk2Active_backend\src\controllers\user.controller.ts:45:20)
+[2025-07-27 06:13:52] [31merror[39m: DatabaseError: User already exists! You can log in instead.
+[2025-07-27 06:13:52] [31merror[39m: An error occurred while creating the user
+[2025-07-27 06:15:01] [31merror[39m: DatabaseError: User already exists! You can log in instead.
+[2025-07-27 06:15:01] [31merror[39m: An error occurred while creating the user
+[2025-07-27 06:16:18] [31merror[39m: DatabaseError: User already exists! You can log in instead.
+[2025-07-27 06:19:52] [31merror[39m: User already exists! You can log in instead.
+[2025-07-27 06:23:27] [31merror[39m: Failed to log in user in service
+[2025-07-27 06:23:40] [31merror[39m: Failed to log in user in service
+[2025-07-27 06:23:48] [31merror[39m: Failed to log in user in service
+[2025-07-27 06:41:01] [31merror[39m: Failed to log in user in service
+[2025-07-27 06:41:01] [31merror[39m: Failed to log in user!User Service
+[2025-07-27 06:42:00] [31merror[39m: Failed to log in user in service
+[2025-07-27 06:42:00] [31merror[39m: Failed to log in user! At User Service
+[2025-07-27 06:42:55] [31merror[39m: Failed to log in user in service
+[2025-07-27 06:42:55] [31merror[39m: User Service: Failed to log in user!
+[2025-07-27 06:43:47] [31merror[39m: User Service: Failed to log in user!
+[2025-07-27 06:44:48] [31merror[39m: User Service: Failed to create user in service.
+[2025-07-27 06:45:19] [31merror[39m: User Service: Failed to create user!
+[2025-07-27 06:45:46] [31merror[39m: User Service: Failed to create account!
+[2025-07-27 06:46:53] [31merror[39m: User Repository: User already exists! You can log in instead.
+[2025-07-27 06:47:52] [31merror[39m: User Repository: User already exists! You can log in instead.
+[2025-07-27 06:51:05] [31merror[39m: User Service: Failed to create account!
+[2025-07-27 06:52:08] [31merror[39m: User Service: Failed to create account!
+[2025-07-27 06:53:40] [31merror[39m: User Service: Failed to create account!
+[2025-07-27 06:54:13] [31merror[39m: User Service: Failed to log in account!
+[2025-07-27 06:54:22] [31merror[39m: User Service: Failed to log in account!
+[2025-07-27 06:55:00] [31merror[39m: User Service: Failed to log in account!
+[2025-07-27 06:55:41] [31merror[39m: User Service: Failed to log in account!

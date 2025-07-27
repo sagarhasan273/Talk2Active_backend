@@ -14,36 +14,43 @@ export class UserService {
     try {
       const user = await this.repository.logInUser(input);
       if (!user) {
-        throw new AppError('Invalid email or password', 404);
+        throw new AppError('Invalid email or password', 404, 'User Service');
       }
       const { password } = input;
 
       const isPasswordValid = await PasswordService.verifyPassword(password, user.password);
-      if (!isPasswordValid) throw new AppError('Invalid password', 401);
+      if (!isPasswordValid) throw new AppError('Invalid password', 401, 'User Service');
 
-      const { password: undefined, ...userWithoutPassword } = user;
 
       const token = JwtService.generateToken(user as UserType);
-      if (!token) throw new AppError('Failed to generate token.', 500);
+      if (!token) throw new AppError('Failed to generate token.', 500, 'User Service');
 
-      return { user: userWithoutPassword, token };
+      return { user, token };
     } catch (error) {
       if (error instanceof AppError) {
         throw error;
       }
-      throw new AppError('Failed to log in user in service.', 500);
+
+      throw new AppError('Failed to log in account!', 500, 'User Service');
     }
   }
 
-  public async createUser(input: CreateUserInput): Promise<UserType> {
+  public async createUser(input: CreateUserInput): Promise<UserWithToken> {
     try {
 
-      return await this.repository.createUser(input);
+      const user = await this.repository.createUser(input);
+
+      const token = JwtService.generateToken(user as UserType);
+      if (!token) throw new AppError('Failed to generate token.', 500, 'User Service');
+
+      return { user, token };
+
     } catch (error) {
-      if (error instanceof Error && error.message.includes('duplicate key error')) {
-        throw new DatabaseError(error as Error, 'User already exists');
+      if (error instanceof AppError) {
+        throw error;
       }
-      throw new DatabaseError(error as Error, 'Failed to create user');
+
+      throw new AppError('Failed to create account!', 500, 'User Service');
     }
   }
 
