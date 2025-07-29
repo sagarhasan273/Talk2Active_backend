@@ -2,8 +2,8 @@
 
 import { UserRepository } from 'src/repositories/user.repository';
 import { ReturnResponseType } from 'src/types/base.type';
-import { CreateUserInput, LogInUserInput, UserAccountUpdateInput, UserType, UserWithoutPassword, UserWithToken } from 'src/types/user.type';
-import { AppError, DatabaseError } from 'src/utils/errors';
+import { CreateUserInput, LogInUserInput, UpdateUserInput, UserAccountActivateInput, UserAccountUpdateInput, UserType, UserWithoutPassword, UserWithToken } from 'src/types/user.type';
+import { AppError } from 'src/utils/errors';
 import { JwtService } from './auth/jwt.service';
 import { PasswordService } from './auth/password.service';
 
@@ -53,34 +53,53 @@ export class UserService {
     }
   }
 
-  public async updateUser(input: UserType): Promise<ReturnResponseType> {
-    try {
-      return await this.repository.updateUser(input);
-    } catch (error) {
-      if (error instanceof Error && error.message.includes('duplicate key error')) {
-        throw new DatabaseError(error as Error, 'User already exists');
-      }
-      throw new DatabaseError(error as Error, 'Failed to create user');
-    }
-  }
-
   public async getUserById(id: string): Promise<UserWithoutPassword> {
     try {
-      return await this.repository.getUserById(id);
+      const user = await this.repository.getUserById(id);
+
+      const { password, ...userWithoutPassword } = user;
+      return userWithoutPassword;
     } catch (error) {
-      if (error instanceof Error && error.message.includes('duplicate key error')) {
-        throw new DatabaseError(error as Error, "User doesn't exist");
+      if (error instanceof AppError) {
+        throw error;
       }
-      throw new DatabaseError(error as Error, 'Failed to get user by email');
+
+      throw new AppError('Failed to get user by email!', 500, 'User Service');
     }
   }
-
 
   public async getUser(token: string): Promise<UserWithoutPassword> {
     try {
-      return await this.repository.getUser(token);
+      const decodedToken = JwtService.decodeToken(token);
+      if (!decodedToken) throw new Error('Invalid token');
+
+      const userId = decodedToken.id;
+      if (!userId) throw new AppError('User ID not found in token', 400, 'User Service');
+
+      const user = await this.repository.getUser(userId);
+
+      const { password, ...userWithoutPassword } = user;
+      return userWithoutPassword;
     } catch (error) {
-      throw new DatabaseError(error as Error, 'Failed to get user by ID');
+      if (error instanceof AppError) {
+        throw error;
+      }
+
+      throw new AppError('Failed to get user by ID!', 500, 'User Service');
+    }
+  }
+
+  public async updateUser(input: UpdateUserInput): Promise<ReturnResponseType> {
+    try {
+      if (!input.id) throw new AppError('User ID is required', 400, 'User Repository');
+
+      return await this.repository.updateUser(input);
+    } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+
+      throw new AppError('Failed to update user!', 500, 'User Service');
     }
   }
 
@@ -88,10 +107,24 @@ export class UserService {
     try {
       return await this.repository.updateUserAccount(input);
     } catch (error) {
-      if (error instanceof Error && error.message.includes('duplicate key error')) {
-        throw new DatabaseError(error as Error, 'User already exists');
+      if (error instanceof AppError) {
+        throw error;
       }
-      throw new DatabaseError(error as Error, 'Failed to update user account');
+
+      throw new AppError('Failed to update user account!', 500, 'User Service');
+    }
+  }
+  public async updateUserAccountActivate(input: UserAccountActivateInput): Promise<ReturnResponseType> {
+    try {
+      if (!input.id) throw new AppError('User ID is required', 400, 'User Repository');
+
+      return await this.repository.updateUserAccountActivate(input);
+    } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+
+      throw new AppError('Failed to update user!', 500, 'User Service');
     }
   }
 }

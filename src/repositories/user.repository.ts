@@ -1,8 +1,7 @@
 import { ObjectId } from 'mongodb';
-import { CreateUserInput, LogInUserInput, UserAccountUpdateInput, UserType, UserWithoutPassword } from 'src/types/user.type';
+import { CreateUserInput, LogInUserInput, UpdateUserInput, UserAccountActivateInput, UserAccountUpdateInput, UserType } from 'src/types/user.type';
 
 import { UserModel } from 'src/models/user.model';
-import { JwtService } from 'src/services/auth/jwt.service';
 import { PasswordService } from 'src/services/auth/password.service';
 import { ReturnResponseType } from 'src/types/base.type';
 import { AppError } from 'src/utils/errors';
@@ -19,7 +18,11 @@ export class UserRepository {
 
       return user;
     } catch (error) {
-      throw error;
+      if (error instanceof AppError) {
+        throw error;
+      }
+
+      throw new AppError('Failed to log in user!', 500, 'User Repository');
     }
   }
 
@@ -57,53 +60,57 @@ export class UserRepository {
 
       return user.toJSON();
     } catch (error) {
-      throw error;
+      if (error instanceof AppError) {
+        throw error;
+      }
+
+      throw new AppError('Failed to create user!', 500, 'User Repository')
     }
   }
 
-  public async getUserById(id: string): Promise<UserWithoutPassword> {
-    if (!id) throw new Error('User ID is required');
-
+  public async getUserById(id: string): Promise<UserType> {
     const user = await UserModel.findOne({ _id: new ObjectId(id) });
 
-    if (!user) throw new Error('User not found');
+    if (!user) throw new AppError('User not found', 404, 'User Repository');
 
-    const { password, ...userWithoutPassword } = user.toJSON();
-    return userWithoutPassword;
+    return user.toJSON();
   }
 
+  public async updateUser(input: UpdateUserInput): Promise<ReturnResponseType> {
+    try {
+      const { id, ...updatableFields } = input;
 
-  public async updateUser(input: UserType): Promise<ReturnResponseType> {
+      const user = await UserModel.updateOne(
+        { _id: new ObjectId(id) },
+        {
+          $set: {
+            ...updatableFields,
+            updatedAt: new Date(),
+          },
+        }
+      );
 
-    if (!input.id) throw new Error('User ID is required');
-    const { id, ...updatableFields } = input;
-
-    await UserModel.updateOne(
-      { _id: new ObjectId(id) },
-      {
-        $set: {
-          ...updatableFields,
-          updatedAt: new Date(),
-        },
+      if (!user.modifiedCount) {
+        throw new AppError('Failed to update user', 404, 'User Repository');
       }
-    );
-    return { message: 'Profile updated successfully', status: true };
+
+      return { message: 'Profile updated successfully', status: true };
+    } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+
+      throw new AppError('Failed to update user!', 500, 'User Repository');
+    }
   }
 
 
-  public async getUser(token: string): Promise<UserWithoutPassword> {
-
-    const decodedToken = JwtService.decodeToken(token);
-    if (!decodedToken) throw new Error('Invalid token');
-
-    const userId = decodedToken.id;
-    if (!userId) throw new Error('User ID not found in token');
+  public async getUser(userId: string): Promise<UserType> {
 
     const user = await UserModel.findOne({ _id: new ObjectId(userId) });
-    if (!user) throw new Error('User not found');
+    if (!user) throw new AppError('User not found!', 404, 'User Repository');
 
-    const { password, ...userWithoutPassword } = user.toJSON();
-    return userWithoutPassword;
+    return user.toJSON();
   }
 
   public async updateUserAccount(input: UserAccountUpdateInput): Promise<ReturnResponseType> {
@@ -136,10 +143,30 @@ export class UserRepository {
       { new: true }
     );
 
-    console.log('Updated User:', updatedUser);
-
-    if (!updatedUser) throw new Error('Failed to update user account');
+    if (!updatedUser) throw new AppError('Failed to update user account', 404, 'User Repository');
 
     return { message: 'Profile updated successfully', status: true };
+  }
+
+  public async updateUserAccountActivate(input: UserAccountActivateInput): Promise<ReturnResponseType> {
+    const { id, accountActive } = input;
+
+    const user = await UserModel.findOne({ _id: new ObjectId(id) });
+    if (!user) throw new Error('User not found');
+
+    const updatedUser = await UserModel.findOneAndUpdate(
+      { _id: new ObjectId(id) },
+      {
+        $set: {
+          accountActive,
+          updatedAt: new Date(),
+        },
+      },
+      { new: true }
+    );
+
+    if (!updatedUser) throw new Error('Failed to update user account activation status');
+
+    return { message: 'Account activation status updated successfully', status: true };
   }
 }

@@ -99,7 +99,20 @@ export const LogInUserSchema = UserSchema.pick({
     password: zod.string().min(8, { message: 'Password must be at least 8 characters' }),
 });
 
-export const UpdateUserSchema = UserSchema.partial().required({
+export const UpdateUserSchema = UserSchema.pick({
+    id: true,
+    userId: true,
+    username: true,
+    email: true,
+    name: true,
+    profilePhoto: true,
+    coverPhoto: true,
+    bio: true,
+    // dateOfBirth: true,
+    location: true,
+    // status: true,
+    website: true,
+}).required({
     id: true,
 });
 
@@ -111,3 +124,8 @@ export const UserAccountUpdateSchema = UserSchema.pick({
     password: zod.string().min(8, { message: 'Password must be at least 8 characters' }),
     newPassword: zod.string().min(8, { message: 'New password must be at least 8 characters' })
 })
+
+export const UserAccountActivateSchema = UserSchema.pick({
+    id: true,
+    accountActive: true,
+}).required({ id: true })
