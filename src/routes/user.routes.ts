@@ -21,5 +21,8 @@ export class UserRoutes extends BaseRouter {
     this.router.post('/account/update', authMiddleware, (req, res) =>
       this.userController.updateUserAccount(req, res)
     );
+    this.router.post('/profile/update/session', authMiddleware, (req, res) =>
+      this.userController.updateUserAccountSession(req, res)
+    );
   }
 }

@@ -1,5 +1,5 @@
 import { ObjectId } from 'mongodb';
-import { CreateUserInput, LogInUserInput, UpdateUserInput, UserAccountActivateInput, UserAccountUpdateInput, UserType } from 'src/types/user.type';
+import { CreateUserInput, LogInUserInput, UpdateUserInput, UserAccountActivateInput, UserAccountSessionInput, UserAccountUpdateInput, UserType } from 'src/types/user.type';
 
 import { UserModel } from 'src/models/user.model';
 import { PasswordService } from 'src/services/auth/password.service';
@@ -120,13 +120,13 @@ export class UserRepository {
 
 
     const user = await UserModel.findOne({ _id: new ObjectId(id), userId }).select('+password');
-    if (!user) throw new Error('User not found');
+    if (!user) throw new AppError('User not found', 404, 'User Repository');
 
-    if (!password || !newPassword) throw new Error('Password and new password are required');
+    if (!password || !newPassword) throw new AppError('Password and new password are required', 400, 'User Repository');
 
     const isPasswordValid = await PasswordService.verifyPassword(password, user.password);
 
-    if (!isPasswordValid) throw new Error('Current password is incorrect.');
+    if (!isPasswordValid) throw new AppError('Current password is incorrect.', 401, 'User Repository');
 
     // Hash password
     const hashedPassword = await PasswordService.hashPassword(newPassword);
@@ -165,8 +165,30 @@ export class UserRepository {
       { new: true }
     );
 
-    if (!updatedUser) throw new Error('Failed to update user account activation status');
+    if (!updatedUser) throw new AppError('Failed to update user account activation status', 404, 'User Repository');
 
     return { message: 'Account activation status updated successfully', status: true };
+  }
+
+  public async updateUserAccountSession(input: UserAccountSessionInput): Promise<ReturnResponseType> {
+    const { id, sessionTimeOut } = input;
+
+    const user = await UserModel.findOne({ _id: new ObjectId(id) });
+    if (!user) throw new Error('User not found');
+
+    const updatedUser = await UserModel.findOneAndUpdate(
+      { _id: new ObjectId(id) },
+      {
+        $set: {
+          sessionTimeOut,
+          updatedAt: new Date(),
+        },
+      },
+      { new: true }
+    );
+
+    if (!updatedUser) throw new AppError('Failed to update user account session', 404, 'User Repository');
+
+    return { message: 'Account session updated successfully', status: true };
   }
 }

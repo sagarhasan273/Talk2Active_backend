@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { CreateUserSchema, LogInUserSchema, UpdateUserSchema, UserAccountActivateSchema, UserAccountUpdateSchema } from 'src/schemas/user.shema';
+import { CreateUserSchema, LogInUserSchema, UpdateUserSchema, UserAccountActivateSchema, UserAccountSessionSchema, UserAccountUpdateSchema } from 'src/schemas/user.shema';
 import { UserService } from 'src/services/user.service';
 import { AppError } from 'src/utils/errors';
 import logger from 'src/utils/logger';
@@ -170,6 +170,26 @@ export class UserController {
 
     try {
       const user = await this.service.updateUserAccountActivate(validatedInput);
+
+      res.status(201).json(user);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+      res.status(500).json({ message: errorMessage });
+    }
+  }
+
+  public async updateUserAccountSession(req: Request, res: Response): Promise<void> {
+    let validatedInput;
+    try {
+      validatedInput = UserAccountSessionSchema.parse(req.body);
+    } catch (error) {
+      logger.error('Invalid user data provided for update!');
+      res.status(400).json({ status: false, message: 'Invalid user data provided for update!' });
+      return;
+    }
+
+    try {
+      const user = await this.service.updateUserAccountSession(validatedInput);
 
       res.status(201).json(user);
     } catch (error) {

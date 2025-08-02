@@ -2,7 +2,7 @@
 
 import { UserRepository } from 'src/repositories/user.repository';
 import { ReturnResponseType } from 'src/types/base.type';
-import { CreateUserInput, LogInUserInput, UpdateUserInput, UserAccountActivateInput, UserAccountUpdateInput, UserType, UserWithoutPassword, UserWithToken } from 'src/types/user.type';
+import { CreateUserInput, LogInUserInput, UpdateUserInput, UserAccountActivateInput, UserAccountSessionInput, UserAccountUpdateInput, UserType, UserWithoutPassword, UserWithToken } from 'src/types/user.type';
 import { AppError } from 'src/utils/errors';
 import { JwtService } from './auth/jwt.service';
 import { PasswordService } from './auth/password.service';
@@ -114,6 +114,7 @@ export class UserService {
       throw new AppError('Failed to update user account!', 500, 'User Service');
     }
   }
+
   public async updateUserAccountActivate(input: UserAccountActivateInput): Promise<ReturnResponseType> {
     try {
       if (!input.id) throw new AppError('User ID is required', 400, 'User Repository');
@@ -125,6 +126,20 @@ export class UserService {
       }
 
       throw new AppError('Failed to update user!', 500, 'User Service');
+    }
+  }
+
+  public async updateUserAccountSession(input: UserAccountSessionInput): Promise<ReturnResponseType> {
+    try {
+      if (!input.id) throw new AppError('User ID is required', 400, 'User Repository');
+
+      return await this.repository.updateUserAccountSession(input);
+    } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+
+      throw new AppError('Failed to update user session!', 500, 'User Service');
     }
   }
 }

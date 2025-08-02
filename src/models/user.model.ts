@@ -69,6 +69,7 @@ const UserModalSchema = new Schema<UserType & Document>({
   },
   verified: { type: Boolean, default: false },
   accountActive: { type: Boolean, default: true },
+  sessionTimeOut: { type: Number, default: 10, min: 0 },
   followersCount: { type: Number, default: 0, min: 0 },
   followingCount: { type: Number, default: 0, min: 0 },
   postCount: { type: Number, default: 0, min: 0 },

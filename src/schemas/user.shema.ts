@@ -74,6 +74,7 @@ export const UserSchema = zod.object({
         .enum(['online', 'offline', 'busy', 'brb', 'afk', 'zzz']),
     verified: zod.boolean(),
     accountActive: zod.boolean(),
+    sessionTimeOut: zod.number().int().nonnegative(),
     followersCount: zod.number().int().nonnegative(),
     followingCount: zod.number().int().nonnegative(),
     postCount: zod.number().int().nonnegative(),
@@ -128,4 +129,9 @@ export const UserAccountUpdateSchema = UserSchema.pick({
 export const UserAccountActivateSchema = UserSchema.pick({
     id: true,
     accountActive: true,
+}).required({ id: true })
+
+export const UserAccountSessionSchema = UserSchema.pick({
+    id: true,
+    sessionTimeOut: true,
 }).required({ id: true })
