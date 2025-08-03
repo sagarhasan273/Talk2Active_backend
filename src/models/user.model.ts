@@ -72,6 +72,15 @@ const UserModalSchema = new Schema<UserType & Document>({
   sessionTimeOut: { type: Number, default: 10, min: 0 },
   followersCount: { type: Number, default: 0, min: 0 },
   followingCount: { type: Number, default: 0, min: 0 },
+  profileVisibility: {
+    type: String,
+    enum: ['public', 'private', 'friends-only'],
+    default: 'public'
+  },
+  allowMessagesFrom: { type: String, enum: ['everyone', 'friends', 'no-one'], default: 'everyone' },
+  showActivityStatus: { type: Boolean, default: true },
+  showReadReceipts: { type: Boolean, default: true },
+  showLastSeen: { type: Boolean, default: true },
   postCount: { type: Number, default: 0, min: 0 },
   location: {
     type: String,

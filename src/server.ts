@@ -6,6 +6,7 @@ import { InventoryRouter } from 'src/routes/inventory.router';
 import { UserRoutes } from 'src/routes/user.routes';
 import logger from 'src/utils/logger';
 import { errorMiddleware } from './middlewares/error.middleware';
+import { SettingRoutes } from './routes/settings.routes';
 import { getLocalIp } from './utils/system';
 
 const app = express();
@@ -23,6 +24,9 @@ app.use(errorMiddleware);
 
 const userRouters = new UserRoutes();
 app.use('/user', userRouters.router);
+
+const settingsRouters = new SettingRoutes();
+app.use('/settings', settingsRouters.router);
 
 const inventoryRouters = new InventoryRouter();
 app.use('/inventory', inventoryRouters.router);

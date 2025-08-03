@@ -29,6 +29,7 @@ export class UserController {
         res.status(error.statusCode).json({ message: error.message, status: false });
         return;
       }
+
       logger.error('An error occurred while logging in!');
       res.status(500).json({ message: 'An error occurred while logging in', status: false });
     }

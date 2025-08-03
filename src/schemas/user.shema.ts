@@ -81,6 +81,11 @@ export const UserSchema = zod.object({
     location: zod.string().max(100, { message: 'Location cannot exceed 100 characters' }),
     website: zod.string().url({ message: 'Invalid website URL' }).or(zod.literal('')).optional(),
     socialLinks: SocialLinksSchema.optional(),
+    profileVisibility: zod.enum(['public', 'private', 'friends-only']).default('public'),
+    allowMessagesFrom: zod.enum(['everyone', 'friends', 'no-one']).default('everyone'),
+    showActivityStatus: zod.boolean().default(true),
+    showReadReceipts: zod.boolean().default(true),
+    showLastSeen: zod.boolean().default(true),
     createdAt: zod.date().optional(),
     updatedAt: zod.date().optional(),
 }).strict();
