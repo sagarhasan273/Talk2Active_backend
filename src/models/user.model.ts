@@ -88,7 +88,33 @@ const UserModalSchema = new Schema<UserType & Document>({
     default: ''
   },
   website: { type: String },
-  socialLinks: { type: SocialLinksSchema }
+  socialLinks: { type: SocialLinksSchema },
+  blockedUsers: [{
+    type: Schema.Types.ObjectId,
+    ref: 'blockedUsers'
+  }],
+
+  // Notification types
+  pushNotification: { type: Boolean, default: true },
+  smsNotification: { type: Boolean, default: true },
+  likesNotification: { type: Boolean, default: true },
+  repostNotification: { type: Boolean, default: true },
+  commentsNotification: { type: Boolean, default: true },
+  newFollowersNotification: { type: Boolean, default: true },
+
+  directMessage: { type: Boolean, default: true },
+  roomInvitations: { type: Boolean, default: true },
+  liveEvents: { type: Boolean, default: true },
+
+  soundNotification: { type: Boolean, default: false },
+  vibrationForNotification: { type: Boolean, default: false },
+
+  primaryColor: {
+    type: String,
+    enum: ['blue', 'cyan', 'orange', 'purple', 'red'],
+    default: 'blue'
+  },
+  themeMode: { type: Boolean, default: false },
 }, {
   timestamps: true,
   toJSON: {
@@ -97,6 +123,10 @@ const UserModalSchema = new Schema<UserType & Document>({
       if ('_id' in ret) delete ret._id;
       if ('__v' in ret) delete ret.__v;
       if ('password' in ret) delete ret.password;
+
+      if (!ret.blockedUsers && doc.blockedUsers) {
+        ret.blockedUsers = doc.blockedUsers;
+      }
     }
   },
   toObject: {

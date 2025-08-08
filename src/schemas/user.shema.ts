@@ -26,6 +26,12 @@ export const SocialLinksSchema = zod.object({
     linkedin: zod.string().url({ message: 'Invalid LinkedIn URL' }).or(zod.literal('')).optional(),
 }).strict();
 
+export const BlockedUserSchema = zod.object({
+    userId: objectIdSchema,
+    createdAt: zod.date().default(() => new Date()),
+    reason: zod.string().optional(),
+});
+
 // Main User Schema
 export const UserSchema = zod.object({
     id: objectIdSchema,
@@ -81,6 +87,7 @@ export const UserSchema = zod.object({
     location: zod.string().max(100, { message: 'Location cannot exceed 100 characters' }),
     website: zod.string().url({ message: 'Invalid website URL' }).or(zod.literal('')).optional(),
     socialLinks: SocialLinksSchema.optional(),
+    blockedUsers: zod.array(BlockedUserSchema).optional(),
     profileVisibility: zod.enum(['public', 'private', 'friends-only']).default('public'),
     allowMessagesFrom: zod.enum(['everyone', 'friends', 'no-one']).default('everyone'),
     showActivityStatus: zod.boolean().default(true),
@@ -88,6 +95,25 @@ export const UserSchema = zod.object({
     showLastSeen: zod.boolean().default(true),
     createdAt: zod.date().optional(),
     updatedAt: zod.date().optional(),
+
+    // Notification types
+    pushNotification: zod.boolean(),
+    smsNotification: zod.boolean(),
+    likesNotification: zod.boolean(),
+    repostNotification: zod.boolean(),
+    commentsNotification: zod.boolean(),
+    newFollowersNotification: zod.boolean(),
+
+    directMessage: zod.boolean(),
+    roomInvitations: zod.boolean(),
+    liveEvents: zod.boolean(),
+
+    soundNotification: zod.boolean(),
+    vibrationForNotification: zod.boolean(),
+
+    // Appearance types
+    primaryColor: zod.enum(['blue', 'cyan', 'orange', 'purple', 'red']).default('blue'),
+    themeMode: zod.boolean(),
 }).strict();
 
 // Derived Schemas
@@ -140,3 +166,4 @@ export const UserAccountSessionSchema = UserSchema.pick({
     id: true,
     sessionTimeOut: true,
 }).required({ id: true })
+
