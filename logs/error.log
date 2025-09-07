@@ -110,3 +110,7 @@ DatabaseError: DatabaseError: User already exists! You can log in instead.
 [2025-08-08 06:05:10] [31merror[39m: Invalid settings data!
 [2025-08-08 06:05:47] [31merror[39m: Invalid settings data!
 [2025-08-08 06:05:48] [31merror[39m: Invalid settings data!
+[2025-09-08 01:41:07] [31merror[39m: Invalid privacy data!
+[2025-09-08 01:41:11] [31merror[39m: Invalid privacy data!
+[2025-09-08 01:41:35] [31merror[39m: Invalid privacy data!
+[2025-09-08 01:44:37] [31merror[39m: Invalid privacy data!

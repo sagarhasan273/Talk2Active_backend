@@ -1,20 +1,21 @@
-import { PostTagsEnum } from "src/types/post.type";
+import { PostTagsEnum } from "src/enums/post.enum";
 import { z } from "zod";
 import { objectIdSchema } from "./user.schema";
 
 // Media Schema
 export const MediaSchema = z.object({
     type: z.enum(['image', 'video', 'gif', 'none']).default('none'),
-    urls: z.array(z.string().url()).default([]),
+    urls: z.array(z.string().url()).default([]).optional(),
     content: z.string()
         .min(1, "Content cannot be empty")
-        .max(2000, "Content cannot exceed 2000 characters")
-        .trim(),
+        .max(500, "Content cannot exceed 500 characters")
+        .trim().optional(),
 });
 
 // Engagement Schema
 export const EngagementSchema = z.object({
     likes: z.number().int().nonnegative().default(0),
+    dislikes: z.number().int().nonnegative().default(0),
     repost: z.number().int().nonnegative().default(0),
 });
 
@@ -25,6 +26,7 @@ export const PostSchema = z.object({
     tags: z.array(z.enum(Object.values(PostTagsEnum) as [string, ...string[]]))
         .max(30, "Cannot have more than 30 tags")
         .default([]),
+    engagement: EngagementSchema.default({ likes: 0, dislikes: 0, repost: 0 }),
     isDeleted: z.boolean().default(false),
     deletedAt: z.date().optional(),
     createdAt: z.date().default(() => new Date()),
@@ -33,15 +35,11 @@ export const PostSchema = z.object({
 
 // Schema for creating a new post (excludes auto-generated fields)
 export const CreatePostSchema = PostSchema.omit({
+    engagement: true,
     isDeleted: true,
     deletedAt: true,
     createdAt: true,
     updatedAt: true
-}).extend({
-    // Make author optional for creation (can be set from authenticated user)
-    author: z.string().refine((val) => /^[0-9a-fA-F]{24}$/.test(val), {
-        message: "Invalid author ObjectId format"
-    }).optional()
 });
 
 // Schema for updating a post

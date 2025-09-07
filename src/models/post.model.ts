@@ -1,6 +1,7 @@
 // models/post.model.ts
 import mongoose, { Schema } from 'mongoose';
-import { PostTagsEnum, PostType } from 'src/types/post.type';
+import { PostTagsEnum } from 'src/enums/post.enum';
+import { PostType } from 'src/types/post.type';
 
 
 
@@ -21,6 +22,11 @@ const PostModelSchema = new Schema<PostType & Document>({
         },
     },
     tags: [{ type: String, enum: Object.values(PostTagsEnum), lowercase: true }],
+    engagement: {
+        likes: { type: Number, default: 0, min: 0 },
+        dislikes: { type: Number, default: 0, min: 0 },
+        repost: { type: Number, default: 0, min: 0 },
+    },
     isDeleted: { type: Boolean, default: false },
     deletedAt: Date
 }, {

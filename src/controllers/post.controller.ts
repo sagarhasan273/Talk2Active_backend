@@ -12,14 +12,14 @@ export class PostController {
         try {
             validatedInput = CreatePostSchema.parse(req.body);
         } catch (error) {
-            logger.error('Invalid privacy data!');
-            res.status(400).json({ status: false, message: 'Invalid privacy data!' });
+            logger.error('Invalid post create data!');
+            res.status(400).json({ status: false, message: 'Invalid post create data!' });
             return;
         }
 
         try {
             await this.service.createPost(validatedInput);
-            res.status(200).json({ status: true, message: 'Privacy settings updated successfully' });
+            res.status(200).json({ status: true, message: 'Post created successfully' });
         } catch (error) {
             if (error instanceof AppError) {
                 logger.error(`${error.at}: ${error.message}`);
