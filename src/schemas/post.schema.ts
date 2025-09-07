@@ -46,7 +46,13 @@ export const CreatePostSchema = PostSchema.omit({
 export const UpdatePostSchema = CreatePostSchema.partial();
 
 // Schema for API response (transformed data)
-export const PostResponseSchema = PostSchema.extend({
+export const PostResponseSchema = PostSchema.omit({
+    author: true,
+    isDeleted: true,
+    deletedAt: true,
+    createdAt: true,
+    updatedAt: true
+}).extend({
     id: z.string(),
     authorDetails: z.object({
         _id: z.string(),

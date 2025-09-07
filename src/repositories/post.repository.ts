@@ -1,6 +1,6 @@
 import { PostModel } from "src/models/post.model";
 import { ReturnResponseType } from "src/types/base.type";
-import { CreatePostInput } from 'src/types/post.type';
+import { CreatePostInput, PostResponseType } from 'src/types/post.type';
 import { AppError } from "src/utils/errors";
 
 
@@ -25,6 +25,23 @@ export class PostRepository {
                 throw error;
             }
             throw new AppError('Failed to update user privacy settings!', 500, 'Settings Repository');
+        }
+    }
+
+    public async getPosts(): Promise<PostResponseType[]> {
+        try {
+            const posts = await PostModel.find({ isDeleted: false })
+                .populate('authorDetails')
+                .sort({ createdAt: -1 });
+            return posts.map(post => {
+                const obj = post.toJSON();
+                return {
+                    ...obj,
+                    id: obj._id.toString(),
+                };
+            });
+        } catch (error) {
+            throw new AppError('Failed to fetch posts', 500, 'Post Repository');
         }
     }
 }

@@ -5,5 +5,5 @@ import { z } from 'zod';
 export type PostType = z.infer<typeof PostSchema>;
 export type CreatePostInput = z.infer<typeof CreatePostSchema>;
 export type UpdatePostInput = z.infer<typeof UpdatePostSchema>;
-export type PostResponse = z.infer<typeof PostResponseSchema>;
+export type PostResponseType = z.infer<typeof PostResponseSchema>;
 export type Media = z.infer<typeof MediaSchema>;

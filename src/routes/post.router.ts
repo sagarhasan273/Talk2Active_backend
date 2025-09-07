@@ -7,5 +7,6 @@ export class PostRoutes extends BaseRouter {
 
     protected routes(): void {
         this.router.post('/create', authMiddleware, (req, res) => this.postController.createPost(req, res));
+        this.router.get('/all', authMiddleware, (req, res) => this.postController.getPosts(req, res));
     }
 }
