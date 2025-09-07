@@ -3,7 +3,7 @@ import { ObjectId } from 'mongodb';
 import { z as zod } from 'zod';
 
 // Helper schema for MongoDB ObjectId
-const objectIdSchema = zod.union([
+export const objectIdSchema = zod.union([
     zod.string().transform((val, ctx) => {
         try {
             return new ObjectId(val);

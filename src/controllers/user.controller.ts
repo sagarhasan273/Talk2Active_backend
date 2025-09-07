@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { CreateUserSchema, LogInUserSchema, UpdateUserSchema, UserAccountActivateSchema, UserAccountSessionSchema, UserAccountUpdateSchema } from 'src/schemas/user.shema';
+import { CreateUserSchema, LogInUserSchema, UpdateUserSchema, UserAccountActivateSchema, UserAccountSessionSchema, UserAccountUpdateSchema } from 'src/schemas/user.schema';
 import { UserService } from 'src/services/user.service';
 import { AppError } from 'src/utils/errors';
 import logger from 'src/utils/logger';

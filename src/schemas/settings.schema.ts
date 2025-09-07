@@ -1,4 +1,4 @@
-import { UserSchema } from "./user.shema";
+import { UserSchema } from "./user.schema";
 
 export const UpdateUserPrivacySchema = UserSchema.pick({
     id: true,

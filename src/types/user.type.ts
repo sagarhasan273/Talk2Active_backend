@@ -1,4 +1,4 @@
-import { CreateUserSchema, LogInUserSchema, SocialLinksSchema, UpdateUserSchema, UserAccountActivateSchema, UserAccountSessionSchema, UserAccountUpdateSchema, UserSchema } from 'src/schemas/user.shema';
+import { CreateUserSchema, LogInUserSchema, SocialLinksSchema, UpdateUserSchema, UserAccountActivateSchema, UserAccountSessionSchema, UserAccountUpdateSchema, UserSchema } from 'src/schemas/user.schema';
 import { z as zod } from 'zod';
 
 // Type Definitions
