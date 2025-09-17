@@ -1,6 +1,6 @@
 import { PostTagsEnum } from "src/enums/post.enum";
 import { z } from "zod";
-import { objectIdSchema } from "./user.schema";
+import { objectIdSchema } from "./base.schema";
 
 // Media Schema
 export const MediaSchema = z.object({
@@ -16,7 +16,7 @@ export const MediaSchema = z.object({
 export const EngagementSchema = z.object({
     likes: z.number().int().nonnegative().default(0),
     dislikes: z.number().int().nonnegative().default(0),
-    repost: z.number().int().nonnegative().default(0),
+    reposts: z.number().int().nonnegative().default(0),
 });
 
 // Main Post Schema
@@ -26,7 +26,7 @@ export const PostSchema = z.object({
     tags: z.array(z.enum(Object.values(PostTagsEnum) as [string, ...string[]]))
         .max(30, "Cannot have more than 30 tags")
         .default([]),
-    engagement: EngagementSchema.default({ likes: 0, dislikes: 0, repost: 0 }),
+    engagement: EngagementSchema.default({ likes: 0, dislikes: 0, reposts: 0 }),
     isDeleted: z.boolean().default(false),
     deletedAt: z.date().optional(),
     createdAt: z.date().default(() => new Date()),
@@ -43,7 +43,11 @@ export const CreatePostSchema = PostSchema.omit({
 });
 
 // Schema for updating a post
-export const UpdatePostSchema = CreatePostSchema.partial();
+export const UpdatePostSchema = PostSchema.partial().extend(
+    {
+        postId: objectIdSchema
+    }
+);
 
 // Schema for API response (transformed data)
 export const PostResponseSchema = PostSchema.omit({
@@ -60,5 +64,7 @@ export const PostResponseSchema = PostSchema.omit({
         name: z.string().optional(),
         profilePhoto: z.string().url().optional(),
         verified: z.boolean().default(false)
-    }).optional()
+    }).optional(),
+    // Add like status for the current user
+    liked: z.boolean().optional(),
 });

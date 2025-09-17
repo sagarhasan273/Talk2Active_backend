@@ -1,5 +1,6 @@
 import { PostRepository } from "src/repositories/post.repository";
-import { CreatePostInput, PostResponseType } from "src/types/post.type";
+import { ReturnResponseType } from "src/types/base.type";
+import { CreatePostInput, PostResponseType, UpdatePostInput } from "src/types/post.type";
 import { AppError } from "src/utils/errors";
 
 
@@ -28,6 +29,18 @@ export class PostService {
                 throw error;
             }
             throw new AppError('Failed to fetch posts', 500, 'Post Service');
+        }
+    }
+
+    public async updatePost(input: UpdatePostInput): Promise<ReturnResponseType> {
+        try {
+            return await this.repository.updatePost(input);
+        } catch (error) {
+            if (error instanceof AppError) {
+                throw error;
+            }
+
+            throw new AppError('Failed to update Post!', 500, 'Post Service');
         }
     }
 }

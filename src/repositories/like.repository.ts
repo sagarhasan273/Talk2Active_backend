@@ -1,11 +1,11 @@
 import { ObjectId } from 'mongodb';
 import { PostModel } from 'src/models/post.model';
 import { ReturnResponseType } from 'src/types/base.type';
-import { CreatePostInput, PostResponseType, UpdatePostInput } from 'src/types/post.type';
+import { CreateLikeInput, DeleteLikeInput } from 'src/types/like.type';
 import { AppError } from 'src/utils/errors';
 
-export class PostRepository {
-    public async createPost(input: CreatePostInput): Promise<ReturnResponseType> {
+export class LikeRepository {
+    public async createLike(input: CreateLikeInput): Promise<ReturnResponseType> {
         try {
             const { ...createFields } = input;
 
@@ -26,25 +26,7 @@ export class PostRepository {
         }
     }
 
-    public async getPosts(): Promise<PostResponseType[]> {
-        try {
-            const posts = await PostModel.find({ isDeleted: false })
-                .populate('authorDetails')
-                .sort({ createdAt: -1 });
-
-            return posts.map((post) => {
-                const obj = post.toJSON();
-                return {
-                    ...obj,
-                    id: obj._id.toString(),
-                };
-            });
-        } catch (error) {
-            throw new AppError('Failed to fetch posts', 500, 'Post Repository');
-        }
-    }
-
-    public async updatePost(input: UpdatePostInput): Promise<ReturnResponseType> {
+    public async deleteLike(input: DeleteLikeInput): Promise<ReturnResponseType> {
         try {
             const { postId, ...updatableFields } = input;
 
