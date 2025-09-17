@@ -17,12 +17,12 @@ export class PostRepository {
                 throw new AppError('Failed to create post', 404, 'Post Repository');
             }
 
-            return { message: 'Privacy updated successfully', status: true };
+            return { message: 'Post created successfully', status: true };
         } catch (error) {
             if (error instanceof AppError) {
                 throw error;
             }
-            throw new AppError('Failed to update user privacy settings!', 500, 'Settings Repository');
+            throw new AppError('Failed to create Post!', 500, 'Post Repository');
         }
     }
 
@@ -62,7 +62,7 @@ export class PostRepository {
                 throw new AppError('Failed to update post', 404, 'Post Repository');
             }
 
-            return { message: 'Profile updated successfully', status: true };
+            return { message: 'Post updated successfully', status: true };
         } catch (error) {
             if (error instanceof AppError) {
                 throw error;

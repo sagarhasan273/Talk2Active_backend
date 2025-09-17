@@ -6,6 +6,7 @@ import { InventoryRouter } from 'src/routes/inventory.router';
 import { UserRoutes } from 'src/routes/user.routes';
 import logger from 'src/utils/logger';
 import { errorMiddleware } from './middlewares/error.middleware';
+import { PostEngagementRoutes } from './routes/post-engagement.router';
 import { PostRoutes } from './routes/post.router';
 import { SettingRoutes } from './routes/settings.routes';
 import { getLocalIp } from './utils/system';
@@ -34,6 +35,9 @@ app.use('/inventory', inventoryRouters.router);
 
 const postRouters = new PostRoutes();
 app.use('/post', postRouters.router);
+
+const postEngagementRouters = new PostEngagementRoutes();
+app.use('/post-engagement', postEngagementRouters.router);
 
 
 

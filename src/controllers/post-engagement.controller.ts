@@ -1,11 +1,11 @@
 import { Request, Response } from 'express';
 import { CreateLikeSchema } from "src/schemas/like.schema";
-import { LikeService } from 'src/services/like.service';
+import { PostEngagementService } from 'src/services/post-engagement.service';
 import { AppError } from 'src/utils/errors';
 import logger from 'src/utils/logger';
 
-export class LikeController {
-    private service = new LikeService();
+export class PostEngagementController {
+    private service = new PostEngagementService();
 
     public async likePost(req: Request, res: Response): Promise<void> {
         // Implementation for liking a post
