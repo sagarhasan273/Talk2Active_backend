@@ -17,4 +17,5 @@ export const objectIdSchema = zod.union([
         }
     }),
     zod.instanceof(ObjectId),
+    zod.string(),
 ]);

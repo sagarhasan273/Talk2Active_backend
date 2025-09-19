@@ -16,6 +16,15 @@ export const DeleteLikeSchema = z.object({
     postId: objectIdSchema,
 });
 
+export const LikedPostsSchema = z.object({
+    postIds: z.array(objectIdSchema).default([]),
+    userId: objectIdSchema,
+});
+
+export const LikedPostsResponseSchema = LikeSchema.omit({
+    createdAt: true
+});
+
 export const LikeCountSchema = z.object({
     postId: objectIdSchema,
     likeCount: z.number().int().nonnegative().default(0),
@@ -27,4 +36,4 @@ export const UserLikesSchema = z.object({
     total: z.number().int().nonnegative().default(0),
     page: z.number().int().positive(),
     totalPages: z.number().int().nonnegative().default(0),
-})
+});

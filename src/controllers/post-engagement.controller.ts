@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { CreateLikeSchema } from "src/schemas/like.schema";
+import { CreateLikeSchema } from "src/schemas/post-engagement.schema";
 import { PostEngagementService } from 'src/services/post-engagement.service';
 import { AppError } from 'src/utils/errors';
 import logger from 'src/utils/logger';

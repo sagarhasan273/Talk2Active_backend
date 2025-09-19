@@ -1,5 +1,5 @@
 import mongoose, { Schema } from "mongoose";
-import { LikeType } from "src/types/like.type";
+import { LikeType } from "src/types/post-engagement.type";
 
 
 export const LikeModelSchema = new Schema<LikeType & Document>({

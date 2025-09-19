@@ -34,7 +34,13 @@ export class PostController {
 
     public async getPosts(req: Request, res: Response): Promise<void> {
         try {
-            const posts = await this.service.getPosts();
+            const authHeader = req.headers['authorization'];
+            const token = authHeader?.split(' ')[1];
+            if (!token) {
+                throw new AppError('Authorization token is required', 401, 'Post Controller');
+            }
+
+            const posts = await this.service.getPosts(token);
             res.status(200).json({ data: posts, status: true });
         } catch (error) {
             if (error instanceof AppError) {
@@ -58,7 +64,13 @@ export class PostController {
         }
 
         try {
-            const posts = await this.service.getPosts();
+            const authHeader = req.headers['authorization'];
+            const token = authHeader?.split(' ')[1];
+            if (!token) {
+                throw new AppError('Authorization token is required', 401, 'Post Controller');
+            }
+
+            const posts = await this.service.getPosts(token);
             res.status(200).json({ data: posts, status: true });
         } catch (error) {
             if (error instanceof AppError) {

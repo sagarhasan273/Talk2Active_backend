@@ -66,5 +66,5 @@ export const PostResponseSchema = PostSchema.omit({
         verified: z.boolean().default(false)
     }).optional(),
     // Add like status for the current user
-    liked: z.boolean().optional(),
+    isLiked: z.boolean().optional(),
 });

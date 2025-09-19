@@ -1,11 +1,35 @@
 import { ObjectId } from 'mongodb';
-import { LikeModel } from 'src/models/like.model';
+import { LikeModel } from 'src/models/post-engagement.model';
 import { PostModel } from 'src/models/post.model';
 import { ReturnResponseType } from 'src/types/base.type';
-import { CreateLikeInput, DeleteLikeInput } from 'src/types/like.type';
+import { CreateLikeInput, DeleteLikeInput, LikedPostsInput, LikedPostsResponseType } from 'src/types/post-engagement.type';
 import { AppError } from 'src/utils/errors';
 
 export class PostEngagementRepository {
+    public async isLiked(postId: string, userId: string): Promise<boolean> {
+        try {
+            const like = await LikeModel.findOne({ postId: new ObjectId(postId), userId: new ObjectId(userId) });
+            return !!like;
+        } catch (error) {
+            if (error instanceof AppError) {
+                throw error;
+            }
+            throw new AppError('Failed to check like status!', 500, 'Post Engagement Repository');
+        }
+    }
+
+    public async countLikes(postId: string): Promise<number> {
+        try {
+            const likeCount = await LikeModel.countDocuments({ postId: new ObjectId(postId) });
+            return likeCount;
+        } catch (error) {
+            if (error instanceof AppError) {
+                throw error;
+            }
+            throw new AppError('Failed to count likes!', 500, 'Post Engagement Repository');
+        }
+    }
+
     public async likePost(input: CreateLikeInput): Promise<ReturnResponseType> {
         try {
             const { postId, userId } = input;
@@ -56,6 +80,30 @@ export class PostEngagementRepository {
                 throw error;
             }
             throw new AppError('Failed to create Like of Post!', 500, 'Post Engagement Repository');
+        }
+    }
+
+
+    public async likedPosts(input: LikedPostsInput): Promise<LikedPostsResponseType[]> {
+        try {
+            const { postIds, userId } = input;
+
+            const likedPosts = await LikeModel.find({
+                postId: { $in: postIds },
+                userId
+            }).select("postId");
+
+            if (!likedPosts) {
+                throw new AppError('No liked posts found', 404, 'Post Engagement Repository');
+            }
+
+            return likedPosts;
+
+        } catch (error) {
+            if (error instanceof AppError) {
+                throw error;
+            }
+            throw new AppError('Failed to fetch liked posts!', 500, 'Post Engagement Repository');
         }
     }
 
