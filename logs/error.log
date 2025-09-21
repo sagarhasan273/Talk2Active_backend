@@ -123,3 +123,16 @@ DatabaseError: DatabaseError: User already exists! You can log in instead.
 [2025-09-16 03:37:14] [31merror[39m: Invalid user data provided for update!
 [2025-09-16 03:37:15] [31merror[39m: Invalid user data provided for update!
 [2025-09-16 03:37:16] [31merror[39m: Invalid user data provided for update!
+[2025-09-20 01:16:02] [31merror[39m: Post Service: Failed to fetch posts
+[2025-09-20 01:27:57] [31merror[39m: An error occurred while fetching posts!
+[2025-09-20 02:01:50] [31merror[39m: An error occurred while fetching posts!
+[2025-09-20 02:02:21] [31merror[39m: An error occurred while fetching posts!
+[2025-09-20 02:23:28] [31merror[39m: An error occurred while fetching posts!
+[2025-09-20 02:33:54] [31merror[39m: Invalid input for posts!
+[2025-09-20 02:35:26] [31merror[39m: Invalid input for posts!
+[2025-09-20 02:35:29] [31merror[39m: Invalid input for posts!
+[2025-09-20 02:36:00] [31merror[39m: Invalid input for posts!
+[2025-09-20 02:36:27] [31merror[39m: Invalid input for posts!
+[2025-09-20 02:42:55] [31merror[39m: Invalid input for posts!
+[2025-09-20 02:49:46] [31merror[39m: Invalid input for posts!
+[2025-09-20 02:51:42] [31merror[39m: Invalid input for posts!

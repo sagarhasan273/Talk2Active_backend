@@ -1,25 +1,28 @@
 import { PostEngagementRepository } from "src/repositories/post-engagement.repository";
 import { PostRepository } from "src/repositories/post.repository";
 import { ReturnResponseType } from "src/types/base.type";
-import { CreatePostInput, PostResponseType, UpdatePostInput } from "src/types/post.type";
+import { CreatePostInput, GetPostsInput, PostResponseType, UpdatePostInput } from "src/types/post.type";
 import { AppError } from "src/utils/errors";
-import { JwtService } from "./auth/jwt.service";
 
 
 export class PostService {
     private repository = new PostRepository();
     private engagementRepository = new PostEngagementRepository();
 
-    async enhancePostsWithLikeInfo(posts: PostResponseType[], userId: string): Promise<PostResponseType[]> {
+    async enhancePostsWithEngagementInfo(posts: PostResponseType[], userId: string): Promise<PostResponseType[]> {
         const likedPosts = await this.engagementRepository.likedPosts({ postIds: posts.map(p => p.id), userId });
+        const dislikedPosts = await this.engagementRepository.dislikedPosts({ postIds: posts.map(p => p.id), userId });
         const likedSet = new Set(likedPosts.map(l => l.postId.toString()));
+        const dislikedSet = new Set(dislikedPosts.map(d => d.postId.toString()));
 
         const enhancedPosts = await Promise.all(posts.map(async (post) => {
             return {
                 ...post,
                 isLiked: likedSet.has(post.id),
+                isDisliked: dislikedSet.has(post.id),
             };
         }));
+
         return enhancedPosts;
     }
 
@@ -36,17 +39,15 @@ export class PostService {
         }
     }
 
-    public async getPosts(token: string): Promise<PostResponseType[]> {
+    public async getPosts(userId: GetPostsInput['userId']): Promise<PostResponseType[]> {
         try {
-            const posts = await this.repository.getPosts();
+            userId;
 
-            const decodedToken = JwtService.decodeToken(token);
-            if (!decodedToken) throw new Error('Invalid token');
-
-            const userId = decodedToken.id;
             if (!userId) throw new AppError('User ID not found in token', 400, 'User Service');
 
-            const enhancedPosts = await this.enhancePostsWithLikeInfo(posts, userId); // Example userId
+            const posts = await this.repository.getPosts();
+
+            const enhancedPosts = await this.enhancePostsWithEngagementInfo(posts, userId.toString());
             return enhancedPosts;
         } catch (error) {
             if (error instanceof AppError) {

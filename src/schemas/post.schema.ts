@@ -49,6 +49,10 @@ export const UpdatePostSchema = PostSchema.partial().extend(
     }
 );
 
+export const GetPostsSchemaInput = z.object({
+    userId: objectIdSchema
+});
+
 // Schema for API response (transformed data)
 export const PostResponseSchema = PostSchema.omit({
     author: true,
