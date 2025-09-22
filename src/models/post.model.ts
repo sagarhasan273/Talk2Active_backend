@@ -24,7 +24,7 @@ const PostModelSchema = new Schema<PostType & Document>({
     engagement: {
         likes: { type: Number, default: 0, min: 0 },
         dislikes: { type: Number, default: 0, min: 0 },
-        reposts: { type: Number, default: 0, min: 0 },
+        pins: { type: Number, default: 0, min: 0 },
     },
     isDeleted: { type: Boolean, default: false },
     deletedAt: Date

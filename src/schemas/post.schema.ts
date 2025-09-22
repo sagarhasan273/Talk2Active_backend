@@ -16,7 +16,7 @@ export const MediaSchema = z.object({
 export const EngagementSchema = z.object({
     likes: z.number().int().nonnegative().default(0),
     dislikes: z.number().int().nonnegative().default(0),
-    reposts: z.number().int().nonnegative().default(0),
+    pins: z.number().int().nonnegative().default(0),
 });
 
 // Main Post Schema
@@ -26,7 +26,7 @@ export const PostSchema = z.object({
     tags: z.array(z.enum(Object.values(PostTagsEnum) as [string, ...string[]]))
         .max(30, "Cannot have more than 30 tags")
         .default([]),
-    engagement: EngagementSchema.default({ likes: 0, dislikes: 0, reposts: 0 }),
+    engagement: EngagementSchema.default({ likes: 0, dislikes: 0, pins: 0 }),
     isDeleted: z.boolean().default(false),
     deletedAt: z.date().optional(),
     createdAt: z.date().default(() => new Date()),

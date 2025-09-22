@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { CreateDisLikeSchema, CreateLikeSchema } from "src/schemas/post-engagement.schema";
+import { CreateDisLikeSchema, CreateLikeSchema, CreatePinpostSchema } from "src/schemas/post-engagement.schema";
 import { PostEngagementService } from 'src/services/post-engagement.service';
 import { AppError } from 'src/utils/errors';
 import logger from 'src/utils/logger';
@@ -28,8 +28,8 @@ export class PostEngagementController {
                 return;
             }
 
-            logger.error('An error occurred while updating privacy settings!');
-            res.status(500).json({ message: 'An error occurred while updating privacy settings!', status: false });
+            logger.error('An error occurred while updating post engagement!');
+            res.status(500).json({ message: 'An error occurred while updating post engagement!', status: false });
         }
     }
 
@@ -56,6 +56,32 @@ export class PostEngagementController {
 
             logger.error('An error occurred while updating privacy settings!');
             res.status(500).json({ message: 'An error occurred while updating privacy settings!', status: false });
+        }
+    }
+
+    public async pinPost(req: Request, res: Response): Promise<void> {
+        // Implementation for disliking a post
+        let validatedInput;
+        try {
+            validatedInput = CreatePinpostSchema.parse(req.body);
+        } catch (error) {
+            logger.error('Invalid pin create input!');
+            res.status(400).json({ status: false, message: 'Invalid pin create input!' });
+            return;
+        }
+
+        try {
+            await this.service.pinPost(validatedInput);
+            res.status(200).json({ status: true, message: 'Pin updated successfully' });
+        } catch (error) {
+            if (error instanceof AppError) {
+                logger.error(`${error.at}: ${error.message}`);
+                res.status(error.statusCode).json({ message: error.message, status: false });
+                return;
+            }
+
+            logger.error('An error occurred while updating post engagement!');
+            res.status(500).json({ message: 'An error occurred while updating post engagement!', status: false });
         }
     }
 }

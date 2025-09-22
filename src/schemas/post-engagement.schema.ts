@@ -71,7 +71,45 @@ export const DisLikeCountSchema = z.object({
 
 export const UserDisLikesSchema = z.object({
     userId: objectIdSchema,
-    likes: z.array(DisLikeSchema).default([]),
+    dislikes: z.array(DisLikeSchema).default([]),
+    total: z.number().int().nonnegative().default(0),
+    page: z.number().int().positive(),
+    totalPages: z.number().int().nonnegative().default(0),
+});
+
+/// Pin Schemas ///
+export const PinpostSchema = z.object({
+    userId: objectIdSchema,
+    postId: objectIdSchema,
+    createdAt: z.date().default(() => new Date()),
+});
+
+export const CreatePinpostSchema = PinpostSchema.omit({
+    createdAt: true
+});
+
+export const DeletePinpostSchema = z.object({
+    userId: objectIdSchema,
+    postId: objectIdSchema,
+});
+
+export const PinpostsSchema = z.object({
+    postIds: z.array(objectIdSchema).default([]),
+    userId: objectIdSchema,
+});
+
+export const PinpostsResponseSchema = PinpostSchema.omit({
+    createdAt: true
+});
+
+export const PinpostCountSchema = z.object({
+    postId: objectIdSchema,
+    likeCount: z.number().int().nonnegative().default(0),
+});
+
+export const UserPinpostsSchema = z.object({
+    userId: objectIdSchema,
+    pinposts: z.array(PinpostSchema).default([]),
     total: z.number().int().nonnegative().default(0),
     page: z.number().int().positive(),
     totalPages: z.number().int().nonnegative().default(0),

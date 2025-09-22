@@ -1,4 +1,4 @@
-import { CreateDisLikeSchema, CreateLikeSchema, DeleteDisLikeSchema, DeleteLikeSchema, DisLikeCountSchema, DisLikedPostsResponseSchema, DisLikedPostsSchema, LikeCountSchema, LikedPostsResponseSchema, LikedPostsSchema, LikeSchema, UserDisLikesSchema, UserLikesSchema } from 'src/schemas/post-engagement.schema';
+import { CreateDisLikeSchema, CreateLikeSchema, CreatePinpostSchema, DeleteDisLikeSchema, DeleteLikeSchema, DeletePinpostSchema, DisLikeCountSchema, DisLikedPostsResponseSchema, DisLikedPostsSchema, LikeCountSchema, LikedPostsResponseSchema, LikedPostsSchema, LikeSchema, PinpostCountSchema, PinpostSchema, PinpostsResponseSchema, PinpostsSchema, UserDisLikesSchema, UserLikesSchema, UserPinpostsSchema } from 'src/schemas/post-engagement.schema';
 import { z } from 'zod';
 
 // Type definitions for Likes
@@ -18,3 +18,12 @@ export type DislikedPostsResponseType = z.infer<typeof DisLikedPostsResponseSche
 export type DeleteDislikeInput = z.infer<typeof DeleteDisLikeSchema>;
 export type DislikeCountType = z.infer<typeof DisLikeCountSchema>;
 export type UserDislikesType = z.infer<typeof UserDisLikesSchema>;
+
+// Type definitions for Pinposts
+export type PinpostType = z.infer<typeof PinpostSchema>;
+export type PinpostsInput = z.infer<typeof PinpostsSchema>;
+export type CreatePinpostInput = z.infer<typeof CreatePinpostSchema>;
+export type PinpostsResponseType = z.infer<typeof PinpostsResponseSchema>;
+export type DeletePinpostInput = z.infer<typeof DeletePinpostSchema>;
+export type PinpostCountType = z.infer<typeof PinpostCountSchema>;
+export type UserPinpostType = z.infer<typeof UserPinpostsSchema>;

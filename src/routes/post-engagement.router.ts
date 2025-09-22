@@ -8,5 +8,6 @@ export class PostEngagementRoutes extends BaseRouter {
     protected routes(): void {
         this.router.post('/like', authMiddleware, (req, res) => this.postEngagementController.likePost(req, res));
         this.router.post('/dislike', authMiddleware, (req, res) => this.postEngagementController.dislikePost(req, res));
+        this.router.post('/pinpost', authMiddleware, (req, res) => this.postEngagementController.pinPost(req, res));
     }
 }

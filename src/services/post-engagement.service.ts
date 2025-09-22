@@ -1,5 +1,5 @@
 import { PostEngagementRepository } from "src/repositories/post-engagement.repository";
-import { CreateDislikeInput, CreateLikeInput } from "src/types/post-engagement.type";
+import { CreateDislikeInput, CreateLikeInput, CreatePinpostInput } from "src/types/post-engagement.type";
 import { AppError } from "src/utils/errors";
 
 
@@ -16,7 +16,7 @@ export class PostEngagementService {
             if (error instanceof AppError) {
                 throw error;
             }
-            throw new AppError('Failed to update user privacy settings!', 500, 'Settings Service');
+            throw new AppError('Failed to update post engagement settings!', 500, 'Settings Service');
         }
     }
 
@@ -30,8 +30,21 @@ export class PostEngagementService {
             if (error instanceof AppError) {
                 throw error;
             }
-            throw new AppError('Failed to update user privacy settings!', 500, 'Settings Service');
+            throw new AppError('Failed to update post engagement settings!', 500, 'Settings Service');
         }
     }
 
+    public async pinPost(input: CreatePinpostInput): Promise<any> {
+        try {
+            // Validate and sanitize settings input here if necessary
+            const updatedPost = await this.repository.pinPost(input);
+            return updatedPost;
+        }
+        catch (error) {
+            if (error instanceof AppError) {
+                throw error;
+            }
+            throw new AppError('Failed to update post engagement settings!', 500, 'Settings Service');
+        }
+    }
 }

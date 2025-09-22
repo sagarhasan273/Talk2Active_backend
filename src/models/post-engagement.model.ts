@@ -12,9 +12,6 @@ export const LikeModelSchema = new Schema<LikeType & Document>({
     toObject: { virtuals: true }
 });
 
-LikeModelSchema.index({ userId: 1, postId: 1 }, { unique: true });
-LikeModelSchema.index({ postId: 1, createdAt: -1 });
-
 export const DislikeModelSchema = new Schema<LikeType & Document>({
     userId: { type: Schema.Types.ObjectId, ref: 'users', required: true, index: true },
     postId: { type: Schema.Types.ObjectId, ref: 'posts', required: true, index: true },
@@ -25,8 +22,25 @@ export const DislikeModelSchema = new Schema<LikeType & Document>({
     toObject: { virtuals: true }
 });
 
+export const PinpostModelSchema = new Schema<LikeType & Document>({
+    userId: { type: Schema.Types.ObjectId, ref: 'users', required: true, index: true },
+    postId: { type: Schema.Types.ObjectId, ref: 'posts', required: true, index: true },
+    createdAt: { type: Date, default: () => new Date(), index: true },
+}, {
+    timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true }
+});
+
+LikeModelSchema.index({ userId: 1, postId: 1 }, { unique: true });
+LikeModelSchema.index({ postId: 1, createdAt: -1 });
+
 DislikeModelSchema.index({ userId: 1, postId: 1 }, { unique: true });
 DislikeModelSchema.index({ postId: 1, createdAt: -1 });
 
+PinpostModelSchema.index({ userId: 1, postId: 1 }, { unique: true });
+PinpostModelSchema.index({ postId: 1, createdAt: -1 });
+
 export const LikeModel = mongoose.model<LikeType & Document>('likes', LikeModelSchema);
 export const DislikeModel = mongoose.model<LikeType & Document>('dislikes', DislikeModelSchema);
+export const PinpostModel = mongoose.model<LikeType & Document>('pinposts', PinpostModelSchema);

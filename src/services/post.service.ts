@@ -12,14 +12,18 @@ export class PostService {
     async enhancePostsWithEngagementInfo(posts: PostResponseType[], userId: string): Promise<PostResponseType[]> {
         const likedPosts = await this.engagementRepository.likedPosts({ postIds: posts.map(p => p.id), userId });
         const dislikedPosts = await this.engagementRepository.dislikedPosts({ postIds: posts.map(p => p.id), userId });
+        const pinPosts = await this.engagementRepository.pinPosts({ postIds: posts.map(p => p.id), userId });
+
         const likedSet = new Set(likedPosts.map(l => l.postId.toString()));
         const dislikedSet = new Set(dislikedPosts.map(d => d.postId.toString()));
+        const pinSet = new Set(pinPosts.map(p => p.postId.toString()));
 
         const enhancedPosts = await Promise.all(posts.map(async (post) => {
             return {
                 ...post,
                 isLiked: likedSet.has(post.id),
                 isDisliked: dislikedSet.has(post.id),
+                isPinned: pinSet.has(post.id),
             };
         }));
 
