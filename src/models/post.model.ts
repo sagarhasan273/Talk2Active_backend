@@ -19,6 +19,7 @@ const PostModelSchema = new Schema<PostType & Document>({
             maxlength: 500,
             trim: true
         },
+        authorName: { type: String }
     },
     tags: [{ type: String, enum: Object.values(PostTagsEnum), lowercase: true }],
     engagement: {

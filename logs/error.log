@@ -136,3 +136,13 @@ DatabaseError: DatabaseError: User already exists! You can log in instead.
 [2025-09-20 02:42:55] [31merror[39m: Invalid input for posts!
 [2025-09-20 02:49:46] [31merror[39m: Invalid input for posts!
 [2025-09-20 02:51:42] [31merror[39m: Invalid input for posts!
+[2025-09-23 04:29:58] [31merror[39m: Invalid post create data!
+[2025-09-23 04:30:10] [31merror[39m: Invalid post create data!
+[2025-09-23 04:35:53] [31merror[39m: Invalid post create data!
+[2025-09-23 04:36:06] [31merror[39m: Invalid post create data!
+[2025-09-23 04:45:03] [31merror[39m: Invalid post create data!
+[2025-09-23 04:45:28] [31merror[39m: Invalid post create data!
+[2025-09-23 04:46:51] [31merror[39m: Invalid post create data!
+[2025-09-23 05:20:58] [31merror[39m: Invalid user data provided for update!
+[2025-09-23 05:21:00] [31merror[39m: Invalid user data provided for update!
+[2025-09-23 05:21:02] [31merror[39m: Invalid user data provided for update!
