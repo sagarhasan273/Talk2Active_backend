@@ -67,9 +67,14 @@ export const UserSchema = zod.object({
     verified: zod.boolean(),
     accountActive: zod.boolean(),
     sessionTimeOut: zod.number().int().nonnegative(),
-    followersCount: zod.number().int().nonnegative(),
+
+    followerCount: zod.number().int().nonnegative(),
     followingCount: zod.number().int().nonnegative(),
+    friendCount: zod.number().int().nonnegative(),
+    pendingRequests: zod.number().int().nonnegative(),
+
     postCount: zod.number().int().nonnegative(),
+
     location: zod.string().max(100, { message: 'Location cannot exceed 100 characters' }),
     website: zod.string().url({ message: 'Invalid website URL' }).or(zod.literal('')).optional(),
     socialLinks: SocialLinksSchema.optional(),

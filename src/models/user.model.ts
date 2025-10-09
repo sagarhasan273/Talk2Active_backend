@@ -70,8 +70,28 @@ const UserModalSchema = new Schema<UserType & Document>({
   verified: { type: Boolean, default: false },
   accountActive: { type: Boolean, default: true },
   sessionTimeOut: { type: Number, default: 10, min: 0 },
-  followersCount: { type: Number, default: 0, min: 0 },
-  followingCount: { type: Number, default: 0, min: 0 },
+
+  followerCount: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
+  followingCount: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
+  friendCount: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
+  pendingRequests: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
+
   profileVisibility: {
     type: String,
     enum: ['public', 'private', 'friends-only'],
@@ -143,6 +163,8 @@ const UserModalSchema = new Schema<UserType & Document>({
 UserModalSchema.index({ username: 1 }, { unique: true });
 UserModalSchema.index({ email: 1 }, { unique: true });
 UserModalSchema.index({ userId: 1 }, { unique: true });
+UserModalSchema.index({ followerCount: -1 });
+UserModalSchema.index({ friendCount: -1 });
 
 // Virtuals
 UserModalSchema.virtual('fullProfile').get(function () {
@@ -154,8 +176,11 @@ UserModalSchema.virtual('fullProfile').get(function () {
     profilePhoto: this.profilePhoto,
     coverPhoto: this.coverPhoto,
     bio: this.bio,
-    followersCount: this.followersCount,
-    followingCount: this.followingCount
+    followerCount: this.followerCount,
+    followingCount: this.followingCount,
+    friendCount: this.friendCount,
+    pendingRequests: this.pendingRequests,
+    postCount: this.postCount,
   };
 });
 
