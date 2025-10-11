@@ -121,6 +121,7 @@ export class RelationshipController {
             res.status(400).json({ status: false, message: 'Invalid decline friend request data!' });
             return;
         }
+
         try {
             await this.relationshipService.declineFriendRequest(validatedInput);
 
