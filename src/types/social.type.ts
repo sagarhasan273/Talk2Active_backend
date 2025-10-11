@@ -4,7 +4,7 @@ import { z } from "zod";
 
 // Types for TypeScript
 export type RelationshipType = z.infer<typeof RelationshipSchema>;
-export type CreateRelationship = z.infer<typeof CreateRelationshipSchema>;
+export type RelationshipInput = z.infer<typeof CreateRelationshipSchema>;
 export type FollowRequestInput = z.infer<typeof CreateRelationshipSchema>;
 export type UpdateRelationship = z.infer<typeof UpdateRelationshipSchema>;
 export type RelationshipResponse = z.infer<typeof RelationshipResponseSchema>;

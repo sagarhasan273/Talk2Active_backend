@@ -2,12 +2,12 @@ import { ObjectId } from 'mongodb';
 import { RelationshipStatusEnum, RelationshipTypeEnum } from "src/enums/social.enum";
 import { RelationshipModel } from "src/models/social.model";
 import { UserModel } from "src/models/user.model";
-import { BatchRelationshipStatus, CreateRelationship, RelationshipType, UpdateRelationship, UserStats } from "src/types/social.type";
+import { BatchRelationshipStatus, RelationshipInput, RelationshipType, UpdateRelationship, UserStats } from "src/types/social.type";
 import { AppError } from "src/utils/errors";
 
 export class RelationshipRepository {
     // Repository methods would go here
-    public async createRelationship(relationshipData: CreateRelationship): Promise<void> {
+    public async createRelationship(relationshipData: RelationshipInput): Promise<void> {
         try {
             // Check if a relationship already exists between the two users
             const existingRelationship = await RelationshipModel.findOne({
@@ -41,7 +41,7 @@ export class RelationshipRepository {
         }
     }
 
-    async updateRelationship(relationshipId: string, updateData: UpdateRelationship): Promise<RelationshipType> {
+    async updateRelationship(relationshipId: string, updateData: UpdateRelationship): Promise<void> {
         const relationship = await RelationshipModel.findById(relationshipId);
 
         if (!relationship) {
@@ -58,14 +58,11 @@ export class RelationshipRepository {
         if (!update) {
             throw new AppError('Failed to update relationship', 500, 'Relationship Repository');
         }
-
         await this.updateUserStats(relationship.requester.toString(), relationship.recipient.toString());
-
-        return update;
     }
 
     // Remove relationship (unfollow, remove friend, unblock)
-    async removeRelationship(requesterId: string, recipientId: string, type: RelationshipType): Promise<boolean> {
+    async removeRelationship(requesterId: string, recipientId: string, type: RelationshipType['type']): Promise<boolean> {
         const result = await RelationshipModel.deleteOne({
             requester: requesterId,
             recipient: recipientId,
