@@ -2,7 +2,7 @@ import { ObjectId } from 'mongodb';
 import { RelationshipStatusEnum, RelationshipTypeEnum } from "src/enums/social.enum";
 import { RelationshipModel } from "src/models/social.model";
 import { UserModel } from "src/models/user.model";
-import { CreateRelationship, RelationshipType, UpdateRelationship, UserStats } from "src/types/social.type";
+import { BatchRelationshipStatus, CreateRelationship, RelationshipType, UpdateRelationship, UserStats } from "src/types/social.type";
 import { AppError } from "src/utils/errors";
 
 export class RelationshipRepository {
@@ -180,10 +180,11 @@ export class RelationshipRepository {
     async getUserStats(userId: string): Promise<UserStats> {
 
         const user = await UserModel.findById(userId).select('followerCount followingCount friendCount pendingRequests');
+
         if (!user) {
             throw new AppError('User not found', 404, 'Relationship Repository');
-
         }
+
         return {
             userId,
             followerCount: user.followerCount || 0,
@@ -191,6 +192,30 @@ export class RelationshipRepository {
             friendCount: user.friendCount || 0,
             pendingRequests: user.pendingRequests || 0
         };
+    }
+
+    // get pending friend requests
+    async getPendingRequests(userId: string, page: number = 1, limit: number = 10): Promise<{ relationships: RelationshipType[], total: number, page: number, totalPages: number }> {
+        const skip = (page - 1) * limit;
+
+        const [relationships, total] = await Promise.all([
+            RelationshipModel.find({
+                recipient: userId,
+                type: RelationshipTypeEnum.FRIEND,
+                status: RelationshipStatusEnum.PENDING
+            })
+                .populate('requester', 'username name profilePhoto verified')
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limit),
+            RelationshipModel.countDocuments({
+                recipient: userId,
+                type: RelationshipTypeEnum.FRIEND,
+                status: RelationshipStatusEnum.PENDING
+            })
+        ]);
+
+        return { relationships, page, total, totalPages: Math.ceil(total / limit) };
     }
 
     async updateUserStats(requesterId: string, recipientId: string): Promise<void> {
@@ -258,5 +283,79 @@ export class RelationshipRepository {
                 status: RelationshipStatusEnum.ACCEPTED
             }
         )
+    }
+
+    // check relationship status between two users
+    async getBatchRelationshipStatuses(userId: string, targetUserIds: string[]): Promise<BatchRelationshipStatus> {
+        const objectIds = targetUserIds.map(id => new ObjectId(id));
+
+        const relationships = await RelationshipModel.find({
+            $or: [
+                { requester: userId, recipient: { $in: objectIds } },
+                { requester: { $in: objectIds }, recipient: userId }
+            ]
+        });
+
+        const statuses: BatchRelationshipStatus['statuses'] = targetUserIds.map(targetUserId => {
+            const targetId = new ObjectId(targetUserId);
+
+            const outgoing = relationships.find(rel =>
+                rel.requester.toString() === userId && rel.recipient.toString() === targetUserId
+            );
+
+            const incoming = relationships.find(rel =>
+                rel.requester.toString() === targetUserId && rel.recipient.toString() === userId
+            );
+
+            const following = outgoing?.type === RelationshipTypeEnum.FOLLOW && outgoing.status === RelationshipStatusEnum.ACCEPTED;
+            const followers = incoming?.type === RelationshipTypeEnum.FOLLOW && incoming.status === RelationshipStatusEnum.ACCEPTED;
+            const friends = following && followers;
+            const blocked = outgoing?.type === RelationshipTypeEnum.BLOCK;
+            const pending = outgoing?.type === RelationshipTypeEnum.FRIEND && outgoing.status === RelationshipStatusEnum.PENDING;
+
+            return {
+                targetUserId: targetId,
+                relationship: blocked
+                    ? "blocked"
+                    : pending
+                        ? "pending"
+                        : friends
+                            ? "friends"
+                            : following
+                                ? "following"
+                                : "none" as "friends" | "pending" | "blocked" | "following" | "none",
+                following,
+                followers,
+                friends,
+                blocked,
+                pending
+            };
+        });
+
+        return {
+            userId,
+            targetUserIds: objectIds,
+            statuses
+        };
+    }
+
+    async areFriends(userId1: string, userId2: string): Promise<boolean> {
+        const [userFollowsUser2, user2FollowsUser1] = await Promise.all([
+            RelationshipModel.findOne({
+                requester: userId1,
+                recipient: userId2,
+
+                type: RelationshipTypeEnum.FOLLOW,
+                status: RelationshipStatusEnum.ACCEPTED
+            }),
+            RelationshipModel.findOne({
+                requester: userId2,
+                recipient: userId1,
+                type: RelationshipTypeEnum.FOLLOW,
+                status: RelationshipStatusEnum.ACCEPTED
+            })
+        ]);
+
+        return !!(userFollowsUser2 && user2FollowsUser1);
     }
 }
