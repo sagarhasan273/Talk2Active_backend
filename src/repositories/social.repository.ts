@@ -175,7 +175,6 @@ export class RelationshipRepository {
     }
 
     async getUserStats(userId: string): Promise<UserStats> {
-
         const user = await UserModel.findById(userId).select('followerCount followingCount friendCount pendingRequests');
 
         if (!user) {
@@ -283,7 +282,7 @@ export class RelationshipRepository {
     }
 
     // check relationship status between two users
-    async getBatchRelationshipStatuses(userId: string, targetUserIds: string[]): Promise<BatchRelationshipStatus> {
+    async getBatchRelationshipStatus(userId: string, targetUserIds: string[]): Promise<BatchRelationshipStatus> {
         const objectIds = targetUserIds.map(id => new ObjectId(id));
 
         const relationships = await RelationshipModel.find({
