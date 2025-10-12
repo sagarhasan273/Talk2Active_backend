@@ -48,4 +48,5 @@ PostModelSchema.virtual('authorDetails', {
     options: { select: 'username name profilePhoto verified' }
 });
 
+
 export const PostModel = mongoose.model<PostType & Document>('posts', PostModelSchema);

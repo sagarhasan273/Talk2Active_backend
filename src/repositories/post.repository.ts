@@ -1,7 +1,7 @@
 import { ObjectId } from 'mongodb';
 import { PostModel } from 'src/models/post.model';
 import { ReturnResponseType } from 'src/types/base.type';
-import { CreatePostInput, PostResponseType, UpdatePostInput } from 'src/types/post.type';
+import { CreatePostInput, PostType, UpdatePostInput } from 'src/types/post.type';
 import { AppError } from 'src/utils/errors';
 
 export class PostRepository {
@@ -26,7 +26,7 @@ export class PostRepository {
         }
     }
 
-    public async getPosts(): Promise<PostResponseType[]> {
+    public async getPosts(): Promise<PostType[]> {
         try {
             const posts = await PostModel.find({ isDeleted: false })
                 .populate('authorDetails')

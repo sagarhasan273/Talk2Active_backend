@@ -56,20 +56,24 @@ export const GetPostsSchemaInput = z.object({
 
 // Schema for API response (transformed data)
 export const PostResponseSchema = PostSchema.omit({
-    author: true,
     isDeleted: true,
     deletedAt: true,
     createdAt: true,
     updatedAt: true
 }).extend({
-    id: z.string(),
     authorDetails: z.object({
-        _id: z.string(),
+        _id: objectIdSchema,
         username: z.string(),
         name: z.string().optional(),
         profilePhoto: z.string().url().optional(),
         verified: z.boolean().default(false)
-    }).optional(),
-    // Add like status for the current user
-    isLiked: z.boolean().optional(),
+    }),
+    authorRelationship: z.object({
+        relationship: z.enum(['following', 'followers', 'friends', 'blocked', 'pending', 'none']),
+        following: z.boolean(),
+        followers: z.boolean(),
+        friends: z.boolean(),
+        blocked: z.boolean(),
+        pending: z.boolean(),
+    })
 });

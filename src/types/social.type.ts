@@ -13,3 +13,11 @@ export type RelationshipListResponse = z.infer<typeof RelationshipListSchema>;
 export type BatchRelationshipStatus = z.infer<typeof BatchRelationshipStatusSchema>;
 export type RelationshipStatusEnum = typeof RelationshipStatusEnum[keyof typeof RelationshipStatusEnum];
 export type RelationshipTypeEnum = typeof RelationshipTypeEnum[keyof typeof RelationshipTypeEnum];
+export type AuthorRelationship = {
+    relationship: 'following' | 'followers' | 'friends' | 'blocked' | 'pending' | 'none';
+    following: boolean;
+    followers: boolean;
+    friends: boolean;
+    blocked: boolean;
+    pending: boolean;
+}

@@ -1,9 +1,10 @@
-import { UserRoutes } from "./user.router";
 import express from "express";
-import { SettingRoutes } from "./settings.router";
 import { InventoryRouter } from "./inventory.router";
-import { PostRoutes } from "./post.router";
 import { PostEngagementRoutes } from "./post-engagement.router";
+import { PostRoutes } from "./post.router";
+import { SettingRoutes } from "./settings.router";
+import { RelationshipRouter } from "./social.router";
+import { UserRoutes } from "./user.router";
 
 const app = express();
 
@@ -21,5 +22,8 @@ app.use('/post', postRouters.router);
 
 const postEngagementRouters = new PostEngagementRoutes();
 app.use('/post-engagement', postEngagementRouters.router);
+
+const socialRouters = new RelationshipRouter();
+app.use('/social', socialRouters.router);
 
 export const rootRouter = app;
