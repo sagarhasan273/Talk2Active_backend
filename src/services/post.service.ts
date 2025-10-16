@@ -2,7 +2,7 @@ import { PostEngagementRepository } from "src/repositories/post-engagement.repos
 import { PostRepository } from "src/repositories/post.repository";
 import { RelationshipRepository } from "src/repositories/social.repository";
 import { ReturnResponseType } from "src/types/base.type";
-import { CreatePostInput, GetPostsInput, PostResponseType, PostType, UpdatePostInput } from "src/types/post.type";
+import { CreatePostInput, DeletePostInput, GetPostsInput, PostResponseType, PostType, UpdatePostInput } from "src/types/post.type";
 import { AuthorRelationship } from "src/types/social.type";
 import { AppError } from "src/utils/errors";
 
@@ -161,6 +161,18 @@ export class PostService {
             }
 
             throw new AppError('Failed to update Post!', 500, 'Post Service');
+        }
+    }
+
+    public async deletePost(input: DeletePostInput): Promise<ReturnResponseType> {
+        try {
+            return await this.repository.deletePost(input);
+        } catch (error) {
+            if (error instanceof AppError) {
+                throw error;
+            }
+
+            throw new AppError('Failed to delete Post!', 500, 'Post Service');
         }
     }
 }

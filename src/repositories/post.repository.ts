@@ -1,7 +1,7 @@
 import { ObjectId } from 'mongodb';
 import { PostModel } from 'src/models/post.model';
 import { ReturnResponseType } from 'src/types/base.type';
-import { CreatePostInput, PostType, UpdatePostInput } from 'src/types/post.type';
+import { CreatePostInput, DeletePostInput, PostType, UpdatePostInput } from 'src/types/post.type';
 import { AppError } from 'src/utils/errors';
 
 export class PostRepository {
@@ -53,7 +53,7 @@ export class PostRepository {
         try {
             const { postId, ...updatableFields } = input;
 
-            const user = await PostModel.updateOne(
+            const post = await PostModel.updateOne(
                 { _id: new ObjectId(postId) },
                 {
                     $set: {
@@ -63,7 +63,7 @@ export class PostRepository {
                 }
             );
 
-            if (!user.modifiedCount) {
+            if (!post.modifiedCount) {
                 throw new AppError('Failed to update post', 404, 'Post Repository');
             }
 
@@ -74,6 +74,28 @@ export class PostRepository {
             }
 
             throw new AppError('Failed to update post!', 500, 'Post Repository');
+        }
+    }
+
+    public async deletePost(input: DeletePostInput): Promise<ReturnResponseType> {
+        try {
+            const { postId, ...updatableFields } = input;
+
+            const deletePost = await PostModel.deleteOne(
+                { _id: new ObjectId(postId) }
+            );
+
+            if (!deletePost) {
+                throw new AppError('Failed to delete post', 404, 'Post Repository');
+            }
+
+            return { message: 'Post delete successfully', status: true };
+        } catch (error) {
+            if (error instanceof AppError) {
+                throw error;
+            }
+
+            throw new AppError('Failed to delete post!', 500, 'Post Repository');
         }
     }
 }

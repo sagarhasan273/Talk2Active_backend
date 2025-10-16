@@ -164,3 +164,14 @@ DatabaseError: DatabaseError: User already exists! You can log in instead.
 [2025-10-15 01:22:14] [31merror[39m: Invalid user data provided for update!
 [2025-10-15 01:22:28] [31merror[39m: Invalid user data provided for update!
 [2025-10-15 01:28:23] [31merror[39m: Invalid post create data!
+[2025-10-17 00:53:51] [31merror[39m: Invalid user data provided for update!
+[2025-10-17 00:53:51] [31merror[39m: Invalid user data provided for update!
+[2025-10-17 00:53:52] [31merror[39m: Invalid user data provided for update!
+[2025-10-17 00:53:52] [31merror[39m: Invalid user data provided for update!
+[2025-10-17 00:53:53] [31merror[39m: Invalid user data provided for update!
+[2025-10-17 00:53:53] [31merror[39m: Invalid user data provided for update!
+[2025-10-17 00:53:54] [31merror[39m: Invalid user data provided for update!
+[2025-10-17 00:53:56] [31merror[39m: Invalid user data provided for update!
+[2025-10-17 05:01:28] [31merror[39m: Invalid post update data!
+[2025-10-17 05:44:06] [31merror[39m: Invalid post delete data!
+[2025-10-17 05:44:34] [31merror[39m: Invalid post delete data!

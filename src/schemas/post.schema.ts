@@ -45,11 +45,21 @@ export const CreatePostSchema = PostSchema.omit({
 });
 
 // Schema for updating a post
-export const UpdatePostSchema = PostSchema.partial().extend(
+export const UpdatePostSchema = PostSchema.omit({
+    engagement: true,
+    isDeleted: true,
+    deletedAt: true,
+    createdAt: true,
+    updatedAt: true
+}).extend(
     {
         postId: objectIdSchema
     }
 );
+
+export const DeletePostSchema = z.object({
+    postId: objectIdSchema
+})
 
 export const GetPostsSchemaInput = z.object({
     userId: objectIdSchema
