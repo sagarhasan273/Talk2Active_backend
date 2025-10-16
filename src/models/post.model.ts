@@ -1,6 +1,6 @@
 // models/post.model.ts
 import mongoose, { Schema } from 'mongoose';
-import { PostTagsEnum } from 'src/enums/post.enum';
+import { PostTagsEnum, PostTypeEnum } from 'src/enums/post.enum';
 import { PostType } from 'src/types/post.type';
 
 
@@ -9,8 +9,8 @@ const PostModelSchema = new Schema<PostType & Document>({
     media: {
         type: {
             type: String,
-            enum: ['image', 'video', 'gif', 'none'],
-            default: 'none'
+            enum: Object.values(PostTypeEnum),
+            default: 'quote',
         },
         urls: [{ type: String }],
         content: {
@@ -19,7 +19,8 @@ const PostModelSchema = new Schema<PostType & Document>({
             maxlength: 500,
             trim: true
         },
-        authorName: { type: String }
+        authorName: { type: String, default: 'Unknown' },
+        videoUrl: { type: String, default: '' }
     },
     tags: [{ type: String, enum: Object.values(PostTagsEnum), lowercase: true }],
     engagement: {

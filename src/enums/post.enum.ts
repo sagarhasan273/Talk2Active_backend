@@ -16,3 +16,13 @@ export const PostTagsEnum = Object.freeze({
     BOOKS_AND_LEARNING: 'books & learning',
     LIFESTYLE: 'lifestyle'
 });
+
+export const PostTypeEnum = Object.freeze({
+    IMAGE: 'image',
+    IMAGES: 'images',
+    GIF: 'gif',
+    YOUTUBE: 'youtube',
+    VIDEO: 'video',
+    CAPTION: 'caption',
+    QUOTE: 'quote'
+})

@@ -154,3 +154,13 @@ DatabaseError: DatabaseError: User already exists! You can log in instead.
 [2025-10-12 04:46:38] [31merror[39m: Invalid user data!
 [2025-10-12 04:47:36] [31merror[39m: Invalid user data!
 [2025-10-12 04:49:00] [31merror[39m: User Repository: User doesn't exist!
+[2025-10-13 01:16:16] [31merror[39m: Invalid post create data!
+[2025-10-13 01:16:19] [31merror[39m: Invalid post create data!
+[2025-10-13 01:16:20] [31merror[39m: Invalid post create data!
+[2025-10-13 01:51:18] [31merror[39m: Invalid post create data!
+[2025-10-15 01:19:08] [31merror[39m: User Service: Invalid password
+[2025-10-15 01:21:23] [31merror[39m: Invalid user data provided for update!
+[2025-10-15 01:21:50] [31merror[39m: Invalid user data provided for update!
+[2025-10-15 01:22:14] [31merror[39m: Invalid user data provided for update!
+[2025-10-15 01:22:28] [31merror[39m: Invalid user data provided for update!
+[2025-10-15 01:28:23] [31merror[39m: Invalid post create data!

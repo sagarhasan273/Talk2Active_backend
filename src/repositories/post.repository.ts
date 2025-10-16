@@ -28,9 +28,14 @@ export class PostRepository {
 
     public async getPosts(): Promise<PostType[]> {
         try {
+            const skip = 0;
+            const limit = 20;
+
             const posts = await PostModel.find({ isDeleted: false })
                 .populate('authorDetails')
-                .sort({ createdAt: -1 });
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limit);
 
             return posts.map((post) => {
                 const obj = post.toJSON();
