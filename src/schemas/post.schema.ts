@@ -58,7 +58,8 @@ export const UpdatePostSchema = PostSchema.omit({
 );
 
 export const DeletePostSchema = z.object({
-    postId: objectIdSchema
+    postId: objectIdSchema,
+    author: objectIdSchema
 })
 
 export const GetPostsSchemaInput = z.object({
@@ -75,8 +76,8 @@ export const PostResponseSchema = PostSchema.omit({
     authorDetails: z.object({
         _id: objectIdSchema,
         username: z.string(),
-        name: z.string().optional(),
-        profilePhoto: z.string().url().optional(),
+        name: z.string(),
+        profilePhoto: z.string().url(),
         verified: z.boolean().default(false)
     }),
     authorRelationship: z.object({

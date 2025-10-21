@@ -79,17 +79,24 @@ export class PostRepository {
 
     public async deletePost(input: DeletePostInput): Promise<ReturnResponseType> {
         try {
-            const { postId, ...updatableFields } = input;
+            const { postId, author } = input;
 
-            const deletePost = await PostModel.deleteOne(
-                { _id: new ObjectId(postId) }
-            );
+            const deleteResult = await PostModel.deleteOne({
+                _id: new ObjectId(postId),
+                author: new ObjectId(author)
+            });
 
-            if (!deletePost) {
-                throw new AppError('Failed to delete post', 404, 'Post Repository');
+            if (deleteResult.deletedCount === 0) {
+                const postExists = await PostModel.exists({ _id: new ObjectId(postId) });
+
+                if (!postExists) {
+                    throw new AppError('Post not found', 404, 'Post Repository');
+                } else {
+                    throw new AppError('Unauthorized: You can only delete your own posts', 403, 'Post Repository');
+                }
             }
 
-            return { message: 'Post delete successfully', status: true };
+            return { message: 'Post deleted successfully', status: true };
         } catch (error) {
             if (error instanceof AppError) {
                 throw error;

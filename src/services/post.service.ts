@@ -16,13 +16,11 @@ export class PostService {
         posts: PostType[],
         userId: string
     ): Promise<PostResponseType[]> {
-        // Get all necessary data in parallel
         const [
             likedPosts,
             dislikedPosts,
             pinPosts,
             authorRelationships,
-            authorStats
         ] = await Promise.all([
             this.engagementRepository.likedPosts({
                 postIds: posts.map(p => p.author),
@@ -46,7 +44,6 @@ export class PostService {
 
         const enhancedPosts = posts.map((post) => {
             const authorRelationship = authorRelationships.get(post.author.toString());
-            const authorStat = authorStats.get(post.author.toString());
 
             return {
                 ...post,
@@ -55,7 +52,6 @@ export class PostService {
                 isPinned: pinSet.has(post.author.toString()),
                 authorRelationship: {
                     ...authorRelationship,
-                    stats: authorStat
                 }
             };
         });

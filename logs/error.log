@@ -175,3 +175,6 @@ DatabaseError: DatabaseError: User already exists! You can log in instead.
 [2025-10-17 05:01:28] [31merror[39m: Invalid post update data!
 [2025-10-17 05:44:06] [31merror[39m: Invalid post delete data!
 [2025-10-17 05:44:34] [31merror[39m: Invalid post delete data!
+[2025-10-22 02:51:54] [31merror[39m: Invalid post delete data!
+[2025-10-22 03:08:49] [31merror[39m: Post Repository: Unauthorized: You can only delete your own posts
+[2025-10-22 04:10:01] [31merror[39m: Relationship Repository: Relationship already exists
