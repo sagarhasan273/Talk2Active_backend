@@ -50,12 +50,14 @@ export class UserRepository {
         throw new AppError('Failed to generate user ID', 500, 'User Repository');
       }
 
+      const now = new Date();
+
       // Create user
       const user = await UserModel.create({
         ...input,
         userId: userId,
         password: hashedPassword,
-        lastActive: new Date()
+        lastActive: now,
       });
 
       return user.toJSON();
