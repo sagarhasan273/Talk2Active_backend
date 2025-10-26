@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { CreatePostSchema, DeletePostSchema, GetPostsSchemaInput, UpdatePostSchema } from "src/schemas/post.schema";
+import { CreatePostSchema, DeletePostSchema, GetPostsByUserIdSchemaInput, GetPostsSchemaInput, UpdatePostSchema } from "src/schemas/post.schema";
 import { PostService } from 'src/services/post.service';
 import { AppError } from 'src/utils/errors';
 import logger from 'src/utils/logger';
@@ -99,6 +99,35 @@ export class PostController {
 
         try {
             const posts = await this.service.getPosts(validatedInput.userId);
+            res.status(200).json({ data: posts, status: true });
+        } catch (error) {
+            if (error instanceof AppError) {
+                logger.error(`${error.at}: ${error.message}`);
+                res.status(error.statusCode).json({ message: error.message, status: false });
+                return;
+            }
+            logger.error('An error occurred while fetching posts!');
+            res.status(500).json({ message: 'An error occurred while fetching posts!', status: false });
+        }
+    }
+
+    public async getPostsByUserId(req: Request, res: Response): Promise<void> {
+        let validatedInput;
+        try {
+            const rawInput = req.query.input as string;
+            const parsed = JSON.parse(rawInput);
+            validatedInput = GetPostsByUserIdSchemaInput.parse(parsed);
+            if (!validatedInput.userId) {
+                throw new AppError('UserId is required', 401, 'Post Controller');
+            }
+        } catch (error) {
+            logger.error('Invalid input for posts!');
+            res.status(400).json({ status: false, message: 'Invalid input for posts!' });
+            return;
+        }
+
+        try {
+            const posts = await this.service.getPostsByUserId(validatedInput);
             res.status(200).json({ data: posts, status: true });
         } catch (error) {
             if (error instanceof AppError) {

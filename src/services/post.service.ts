@@ -2,7 +2,7 @@ import { PostEngagementRepository } from "src/repositories/post-engagement.repos
 import { PostRepository } from "src/repositories/post.repository";
 import { RelationshipRepository } from "src/repositories/social.repository";
 import { ReturnResponseType } from "src/types/base.type";
-import { CreatePostInput, DeletePostInput, GetPostsInput, PostResponseType, PostType, UpdatePostInput } from "src/types/post.type";
+import { CreatePostInput, DeletePostInput, GetPostsByUserIdInput, GetPostsInput, PostResponseType, PostType, UpdatePostInput } from "src/types/post.type";
 import { AuthorRelationship } from "src/types/social.type";
 import { AppError } from "src/utils/errors";
 
@@ -130,24 +130,6 @@ export class PostService {
         }
     }
 
-    public async getPosts(userId: GetPostsInput['userId']): Promise<PostResponseType[]> {
-        try {
-            userId;
-
-            if (!userId) throw new AppError('User ID not found in token', 400, 'User Service');
-
-            const posts = await this.repository.getPosts();
-
-            const enhancedPosts = await this.enhancePostsWithEngagementInfo(posts, userId.toString());
-            return enhancedPosts;
-        } catch (error) {
-            if (error instanceof AppError) {
-                throw error;
-            }
-            throw new AppError('Failed to fetch posts', 500, 'Post Service');
-        }
-    }
-
     public async updatePost(input: UpdatePostInput): Promise<ReturnResponseType> {
         try {
             return await this.repository.updatePost(input);
@@ -171,4 +153,43 @@ export class PostService {
             throw new AppError('Failed to delete Post!', 500, 'Post Service');
         }
     }
+
+
+    public async getPosts(userId: GetPostsInput['userId']): Promise<PostResponseType[]> {
+        try {
+            userId;
+
+            if (!userId) throw new AppError('User ID not found in token', 400, 'User Service');
+
+            const posts = await this.repository.getPosts();
+
+            const enhancedPosts = await this.enhancePostsWithEngagementInfo(posts, userId.toString());
+            return enhancedPosts;
+        } catch (error) {
+            if (error instanceof AppError) {
+                throw error;
+            }
+            throw new AppError('Failed to fetch posts', 500, 'Post Service');
+        }
+    }
+
+
+    public async getPostsByUserId(input: GetPostsByUserIdInput): Promise<PostResponseType[]> {
+        try {
+            const { userId } = input;
+
+            if (!userId) throw new AppError('User ID not found in token', 400, 'User Service');
+
+            const posts = await this.repository.getPostsByUserId(input);
+
+            const enhancedPosts = await this.enhancePostsWithEngagementInfo(posts, userId.toString());
+            return enhancedPosts;
+        } catch (error) {
+            if (error instanceof AppError) {
+                throw error;
+            }
+            throw new AppError('Failed to fetch posts', 500, 'Post Service');
+        }
+    }
+
 }

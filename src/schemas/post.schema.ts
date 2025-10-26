@@ -65,6 +65,10 @@ export const DeletePostSchema = z.object({
 export const GetPostsSchemaInput = z.object({
     userId: objectIdSchema
 });
+export const GetPostsByUserIdSchemaInput = z.object({
+    userId: objectIdSchema,
+    type: z.enum(['posts', 'likes', 'dislikes', 'pins'])
+});
 
 // Schema for API response (transformed data)
 export const PostResponseSchema = PostSchema.omit({

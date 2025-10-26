@@ -10,5 +10,6 @@ export class PostRoutes extends BaseRouter {
         this.router.post('/update', authMiddleware, (req, res) => this.postController.updatePost(req, res));
         this.router.delete('/delete', authMiddleware, (req, res) => this.postController.deletePost(req, res))
         this.router.get('/list', authMiddleware, (req, res) => this.postController.getPosts(req, res));
+        this.router.get('/list/profile', authMiddleware, (req, res) => this.postController.getPostsByUserId(req, res));
     }
 }

@@ -1,7 +1,7 @@
 import { ObjectId } from 'mongodb';
 import { PostModel } from 'src/models/post.model';
 import { ReturnResponseType } from 'src/types/base.type';
-import { CreatePostInput, DeletePostInput, PostType, UpdatePostInput } from 'src/types/post.type';
+import { CreatePostInput, DeletePostInput, GetPostsByUserIdInput, PostType, UpdatePostInput } from 'src/types/post.type';
 import { AppError } from 'src/utils/errors';
 
 export class PostRepository {
@@ -23,29 +23,6 @@ export class PostRepository {
                 throw error;
             }
             throw new AppError('Failed to create Post!', 500, 'Post Repository');
-        }
-    }
-
-    public async getPosts(): Promise<PostType[]> {
-        try {
-            const skip = 0;
-            const limit = 20;
-
-            const posts = await PostModel.find({ isDeleted: false })
-                .populate('authorDetails')
-                .sort({ createdAt: -1 })
-                .skip(skip)
-                .limit(limit);
-
-            return posts.map((post) => {
-                const obj = post.toJSON();
-                return {
-                    ...obj,
-                    id: obj._id.toString(),
-                };
-            });
-        } catch (error) {
-            throw new AppError('Failed to fetch posts', 500, 'Post Repository');
         }
     }
 
@@ -103,6 +80,54 @@ export class PostRepository {
             }
 
             throw new AppError('Failed to delete post!', 500, 'Post Repository');
+        }
+    }
+
+    public async getPosts(): Promise<PostType[]> {
+        try {
+            const skip = 0;
+            const limit = 20;
+
+            const posts = await PostModel.find({ isDeleted: false })
+                .populate('authorDetails')
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limit);
+
+            return posts.map((post) => {
+                const obj = post.toJSON();
+                return {
+                    ...obj,
+                    id: obj._id.toString(),
+                };
+            });
+        } catch (error) {
+            throw new AppError('Failed to fetch posts', 500, 'Post Repository');
+        }
+    }
+
+    public async getPostsByUserId(input: GetPostsByUserIdInput): Promise<PostType[]> {
+        try {
+            const skip = 0;
+            const limit = 10;
+
+            const { userId } = input;
+
+            const posts = await PostModel.find({ author: new ObjectId(userId), isDeleted: false })
+                .populate('authorDetails')
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limit);
+
+            return posts.map((post) => {
+                const obj = post.toJSON();
+                return {
+                    ...obj,
+                    id: obj._id.toString(),
+                };
+            });
+        } catch (error) {
+            throw new AppError('Failed to fetch posts', 500, 'Post Repository');
         }
     }
 }
