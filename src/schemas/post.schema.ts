@@ -23,6 +23,7 @@ export const EngagementSchema = z.object({
 
 // Main Post Schema
 export const PostSchema = z.object({
+    postId: objectIdSchema,
     author: objectIdSchema,
     media: MediaSchema.default({ type: 'quote', urls: [], content: '' }),
     tags: z.array(z.enum(Object.values(PostTagsEnum) as [string, ...string[]]))

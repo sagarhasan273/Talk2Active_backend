@@ -2,7 +2,7 @@ import { PostEngagementRepository } from "src/repositories/post-engagement.repos
 import { PostRepository } from "src/repositories/post.repository";
 import { RelationshipRepository } from "src/repositories/social.repository";
 import { ReturnResponseType } from "src/types/base.type";
-import { CreatePostInput, DeletePostInput, GetPostsByUserIdInput, GetPostsInput, PostResponseType, PostType, UpdatePostInput } from "src/types/post.type";
+import { CreatePostInput, DeletePostInput, GetPostsByUserIdInput, GetPostsInput, PostResponseType, UpdatePostInput } from "src/types/post.type";
 import { AuthorRelationship } from "src/types/social.type";
 import { AppError } from "src/utils/errors";
 
@@ -13,7 +13,7 @@ export class PostService {
     private relationshipService = new RelationshipRepository();
 
     async enhancePostsWithEngagementInfo(
-        posts: PostType[],
+        posts: PostResponseType[],
         userId: string
     ): Promise<PostResponseType[]> {
         const [
@@ -23,19 +23,18 @@ export class PostService {
             authorRelationships,
         ] = await Promise.all([
             this.engagementRepository.likedPosts({
-                postIds: posts.map(p => p.author),
+                postIds: posts.map(p => p.postId),
                 userId
             }),
             this.engagementRepository.dislikedPosts({
-                postIds: posts.map(p => p.author),
+                postIds: posts.map(p => p.postId),
                 userId
             }),
             this.engagementRepository.pinPosts({
-                postIds: posts.map(p => p.author),
+                postIds: posts.map(p => p.postId),
                 userId
             }),
             this.getAuthorRelationships(posts, userId),
-            this.getAuthorStats(posts)
         ]);
 
         const likedSet = new Set(likedPosts.map(l => l.postId.toString()));
@@ -47,9 +46,9 @@ export class PostService {
 
             return {
                 ...post,
-                isLiked: likedSet.has(post.author.toString()),
-                isDisliked: dislikedSet.has(post.author.toString()),
-                isPinned: pinSet.has(post.author.toString()),
+                isLiked: likedSet.has(post.postId.toString()),
+                isDisliked: dislikedSet.has(post.postId.toString()),
+                isPinned: pinSet.has(post.postId.toString()),
                 authorRelationship: {
                     ...authorRelationship,
                 }
@@ -60,7 +59,7 @@ export class PostService {
     }
 
     private async getAuthorRelationships(
-        posts: PostType[],
+        posts: PostResponseType[],
         userId: string
     ): Promise<Map<string, AuthorRelationship>> {
         const authorIds = [...new Set(posts.map(post => post.author.toString()))];
@@ -87,34 +86,6 @@ export class PostService {
         });
 
         return relationshipMap;
-    }
-
-    private async getAuthorStats(posts: PostType[]): Promise<Map<string, any>> {
-        const authorIds = [...new Set(posts.map(post => post.author.toString()))];
-
-        if (authorIds.length === 0) {
-            return new Map();
-        }
-
-        const statsMap = new Map();
-
-        // Get stats for all authors in batch (you might need to implement this in RelationshipService)
-        const statsPromises = authorIds.map(authorId =>
-            this.relationshipService.getUserStats(authorId)
-        );
-
-        const statsResults = await Promise.all(statsPromises);
-
-        statsResults.forEach(stat => {
-            statsMap.set(stat.userId.toString(), {
-                followerCount: stat.followerCount,
-                followingCount: stat.followingCount,
-                friendCount: stat.friendCount,
-                pendingRequests: stat.pendingRequests || 0 // Add if you have post counts
-            });
-        });
-
-        return statsMap;
     }
 
     public async createPost(input: CreatePostInput): Promise<any> {

@@ -202,3 +202,10 @@ DatabaseError: DatabaseError: User already exists! You can log in instead.
 [2025-10-27 00:29:14] [31merror[39m: Invalid input for posts!
 [2025-10-27 00:30:07] [31merror[39m: Invalid input for posts!
 [2025-10-27 00:30:38] [31merror[39m: Invalid input for posts!
+[2025-10-28 03:18:21] [31merror[39m: Invalid user data provided for update!
+[2025-10-28 04:01:52] [31merror[39m: Post Service: Failed to fetch posts
+[2025-10-28 04:09:49] [31merror[39m: Post Service: Failed to fetch posts
+[2025-10-30 01:57:57] [31merror[39m: Post Repository: Failed to fetch posts
+[2025-10-30 01:58:57] [31merror[39m: Post Repository: Failed to fetch posts
+[2025-10-30 02:00:04] [31merror[39m: Post Repository: Failed to fetch posts
+[2025-10-30 02:02:51] [31merror[39m: Post Repository: Failed to fetch posts
