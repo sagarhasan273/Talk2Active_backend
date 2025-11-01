@@ -1,5 +1,6 @@
 import { RelationshipStatusEnum, RelationshipTypeEnum } from "src/enums/social.enum";
 import { RelationshipRepository } from "src/repositories/social.repository";
+import { ReturnResponseType } from "src/types/base.type";
 import { BatchRelationshipStatus, RelationshipInput, RelationshipType } from "src/types/social.type";
 import { AppError } from "src/utils/errors";
 
@@ -102,9 +103,20 @@ export class RelationshipService {
         }
     }
 
-    async getFollowers(userId: string, page: number = 1, limit: number = 10): Promise<{ relationships: RelationshipType[], total: number, page: number, totalPages: number }> {
+    async getFollowers(userId: string, page: number = 1, limit: number = 10): Promise<ReturnResponseType> {
         try {
-            return await this.relationshipRepository.getFollowers(userId, page, limit);
+            const { relationships, total, totalPages } = await this.relationshipRepository.getFollowers(userId, page, limit);
+
+            const metaData = {
+                page,
+                limit,
+                total,
+                totalPages,
+                hasNextPage: page < totalPages,
+                hasPrevPage: page > 1
+            }
+
+            return { data: relationships, metaData }
         } catch (error) {
             if (error instanceof AppError) {
                 throw error;
@@ -113,9 +125,20 @@ export class RelationshipService {
         }
     }
 
-    async getFollowing(userId: string, page: number = 1, limit: number = 10): Promise<{ relationships: RelationshipType[], total: number, page: number, totalPages: number }> {
+    async getFollowing(userId: string, page: number = 1, limit: number = 10): Promise<ReturnResponseType> {
         try {
-            return await this.relationshipRepository.getFollowing(userId, page, limit);
+            const { relationships, total, totalPages } = await this.relationshipRepository.getFollowing(userId, page, limit);
+
+            const metaData = {
+                page,
+                limit,
+                total,
+                totalPages,
+                hasNextPage: page < totalPages,
+                hasPrevPage: page > 1
+            }
+
+            return { data: relationships, metaData }
         } catch (error) {
             if (error instanceof AppError) {
                 throw error;
@@ -125,14 +148,48 @@ export class RelationshipService {
 
     }
 
-    async getFriends(userId: string, page: number = 1, limit: number = 10): Promise<{ relationships: RelationshipType[], total: number, page: number, totalPages: number }> {
+    async getFriends(userId: string, page: number = 1, limit: number = 10): Promise<ReturnResponseType> {
         try {
-            return await this.relationshipRepository.getFriends(userId, page, limit);
+            const { relationships, total, totalPages } = await this.relationshipRepository.getFriends(userId, page, limit);
+
+            const metaData = {
+                page,
+                limit,
+                total,
+                totalPages,
+                hasNextPage: page < totalPages,
+                hasPrevPage: page > 1
+            }
+
+            return { data: relationships, metaData }
         } catch (error) {
             if (error instanceof AppError) {
                 throw error;
             }
             throw new AppError('Failed to get friends!', 500, 'Relationship Service');
+        }
+    }
+
+    async getAllRelations(userId: string, page: number = 1, limit: number = 10): Promise<ReturnResponseType> {
+        try {
+            const { relationships, total, totalPages } = await this.relationshipRepository.getAllRelations(userId, page, limit);
+
+            const metaData = {
+                page,
+                limit,
+                total,
+                totalPages,
+                hasNextPage: page < totalPages,
+                hasPrevPage: page > 1
+            }
+
+            return { data: relationships, metaData }
+
+        } catch (error) {
+            if (error instanceof AppError) {
+                throw error;
+            }
+            throw new AppError('Failed to get All Relations!', 500, 'Relationship Service');
         }
     }
 

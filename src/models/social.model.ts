@@ -7,13 +7,13 @@ import { RelationshipType } from 'src/types/social.type';
 const RelationshipSchema: Schema = new Schema<RelationshipType & Document>({
     requester: {
         type: Schema.Types.ObjectId,
-        ref: 'User',
+        ref: 'users',
         required: true,
         index: true
     },
     recipient: {
         type: Schema.Types.ObjectId,
-        ref: 'User',
+        ref: 'users',
         required: true,
         index: true
     },

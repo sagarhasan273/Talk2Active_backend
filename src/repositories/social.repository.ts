@@ -123,6 +123,7 @@ export class RelationshipRepository {
             })
 
                 .populate('recipient', 'username name profilePhoto verified')
+                .select('recipient requester status type')
                 .sort({ createdAt: -1 })
                 .skip(skip)
                 .limit(limit),
@@ -159,6 +160,7 @@ export class RelationshipRepository {
                 }
             )
                 .populate('requester', 'username name profilePhoto verified')
+                .select('recipient requester status type')
                 .sort({ createdAt: -1 })
                 .skip(skip)
                 .limit(limit),
@@ -171,8 +173,73 @@ export class RelationshipRepository {
                 }
             )
         ]);
+
         return { relationships, page, total, totalPages: Math.ceil(total / limit) };
     }
+
+    // Get all relations (friends + followings)
+    async getAllRelations(
+        userId: string,
+        page: number = 1,
+        limit: number = 10
+    ): Promise<{ relationships: any[], total: number, page: number, totalPages: number }> {
+        const skip = (page - 1) * limit;
+
+        // Step 1 — find all accepted follows initiated by this user
+        const userFollowing = await RelationshipModel.find({
+            requester: userId,
+            type: RelationshipTypeEnum.FOLLOW,
+            status: RelationshipStatusEnum.ACCEPTED,
+        }).select('recipient');
+
+        const followingIds = userFollowing.map((rel) => rel.recipient.toString());
+
+        // Step 2 — find mutual follows (friends)
+        const mutuals = await RelationshipModel.find({
+            requester: { $in: followingIds },
+            recipient: userId,
+            type: RelationshipTypeEnum.FOLLOW,
+            status: RelationshipStatusEnum.ACCEPTED,
+        }).select('requester');
+
+        const mutualIds = new Set(mutuals.map((rel) => rel.requester.toString()));
+
+        // Step 3 — fetch all followings, populate recipient
+        const followings = await RelationshipModel.find({
+            requester: userId,
+            type: RelationshipTypeEnum.FOLLOW,
+            status: RelationshipStatusEnum.ACCEPTED,
+        })
+            .populate('recipient', 'username name profilePhoto verified')
+            .select('recipient requester status type')
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit);
+
+        // Step 4 — map with "relation" field
+        const relationships = followings.map((rel) => {
+            const recipientObj: any = rel.recipient;
+            const recipientId = recipientObj && recipientObj.id ? recipientObj.id.toString() : recipientObj.toString();
+            return {
+                ...rel.toObject(),
+                relation: mutualIds.has(recipientId) ? 'friend' : 'following',
+            };
+        });
+
+        const total = await RelationshipModel.countDocuments({
+            requester: userId,
+            type: RelationshipTypeEnum.FOLLOW,
+            status: RelationshipStatusEnum.ACCEPTED,
+        });
+
+        return {
+            relationships,
+            page,
+            total,
+            totalPages: Math.ceil(total / limit),
+        };
+    }
+
 
     async getUserStats(userId: string): Promise<UserStats> {
         const user = await UserModel.findById(userId).select('followerCount followingCount friendCount pendingRequests');

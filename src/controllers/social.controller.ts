@@ -257,7 +257,7 @@ export class RelationshipController {
         const limit = parseInt(req.query.limit as string) || 10;
         try {
             const result = await this.relationshipService.getFriends(userId, page, limit);
-            res.status(200).json({ status: true, data: result });
+            res.status(200).json({ status: true, ...result });
         } catch (error) {
             if (error instanceof AppError) {
                 logger.error(`${error.at}: ${error.message}`);
@@ -266,6 +266,25 @@ export class RelationshipController {
             }
             logger.error('An error occurred while fetching friends!');
             res.status(500).json({ message: 'An error occurred while fetching friends!', status: false });
+        }
+    }
+
+    // get all relations
+    async getAllRelations(req: Request, res: Response) {
+        const userId = req.params.userId;
+        const page = parseInt(req.query.page as string) || 1;
+        const limit = parseInt(req.query.limit as string) || 10;
+        try {
+            const result = await this.relationshipService.getAllRelations(userId, page, limit);
+            res.status(200).json({ status: true, data: result });
+        } catch (error) {
+            if (error instanceof AppError) {
+                logger.error(`${error.at}: ${error.message}`);
+                res.status(error.statusCode).json({ message: error.message, status: false });
+                return;
+            }
+            logger.error('An error occurred while fetching all Relations!');
+            res.status(500).json({ message: 'An error occurred while fetching all Relations!', status: false });
         }
     }
 

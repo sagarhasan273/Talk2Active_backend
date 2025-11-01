@@ -26,6 +26,8 @@ export class RelationshipRouter extends BaseRouter {
         this.router.get('/following/:userId', authMiddleware, (req, res) => this.relationshipController.getFollowing(req, res));
         // Get friends
         this.router.get('/friends/:userId', authMiddleware, (req, res) => this.relationshipController.getFriends(req, res));
+        // get all relations
+        this.router.get('/all-relations/:userId', authMiddleware, (req, res) => this.relationshipController.getAllRelations(req, res));
         // Get pending friend requests
         this.router.get('/friend-requests/:userId', authMiddleware, (req, res) => this.relationshipController.getPendingRequests(req, res));
         // Get user stats
