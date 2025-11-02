@@ -212,3 +212,13 @@ DatabaseError: DatabaseError: User already exists! You can log in instead.
 [2025-11-01 02:16:57] [31merror[39m: Relationship Service: Failed to get friends!
 [2025-11-01 02:19:00] [31merror[39m: Relationship Service: Failed to get friends!
 [2025-11-01 02:20:19] [31merror[39m: Relationship Service: Failed to get friends!
+[2025-11-01 18:49:35] [31merror[39m: Invalid user data provided for update!
+[2025-11-01 18:49:37] [31merror[39m: Invalid user data provided for update!
+[2025-11-01 21:45:44] [31merror[39m: Invalid post create data!
+[2025-11-01 21:46:05] [31merror[39m: Invalid post create data!
+[2025-11-01 21:46:26] [31merror[39m: Invalid post create data!
+[2025-11-02 01:47:01] [31merror[39m: Invalid user data provided for update!
+[2025-11-02 01:47:01] [31merror[39m: Invalid user data provided for update!
+[2025-11-02 18:29:17] [31merror[39m: Invalid unfollow user data!
+[2025-11-02 18:29:19] [31merror[39m: Invalid unfollow user data!
+[2025-11-02 18:29:28] [31merror[39m: Invalid unfollow user data!

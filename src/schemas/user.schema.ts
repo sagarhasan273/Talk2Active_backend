@@ -1,4 +1,5 @@
 // schemas/user.schema.ts
+import { PostTagsEnum } from 'src/enums/post.enum';
 import { z as zod } from 'zod';
 import { objectIdSchema } from './base.schema';
 
@@ -105,6 +106,11 @@ export const UserSchema = zod.object({
     // Appearance types
     primaryColor: zod.enum(['blue', 'cyan', 'orange', 'purple', 'red']).default('blue'),
     themeMode: zod.boolean(),
+
+    // categories
+    tags: zod.array(zod.enum(Object.values(PostTagsEnum) as [string, ...string[]]))
+        .max(30, "Cannot have more than 30 tags")
+        .default([]),
 }).strict();
 
 // Derived Schemas

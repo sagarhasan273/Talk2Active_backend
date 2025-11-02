@@ -218,7 +218,7 @@ export class RelationshipController {
         const limit = parseInt(req.query.limit as string) || 10;
         try {
             const result = await this.relationshipService.getFollowers(userId, page, limit);
-            res.status(200).json({ status: true, data: result });
+            res.status(200).json({ status: true, message: 'Followers fetched successfully', data: result });
         } catch (error) {
             if (error instanceof AppError) {
                 logger.error(`${error.at}: ${error.message}`);
@@ -237,7 +237,7 @@ export class RelationshipController {
         const limit = parseInt(req.query.limit as string) || 10;
         try {
             const result = await this.relationshipService.getFollowing(userId, page, limit);
-            res.status(200).json({ status: true, data: result });
+            res.status(200).json({ status: true, message: 'Following fetched successfully', ...result });
         }
         catch (error) {
             if (error instanceof AppError) {
@@ -257,7 +257,7 @@ export class RelationshipController {
         const limit = parseInt(req.query.limit as string) || 10;
         try {
             const result = await this.relationshipService.getFriends(userId, page, limit);
-            res.status(200).json({ status: true, ...result });
+            res.status(200).json({ status: true, message: 'Friends fetched successfully', ...result });
         } catch (error) {
             if (error instanceof AppError) {
                 logger.error(`${error.at}: ${error.message}`);
@@ -276,7 +276,7 @@ export class RelationshipController {
         const limit = parseInt(req.query.limit as string) || 10;
         try {
             const result = await this.relationshipService.getAllRelations(userId, page, limit);
-            res.status(200).json({ status: true, data: result });
+            res.status(200).json({ status: true, message: 'All relations fetched successfully', ...result });
         } catch (error) {
             if (error instanceof AppError) {
                 logger.error(`${error.at}: ${error.message}`);

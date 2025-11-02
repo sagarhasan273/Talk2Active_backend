@@ -38,6 +38,7 @@ export const PostSchema = z.object({
 
 // Schema for creating a new post (excludes auto-generated fields)
 export const CreatePostSchema = PostSchema.omit({
+    postId: true,
     engagement: true,
     isDeleted: true,
     deletedAt: true,

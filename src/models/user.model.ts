@@ -1,5 +1,6 @@
 // models/user.model.ts
 import mongoose, { Document, Schema } from 'mongoose';
+import { PostTagsEnum } from 'src/enums/post.enum';
 import { SocialLinks, UserType } from 'src/types/user.type';
 
 // Social Links Sub-Schema
@@ -135,6 +136,8 @@ const UserModalSchema = new Schema<UserType & Document>({
     default: 'blue'
   },
   themeMode: { type: Boolean, default: false },
+
+  tags: [{ type: String, enum: Object.values(PostTagsEnum), lowercase: true }],
 }, {
   timestamps: true,
   toJSON: {

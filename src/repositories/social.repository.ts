@@ -2,8 +2,10 @@ import { ObjectId } from 'mongodb';
 import { RelationshipStatusEnum, RelationshipTypeEnum } from "src/enums/social.enum";
 import { RelationshipModel } from "src/models/social.model";
 import { UserModel } from "src/models/user.model";
-import { BatchRelationshipStatus, RelationshipInput, RelationshipType, UpdateRelationship, UserStats } from "src/types/social.type";
+import { AllRelationsType, BatchRelationshipStatus, RelationshipInput, RelationshipType, UpdateRelationship, UserStats } from "src/types/social.type";
 import { AppError } from "src/utils/errors";
+
+export const CommonRelationshipPopulateQuery = 'email username name profilePhoto bio status lastActive verified';
 
 export class RelationshipRepository {
     // Repository methods would go here
@@ -87,17 +89,17 @@ export class RelationshipRepository {
     }
 
     // Get followers of a user
-    async getFollowers(userId: string, page: number = 1, limit: number = 10): Promise<{ relationships: RelationshipType[], total: number, page: number, totalPages: number }> {
+    async getFollowers(userId: string, page: number = 1, limit: number = 10): Promise<{ relationships: AllRelationsType[], total: number, page: number, totalPages: number }> {
 
         const skip = (page - 1) * limit;
 
-        const [relationships, total] = await Promise.all([
+        const [followerships, total] = await Promise.all([
             RelationshipModel.find({
                 recipient: userId,
                 type: RelationshipTypeEnum.FOLLOW,
                 status: RelationshipStatusEnum.ACCEPTED
             })
-                .populate('requester', 'username name profilePhoto verified')
+                .populate('requester', CommonRelationshipPopulateQuery)
                 .sort({ createdAt: -1 })
                 .skip(skip)
                 .limit(limit),
@@ -108,37 +110,117 @@ export class RelationshipRepository {
             })
         ]);
 
+        const relationships = followerships.map((rel) => {
+            const requesterObj: any = rel.requester;
+            const requesterId = requesterObj && requesterObj.id ? requesterObj.id.toString() : requesterObj.toString();
+
+            const base = rel.toObject() as any;
+
+            const isPopulatedUser = requesterObj && typeof requesterObj === 'object' && typeof requesterObj.toHexString !== 'function';
+
+            base.requester = isPopulatedUser ? requesterObj : requesterId;
+
+            return {
+                accountDetails: {
+                    id: base.requester.id,
+                    email: base.requester.email,
+                    username: base.requester.username,
+                    name: base.requester.name,
+                    profilePhoto: base.requester.profilePhoto,
+                    bio: base.requester.bio,
+                    status: base.requester.status,
+                    lastActive: base.requester.lastActive,
+                    verified: base.requester.verified,
+                },
+                type: base.type,
+                status: base.status,
+                relation: 'follower',
+            } as AllRelationsType;
+        });
+
         return { relationships, page, total, totalPages: Math.ceil(total / limit) };
     }
 
-    // Get users followed by a user
-    async getFollowing(userId: string, page: number = 1, limit: number = 10): Promise<{ relationships: RelationshipType[], total: number, page: number, totalPages: number }> {
+    // Get users followed by a user (excluding mutual follows/friends)
+    async getFollowing(userId: string, page: number = 1, limit: number = 10): Promise<{ relationships: AllRelationsType[], total: number, page: number, totalPages: number }> {
         const skip = (page - 1) * limit;
 
-        const [relationships, total] = await Promise.all([
+        // First, get all users that the current user follows
+        const userFollowing = await RelationshipModel.find({
+            requester: userId,
+            type: RelationshipTypeEnum.FOLLOW,
+            status: RelationshipStatusEnum.ACCEPTED
+        }).select('recipient');
+
+        const followingIds = userFollowing.map(rel => rel.recipient);
+
+        // Then, get users who follow back (mutual follows)
+        const mutualFollows = await RelationshipModel.find({
+            requester: { $in: followingIds },
+            recipient: userId,
+            type: RelationshipTypeEnum.FOLLOW,
+            status: RelationshipStatusEnum.ACCEPTED
+        }).select('requester');
+
+        const mutualFollowIds = mutualFollows.map(rel => rel.requester.toString());
+
+        // Filter out mutual follows to get only one-way following relationships
+        const oneWayFollowingIds = followingIds.filter(id =>
+            !mutualFollowIds.includes(id.toString())
+        );
+
+        const [followingships, total] = await Promise.all([
             RelationshipModel.find({
                 requester: userId,
+                recipient: { $in: oneWayFollowingIds },
                 type: RelationshipTypeEnum.FOLLOW,
                 status: RelationshipStatusEnum.ACCEPTED
             })
-
-                .populate('recipient', 'username name profilePhoto verified')
+                .populate('recipient', CommonRelationshipPopulateQuery)
                 .select('recipient requester status type')
                 .sort({ createdAt: -1 })
                 .skip(skip)
                 .limit(limit),
             RelationshipModel.countDocuments({
                 requester: userId,
+                recipient: { $in: oneWayFollowingIds },
                 type: RelationshipTypeEnum.FOLLOW,
                 status: RelationshipStatusEnum.ACCEPTED
             })
         ]);
 
+        const relationships = followingships.map((rel) => {
+            const recipientObj: any = rel.recipient;
+            const recipientId = recipientObj && recipientObj.id ? recipientObj.id.toString() : recipientObj.toString();
+
+            const base = rel.toObject() as any;
+
+            const isPopulatedUser = recipientObj && typeof recipientObj === 'object' && typeof recipientObj.toHexString !== 'function';
+
+            base.recipient = isPopulatedUser ? recipientObj : recipientId;
+
+            return {
+                accountDetails: {
+                    id: base.recipient.id,
+                    email: base.recipient.email,
+                    username: base.recipient.username,
+                    name: base.recipient.name,
+                    profilePhoto: base.recipient.profilePhoto,
+                    bio: base.recipient.bio,
+                    status: base.recipient.status,
+                    lastActive: base.recipient.lastActive,
+                    verified: base.recipient.verified,
+                },
+                type: base.type,
+                status: base.status,
+                relation: 'following', // This indicates one-way following
+            } as AllRelationsType;
+        });
+
         return { relationships, page, total, totalPages: Math.ceil(total / limit) };
     }
-
     // Get user's friends (mutual follows)
-    async getFriends(userId: string, page: number = 1, limit: number = 10): Promise<{ relationships: RelationshipType[], total: number, page: number, totalPages: number }> {
+    async getFriends(userId: string, page: number = 1, limit: number = 10): Promise<{ relationships: AllRelationsType[], total: number, page: number, totalPages: number }> {
         const skip = (page - 1) * limit;
         const userFollowing = await RelationshipModel.find(
             {
@@ -150,7 +232,7 @@ export class RelationshipRepository {
 
         const followingIds = userFollowing.map(rel => rel.recipient);
 
-        const [relationships, total] = await Promise.all([
+        const [friendships, total] = await Promise.all([
             RelationshipModel.find(
                 {
                     requester: { $in: followingIds },
@@ -159,7 +241,7 @@ export class RelationshipRepository {
                     status: RelationshipStatusEnum.ACCEPTED
                 }
             )
-                .populate('requester', 'username name profilePhoto verified')
+                .populate('requester', CommonRelationshipPopulateQuery)
                 .select('recipient requester status type')
                 .sort({ createdAt: -1 })
                 .skip(skip)
@@ -174,6 +256,34 @@ export class RelationshipRepository {
             )
         ]);
 
+        const relationships = friendships.map((rel) => {
+            const requesterObj: any = rel.requester;
+            const requesterId = requesterObj && requesterObj.id ? requesterObj.id.toString() : requesterObj.toString();
+
+            const base = rel.toObject() as any;
+
+            const isPopulatedUser = requesterObj && typeof requesterObj === 'object' && typeof requesterObj.toHexString !== 'function';
+
+            base.requester = isPopulatedUser ? requesterObj : requesterId;
+
+            return {
+                accountDetails: {
+                    id: base.requester.id,
+                    email: base.requester.email,
+                    username: base.requester.username,
+                    name: base.requester.name,
+                    profilePhoto: base.requester.profilePhoto,
+                    bio: base.requester.bio,
+                    status: base.requester.status,
+                    lastActive: base.requester.lastActive,
+                    verified: base.requester.verified,
+                },
+                type: base.type,
+                status: base.status,
+                relation: 'friend',
+            } as AllRelationsType;
+        });
+
         return { relationships, page, total, totalPages: Math.ceil(total / limit) };
     }
 
@@ -182,7 +292,7 @@ export class RelationshipRepository {
         userId: string,
         page: number = 1,
         limit: number = 10
-    ): Promise<{ relationships: any[], total: number, page: number, totalPages: number }> {
+    ): Promise<{ relationships: AllRelationsType[], total: number, page: number, totalPages: number }> {
         const skip = (page - 1) * limit;
 
         // Step 1 — find all accepted follows initiated by this user
@@ -210,7 +320,7 @@ export class RelationshipRepository {
             type: RelationshipTypeEnum.FOLLOW,
             status: RelationshipStatusEnum.ACCEPTED,
         })
-            .populate('recipient', 'username name profilePhoto verified')
+            .populate('recipient', CommonRelationshipPopulateQuery)
             .select('recipient requester status type')
             .sort({ createdAt: -1 })
             .skip(skip)
@@ -220,10 +330,29 @@ export class RelationshipRepository {
         const relationships = followings.map((rel) => {
             const recipientObj: any = rel.recipient;
             const recipientId = recipientObj && recipientObj.id ? recipientObj.id.toString() : recipientObj.toString();
+
+            const base = rel.toObject() as any;
+
+            const isPopulatedUser = recipientObj && typeof recipientObj === 'object' && typeof recipientObj.toHexString !== 'function';
+
+            base.recipient = isPopulatedUser ? recipientObj : recipientId;
+            console.log(base);
             return {
-                ...rel.toObject(),
+                accountDetails: {
+                    id: base.recipient.id,
+                    email: base.recipient.email,
+                    username: base.recipient.username,
+                    name: base.recipient.name,
+                    profilePhoto: base.recipient.profilePhoto,
+                    bio: base.recipient.bio,
+                    status: base.recipient.status,
+                    lastActive: base.recipient.lastActive,
+                    verified: base.recipient.verified,
+                },
+                type: base.type,
+                status: base.status,
                 relation: mutualIds.has(recipientId) ? 'friend' : 'following',
-            };
+            } as AllRelationsType;
         });
 
         const total = await RelationshipModel.countDocuments({

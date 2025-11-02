@@ -1,6 +1,7 @@
 import { RelationshipStatusEnum, RelationshipTypeEnum } from "src/enums/social.enum";
 import { BatchRelationshipStatusSchema, CreateRelationshipSchema, RelationshipListSchema, RelationshipResponseSchema, RelationshipSchema, UpdateRelationshipSchema, UserStatsSchema } from "src/schemas/social.schema";
 import { z } from "zod";
+import { UserType } from "./user.type";
 
 // Types for TypeScript
 export type RelationshipType = z.infer<typeof RelationshipSchema>;
@@ -20,4 +21,10 @@ export type AuthorRelationship = {
     friends: boolean;
     blocked: boolean;
     pending: boolean;
+}
+export type AllRelationsType = {
+    accountDetails: UserType;
+    relation: 'friend' | 'following' | 'follower';
+    status: RelationshipStatusEnum;
+    type: RelationshipTypeEnum;
 }
