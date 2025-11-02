@@ -139,9 +139,10 @@ export const UpdateUserSchema = UserSchema.pick({
     bio: true,
     // dateOfBirth: true,
     location: true,
-    // status: true,
+    status: true,
     website: true,
-}).required({
+    tags: true,
+}).partial().required({
     id: true,
 });
 

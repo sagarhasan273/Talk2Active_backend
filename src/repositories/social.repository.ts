@@ -336,7 +336,7 @@ export class RelationshipRepository {
             const isPopulatedUser = recipientObj && typeof recipientObj === 'object' && typeof recipientObj.toHexString !== 'function';
 
             base.recipient = isPopulatedUser ? recipientObj : recipientId;
-            console.log(base);
+
             return {
                 accountDetails: {
                     id: base.recipient.id,

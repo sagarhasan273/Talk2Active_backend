@@ -11,4 +11,4 @@ export type UserAccountActivateInput = zod.infer<typeof UserAccountActivateSchem
 export type UserAccountSessionInput = zod.infer<typeof UserAccountSessionSchema>;
 export type SocialLinks = zod.infer<typeof SocialLinksSchema>;
 export type UserWithoutPassword = Omit<UserType, 'password' | '__v'>;
-export type UserWithToken = { user: UserWithoutPassword, token: string };
+export type UserAccessToken = { token: string };

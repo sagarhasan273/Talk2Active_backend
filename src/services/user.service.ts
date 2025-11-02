@@ -2,7 +2,7 @@
 
 import { UserRepository } from 'src/repositories/user.repository';
 import { ReturnResponseType } from 'src/types/base.type';
-import { CreateUserInput, LogInUserInput, UpdateUserInput, UserAccountActivateInput, UserAccountSessionInput, UserAccountUpdateInput, UserType, UserWithoutPassword, UserWithToken } from 'src/types/user.type';
+import { CreateUserInput, LogInUserInput, UpdateUserInput, UserAccessToken, UserAccountActivateInput, UserAccountSessionInput, UserAccountUpdateInput, UserType, UserWithoutPassword } from 'src/types/user.type';
 import { AppError } from 'src/utils/errors';
 import { JwtService } from './auth/jwt.service';
 import { PasswordService } from './auth/password.service';
@@ -10,7 +10,7 @@ import { PasswordService } from './auth/password.service';
 export class UserService {
   private repository = new UserRepository();
 
-  public async logInUser(input: LogInUserInput): Promise<UserWithToken> {
+  public async logInUser(input: LogInUserInput): Promise<UserAccessToken> {
     try {
       const user = await this.repository.logInUser(input);
       if (!user) {
@@ -24,7 +24,7 @@ export class UserService {
       const token = JwtService.generateToken(user as UserType);
       if (!token) throw new AppError('Failed to generate token.', 500, 'User Service');
 
-      return { user, token };
+      return { token };
     } catch (error) {
       if (error instanceof AppError) {
         throw error;
@@ -34,7 +34,7 @@ export class UserService {
     }
   }
 
-  public async createUser(input: CreateUserInput): Promise<UserWithToken> {
+  public async createUser(input: CreateUserInput): Promise<UserAccessToken> {
     try {
 
       const user = await this.repository.createUser(input);
@@ -42,7 +42,7 @@ export class UserService {
       const token = JwtService.generateToken(user as UserType);
       if (!token) throw new AppError('Failed to generate token.', 500, 'User Service');
 
-      return { user, token };
+      return { token };
 
     } catch (error) {
       if (error instanceof AppError) {

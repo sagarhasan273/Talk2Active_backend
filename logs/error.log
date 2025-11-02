@@ -222,3 +222,58 @@ DatabaseError: DatabaseError: User already exists! You can log in instead.
 [2025-11-02 18:29:17] [31merror[39m: Invalid unfollow user data!
 [2025-11-02 18:29:19] [31merror[39m: Invalid unfollow user data!
 [2025-11-02 18:29:28] [31merror[39m: Invalid unfollow user data!
+[2025-11-03 02:54:33] [31merror[39m: Invalid user data provided for update!
+[2025-11-03 02:55:39] [31merror[39m: Invalid user data provided for update!
+[2025-11-03 02:55:41] [31merror[39m: Invalid user data provided for update!
+[2025-11-03 02:55:42] [31merror[39m: Invalid user data provided for update!
+[2025-11-03 02:56:49] [31merror[39m: Invalid user data provided for update!
+[2025-11-03 02:56:54] [31merror[39m: Invalid user data provided for update!
+[2025-11-03 02:57:57] [31merror[39m: Invalid user data provided for update!
+[2025-11-03 02:59:29] [31merror[39m: Invalid user data provided for update!
+[2025-11-03 02:59:57] [31merror[39m: Invalid user data provided for update!
+[2025-11-03 03:00:35] [31merror[39m: Invalid user data provided for update!
+[2025-11-03 03:00:49] [31merror[39m: Invalid user data provided for update!
+[2025-11-03 03:30:35] [31merror[39m: Invalid user data provided for update!
+[2025-11-03 03:30:35] [31merror[39m: Invalid user data provided for update!
+[2025-11-03 03:30:42] [31merror[39m: Invalid user data provided for update!
+[2025-11-03 03:30:59] [31merror[39m: Invalid user data provided for update!
+[2025-11-03 03:30:59] [31merror[39m: Invalid user data provided for update!
+[2025-11-03 03:37:18] [31merror[39m: Invalid user data provided for update!
+[2025-11-03 03:37:27] [31merror[39m: Invalid user data provided for update!
+[2025-11-03 03:37:30] [31merror[39m: Invalid user data provided for update!
+[2025-11-03 03:37:50] [31merror[39m: Invalid user data provided for update!
+[2025-11-03 03:40:34] [31merror[39m: Invalid user data provided for update!
+[2025-11-03 03:41:12] [31merror[39m: Invalid user data provided for update!
+[2025-11-03 03:41:22] [31merror[39m: Invalid user data provided for update!
+[2025-11-03 03:41:23] [31merror[39m: Invalid user data provided for update!
+[2025-11-03 03:41:24] [31merror[39m: Invalid user data provided for update!
+[2025-11-03 04:03:38] [31merror[39m: Relationship Service: Failed to get All Relations!
+[2025-11-03 04:05:37] [31merror[39m: Relationship Service: Failed to get All Relations!
+[2025-11-03 04:24:07] [31merror[39m: Invalid input for posts!
+[2025-11-03 04:33:12] [31merror[39m: Invalid input for posts!
+[2025-11-03 04:34:19] [31merror[39m: Invalid input for posts!
+[2025-11-03 04:35:19] [31merror[39m: Invalid input for posts!
+[2025-11-03 04:41:42] [31merror[39m: Invalid input for posts!
+[2025-11-03 04:48:08] [31merror[39m: Invalid input for posts!
+[2025-11-03 04:49:07] [31merror[39m: Invalid input for posts!
+[2025-11-03 04:49:14] [31merror[39m: Invalid input for posts!
+[2025-11-03 04:49:30] [31merror[39m: Invalid input for posts!
+[2025-11-03 04:51:53] [31merror[39m: Invalid input for posts!
+[2025-11-03 04:53:20] [31merror[39m: Relationship Service: Failed to get All Relations!
+[2025-11-03 04:53:20] [31merror[39m: Invalid input for posts!
+[2025-11-03 04:53:50] [31merror[39m: Invalid input for posts!
+[2025-11-03 05:00:08] [31merror[39m: Invalid input for posts!
+[2025-11-03 05:00:13] [31merror[39m: Invalid input for posts!
+[2025-11-03 05:01:19] [31merror[39m: Invalid input for posts!
+[2025-11-03 05:01:56] [31merror[39m: Invalid input for posts!
+[2025-11-03 05:02:09] [31merror[39m: Invalid input for posts!
+[2025-11-03 05:02:56] [31merror[39m: Invalid input for posts!
+[2025-11-03 05:02:57] [31merror[39m: Invalid input for posts!
+[2025-11-03 05:07:52] [31merror[39m: Invalid user data provided for update!
+[2025-11-03 05:25:31] [31merror[39m: Invalid input for posts!
+[2025-11-03 05:25:40] [31merror[39m: Invalid input for posts!
+[2025-11-03 05:26:04] [31merror[39m: Invalid input for posts!
+[2025-11-03 05:26:05] [31merror[39m: Invalid input for posts!
+[2025-11-03 05:26:06] [31merror[39m: Invalid input for posts!
+[2025-11-03 05:27:18] [31merror[39m: Invalid input for posts!
+[2025-11-03 05:29:41] [31merror[39m: Invalid input for posts!

@@ -17,12 +17,12 @@ export class UserController {
       return;
     }
     try {
-      const user = await this.service.logInUser(validatedInput);
-      if (!user) {
+      const result = await this.service.logInUser(validatedInput);
+      if (!result) {
         throw new AppError('Invalid email or password', 401, 'User Service');
       }
 
-      res.status(200).json({ data: user.user, token: user.token, status: true });
+      res.status(200).json({ token: result.token, status: true });
     } catch (error) {
       if (error instanceof AppError) {
         logger.error(`${error.at}: ${error.message}`);
@@ -46,12 +46,12 @@ export class UserController {
     }
 
     try {
-      const user = await this.service.createUser(validatedInput);
-      if (!user) {
+      const result = await this.service.createUser(validatedInput);
+      if (!result) {
         throw new AppError('User did not appeared in controller!', 409, 'User Controller');
       }
 
-      res.status(201).json({ data: user.user, token: user.token, status: true });
+      res.status(201).json({ token: result.token, status: true });
     } catch (error) {
       if (error instanceof AppError) {
         logger.error(`${error.at}: ${error.message}`);
@@ -73,7 +73,7 @@ export class UserController {
 
       const user = await this.service.getUserById(id);
 
-      res.status(200).json({ user, status: true });
+      res.status(200).json({ data: user, status: true });
     } catch (error) {
       if (error instanceof AppError) {
         logger.error(`${error.at}: ${error.message}`);
@@ -95,7 +95,7 @@ export class UserController {
       }
       const user = await this.service.getUser(token);
 
-      res.status(200).json({ user, status: true });
+      res.status(200).json({ data: user, status: true });
     } catch (error) {
       if (error instanceof AppError) {
         logger.error(`${error.at}: ${error.message}`);
@@ -119,9 +119,9 @@ export class UserController {
     }
 
     try {
-      const user = await this.service.updateUser(validatedInput);
+      const result = await this.service.updateUser(validatedInput);
 
-      res.status(201).json(user);
+      res.status(201).json(result);
     } catch (error) {
       if (error instanceof AppError) {
         logger.error(`${error.at}: ${error.message}`);
