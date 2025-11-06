@@ -217,6 +217,9 @@ export class RelationshipController {
         const page = parseInt(req.query.page as string) || 1;
         const limit = parseInt(req.query.limit as string) || 10;
         try {
+            if (!userId) {
+                throw new AppError('User ID is required', 400, 'User Controller');
+            }
             const result = await this.relationshipService.getFollowers(userId, page, limit);
             res.status(200).json({ status: true, message: 'Followers fetched successfully', data: result });
         } catch (error) {
@@ -236,6 +239,9 @@ export class RelationshipController {
         const page = parseInt(req.query.page as string) || 1;
         const limit = parseInt(req.query.limit as string) || 10;
         try {
+            if (!userId) {
+                throw new AppError('User ID is required', 400, 'User Controller');
+            }
             const result = await this.relationshipService.getFollowing(userId, page, limit);
             res.status(200).json({ status: true, message: 'Following fetched successfully', ...result });
         }
@@ -256,6 +262,9 @@ export class RelationshipController {
         const page = parseInt(req.query.page as string) || 1;
         const limit = parseInt(req.query.limit as string) || 10;
         try {
+            if (!userId) {
+                throw new AppError('User ID is required', 400, 'User Controller');
+            }
             const result = await this.relationshipService.getFriends(userId, page, limit);
             res.status(200).json({ status: true, message: 'Friends fetched successfully', ...result });
         } catch (error) {
@@ -275,6 +284,9 @@ export class RelationshipController {
         const page = parseInt(req.query.page as string) || 1;
         const limit = parseInt(req.query.limit as string) || 10;
         try {
+            if (!userId) {
+                throw new AppError('User ID is required', 400, 'User Controller');
+            }
             const result = await this.relationshipService.getAllRelations(userId, page, limit);
             res.status(200).json({ status: true, message: 'All relations fetched successfully', ...result });
         } catch (error) {
@@ -294,6 +306,9 @@ export class RelationshipController {
         const page = parseInt(req.query.page as string) || 1;
         const limit = parseInt(req.query.limit as string) || 10;
         try {
+            if (!userId) {
+                throw new AppError('User ID is required', 400, 'User Controller');
+            }
             const result = await this.relationshipService.getPendingRequests(userId, page, limit);
             res.status(200).json({ status: true, data: result });
         } catch (error) {
@@ -310,6 +325,9 @@ export class RelationshipController {
     async getUserStats(req: Request, res: Response) {
         const userId = req.params.userId;
         try {
+            if (!userId) {
+                throw new AppError('User ID is required', 400, 'User Controller');
+            }
             const result = await this.relationshipService.getUserStats(userId);
             res.status(200).json({ status: true, data: result });
         }

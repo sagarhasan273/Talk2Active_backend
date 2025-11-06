@@ -4,6 +4,7 @@ import { PostEngagementRoutes } from "./post-engagement.router";
 import { PostRoutes } from "./post.router";
 import { SettingRoutes } from "./settings.router";
 import { RelationshipRouter } from "./social.router";
+import { UserSuggestionRoutes } from "./user-suggestion.router";
 import { UserRoutes } from "./user.router";
 
 const app = express();
@@ -25,5 +26,8 @@ app.use('/post-engagement', postEngagementRouters.router);
 
 const socialRouters = new RelationshipRouter();
 app.use('/social', socialRouters.router);
+
+const userSuggestionRouters = new UserSuggestionRoutes();
+app.use('/suggestion', userSuggestionRouters.router);
 
 export const rootRouter = app;
