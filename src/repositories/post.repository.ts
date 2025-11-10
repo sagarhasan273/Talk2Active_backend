@@ -88,7 +88,7 @@ export class PostRepository {
     public async getPosts(): Promise<PostResponseType[]> {
         try {
             const skip = 0;
-            const limit = 20;
+            const limit = 120;
 
             const posts = await PostModel.find({ isDeleted: false })
                 .populate('authorDetails')
@@ -101,7 +101,6 @@ export class PostRepository {
                 return {
                     ...obj,
                     postId: obj._id.toString(),
-                    // ensure populated fields required by PostResponseType are present
                     authorDetails: (obj as any).authorDetails ?? null,
                     authorRelationship: (obj as any).authorRelationship ?? null,
                 } as PostResponseType;

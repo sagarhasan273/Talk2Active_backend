@@ -294,3 +294,89 @@ DatabaseError: DatabaseError: User already exists! You can log in instead.
 [2025-11-05 08:29:45] [31merror[39m: Relationship Service: Failed to get All Relations!
 [2025-11-05 08:29:45] [31merror[39m: Invalid input for posts!
 [2025-11-07 03:24:14] [31merror[39m: Invalid follow user data!
+[2025-11-09 20:25:14] [31merror[39m: Relationship Service: Failed to get NewUsers Suggestions!
+[2025-11-09 20:25:14] [31merror[39m: Invalid input for posts!
+[2025-11-09 20:25:44] [31merror[39m: Relationship Service: Failed to get NewUsers Suggestions!
+[2025-11-09 20:25:44] [31merror[39m: Invalid input for posts!
+[2025-11-09 20:25:47] [31merror[39m: Relationship Service: Failed to get NewUsers Suggestions!
+[2025-11-09 20:25:47] [31merror[39m: Invalid input for posts!
+[2025-11-09 20:26:05] [31merror[39m: Relationship Service: Failed to get NewUsers Suggestions!
+[2025-11-09 20:26:05] [31merror[39m: Invalid input for posts!
+[2025-11-09 20:26:15] [31merror[39m: Relationship Service: Failed to get NewUsers Suggestions!
+[2025-11-09 20:26:15] [31merror[39m: Invalid input for posts!
+[2025-11-09 20:26:17] [31merror[39m: Relationship Service: Failed to get NewUsers Suggestions!
+[2025-11-09 20:26:17] [31merror[39m: Invalid input for posts!
+[2025-11-09 20:26:19] [31merror[39m: Relationship Service: Failed to get NewUsers Suggestions!
+[2025-11-09 20:26:19] [31merror[39m: Invalid input for posts!
+[2025-11-09 20:26:26] [31merror[39m: Relationship Service: Failed to get NewUsers Suggestions!
+[2025-11-09 20:26:26] [31merror[39m: Invalid input for posts!
+[2025-11-09 20:26:29] [31merror[39m: Relationship Service: Failed to get NewUsers Suggestions!
+[2025-11-09 20:26:29] [31merror[39m: Invalid input for posts!
+[2025-11-09 20:26:44] [31merror[39m: Relationship Service: Failed to get NewUsers Suggestions!
+[2025-11-09 20:26:44] [31merror[39m: Invalid input for posts!
+[2025-11-09 20:26:59] [31merror[39m: Relationship Service: Failed to get NewUsers Suggestions!
+[2025-11-09 20:26:59] [31merror[39m: Invalid input for posts!
+[2025-11-09 20:27:13] [31merror[39m: Relationship Service: Failed to get NewUsers Suggestions!
+[2025-11-09 20:27:13] [31merror[39m: Invalid input for posts!
+[2025-11-09 20:27:46] [31merror[39m: Relationship Service: Failed to get NewUsers Suggestions!
+[2025-11-09 20:27:46] [31merror[39m: Invalid input for posts!
+[2025-11-09 20:27:47] [31merror[39m: Relationship Service: Failed to get NewUsers Suggestions!
+[2025-11-09 20:27:47] [31merror[39m: Invalid input for posts!
+[2025-11-09 20:27:48] [31merror[39m: Relationship Service: Failed to get NewUsers Suggestions!
+[2025-11-09 20:27:48] [31merror[39m: Invalid input for posts!
+[2025-11-09 20:27:48] [31merror[39m: Relationship Service: Failed to get NewUsers Suggestions!
+[2025-11-09 20:27:48] [31merror[39m: Invalid input for posts!
+[2025-11-09 20:27:49] [31merror[39m: Relationship Service: Failed to get NewUsers Suggestions!
+[2025-11-09 20:27:49] [31merror[39m: Invalid input for posts!
+[2025-11-09 20:27:49] [31merror[39m: Relationship Service: Failed to get NewUsers Suggestions!
+[2025-11-09 20:27:49] [31merror[39m: Invalid input for posts!
+[2025-11-09 20:27:49] [31merror[39m: Relationship Service: Failed to get NewUsers Suggestions!
+[2025-11-09 20:27:49] [31merror[39m: Invalid input for posts!
+[2025-11-09 20:27:50] [31merror[39m: Relationship Service: Failed to get NewUsers Suggestions!
+[2025-11-09 20:27:50] [31merror[39m: Invalid input for posts!
+[2025-11-09 20:27:50] [31merror[39m: Relationship Service: Failed to get NewUsers Suggestions!
+[2025-11-09 20:27:50] [31merror[39m: Invalid input for posts!
+[2025-11-09 20:27:50] [31merror[39m: Relationship Service: Failed to get NewUsers Suggestions!
+[2025-11-09 20:27:50] [31merror[39m: Invalid input for posts!
+[2025-11-09 20:27:51] [31merror[39m: Relationship Service: Failed to get NewUsers Suggestions!
+[2025-11-09 20:27:51] [31merror[39m: Invalid input for posts!
+[2025-11-09 20:27:51] [31merror[39m: Relationship Service: Failed to get NewUsers Suggestions!
+[2025-11-09 20:27:51] [31merror[39m: Invalid input for posts!
+[2025-11-09 20:28:01] [31merror[39m: Relationship Service: Failed to get NewUsers Suggestions!
+[2025-11-09 20:28:01] [31merror[39m: Invalid input for posts!
+[2025-11-09 20:28:48] [31merror[39m: Relationship Service: Failed to get NewUsers Suggestions!
+[2025-11-09 20:28:48] [31merror[39m: Invalid input for posts!
+[2025-11-09 20:28:50] [31merror[39m: Relationship Service: Failed to get NewUsers Suggestions!
+[2025-11-09 20:28:50] [31merror[39m: Invalid input for posts!
+[2025-11-09 20:29:00] [31merror[39m: Relationship Service: Failed to get NewUsers Suggestions!
+[2025-11-09 20:29:00] [31merror[39m: Invalid input for posts!
+[2025-11-09 20:29:22] [31merror[39m: Relationship Service: Failed to get NewUsers Suggestions!
+[2025-11-09 20:29:22] [31merror[39m: Invalid input for posts!
+[2025-11-09 20:29:45] [31merror[39m: Relationship Service: Failed to get NewUsers Suggestions!
+[2025-11-09 20:29:45] [31merror[39m: Invalid input for posts!
+[2025-11-09 20:29:48] [31merror[39m: Relationship Service: Failed to get NewUsers Suggestions!
+[2025-11-09 20:29:48] [31merror[39m: Invalid input for posts!
+[2025-11-09 20:29:57] [31merror[39m: Relationship Service: Failed to get NewUsers Suggestions!
+[2025-11-09 20:29:57] [31merror[39m: Invalid input for posts!
+[2025-11-09 20:30:11] [31merror[39m: Relationship Service: Failed to get NewUsers Suggestions!
+[2025-11-09 20:30:11] [31merror[39m: Invalid input for posts!
+[2025-11-09 20:31:01] [31merror[39m: Relationship Service: Failed to get NewUsers Suggestions!
+[2025-11-09 20:31:01] [31merror[39m: Invalid input for posts!
+[2025-11-09 20:33:33] [31merror[39m: Relationship Service: Failed to get NewUsers Suggestions!
+[2025-11-09 20:33:33] [31merror[39m: Invalid input for posts!
+[2025-11-09 20:34:16] [31merror[39m: Relationship Service: Failed to get NewUsers Suggestions!
+[2025-11-09 20:34:16] [31merror[39m: Invalid input for posts!
+[2025-11-09 20:34:31] [31merror[39m: Relationship Service: Failed to get NewUsers Suggestions!
+[2025-11-09 20:34:31] [31merror[39m: Invalid input for posts!
+[2025-11-09 20:35:04] [31merror[39m: Relationship Service: Failed to get NewUsers Suggestions!
+[2025-11-09 20:35:04] [31merror[39m: Invalid input for posts!
+[2025-11-09 20:35:08] [31merror[39m: Relationship Service: Failed to get NewUsers Suggestions!
+[2025-11-09 20:35:08] [31merror[39m: Invalid input for posts!
+[2025-11-11 00:27:46] [31merror[39m: Relationship Service: Failed to get NewUsers Suggestions!
+[2025-11-11 00:27:46] [31merror[39m: Invalid input for posts!
+[2025-11-11 00:27:49] [31merror[39m: Relationship Service: Failed to get NewUsers Suggestions!
+[2025-11-11 00:27:49] [31merror[39m: Invalid input for posts!
+[2025-11-11 01:30:47] [31merror[39m: Relationship Service: Failed to get NewUsers Suggestions!
+[2025-11-11 01:30:47] [31merror[39m: Invalid input for posts!
+[2025-11-11 01:30:49] [31merror[39m: Relationship Service: Failed to get NewUsers Suggestions!
+[2025-11-11 01:30:49] [31merror[39m: Invalid input for posts!
