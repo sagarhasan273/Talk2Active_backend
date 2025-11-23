@@ -1,4 +1,5 @@
 import express from "express";
+import { ChatRouter } from "./chat.router";
 import { InventoryRouter } from "./inventory.router";
 import { PostEngagementRoutes } from "./post-engagement.router";
 import { PostRoutes } from "./post.router";
@@ -29,5 +30,8 @@ app.use('/social', socialRouters.router);
 
 const userSuggestionRouters = new UserSuggestionRoutes();
 app.use('/suggestion', userSuggestionRouters.router);
+
+const chatRouters = new ChatRouter();
+app.use('/room', chatRouters.router);
 
 export const rootRouter = app;

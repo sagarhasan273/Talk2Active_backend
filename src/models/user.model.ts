@@ -163,11 +163,7 @@ const UserModalSchema = new Schema<UserType & Document>({
 });
 
 // Indexes
-UserModalSchema.index({ username: 1 }, { unique: true });
-UserModalSchema.index({ email: 1 }, { unique: true });
-UserModalSchema.index({ userId: 1 }, { unique: true });
-UserModalSchema.index({ followerCount: -1 });
-UserModalSchema.index({ friendCount: -1 });
+UserModalSchema.index({ createdAt: -1 });
 
 // Virtuals
 UserModalSchema.virtual('fullProfile').get(function () {

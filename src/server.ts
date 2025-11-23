@@ -1,13 +1,17 @@
 import cors from 'cors';
 import express from 'express';
+import { createServer } from 'http';
+import { Server } from 'socket.io';
 import { closeDatabaseConnection } from 'src/database';
 import { databaseMiddleware } from 'src/middlewares/database.middleware';
 import logger from 'src/utils/logger';
 import { errorMiddleware } from './middlewares/error.middleware';
 import { rootRouter } from './routes/root.router';
+import setupVoiceHandlers from './socket/voice-handler';
 import { getLocalIp } from './utils/system';
 
 const app = express();
+const server = createServer(app);
 
 app.use(
   cors({
@@ -22,8 +26,18 @@ app.use(errorMiddleware);
 
 app.use('/', rootRouter);
 
+// socket.io setup
+const io = new Server(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"]
+  }
+});
+
+setupVoiceHandlers(io);
+
 const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 5001;
-const server = app.listen(PORT, () => {
+server.listen(PORT, () => {
   logger.info(`Server is running at http://${getLocalIp()}:${PORT}`);
 });
 

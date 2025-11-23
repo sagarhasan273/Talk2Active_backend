@@ -165,3 +165,22 @@ export const UserAccountSessionSchema = UserSchema.pick({
     sessionTimeOut: true,
 }).required({ id: true })
 
+export const ParticipantUserSchema = UserSchema.pick({
+    id: true,
+    userId: true,
+    username: true,
+    email: true,
+    name: true,
+    profilePhoto: true,
+    coverPhoto: true,
+    bio: true,
+    // dateOfBirth: true,
+    location: true,
+    status: true,
+    website: true,
+    tags: true,
+}).partial().required({
+    id: true,
+}).extend({ roomId: zod.string() });
+
+

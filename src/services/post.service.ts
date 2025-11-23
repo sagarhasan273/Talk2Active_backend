@@ -90,8 +90,8 @@ export class PostService {
 
     public async createPost(input: CreatePostInput): Promise<any> {
         try {
-            const updatedPost = await this.repository.createPost(input);
-            return updatedPost;
+            const createdPost = await this.repository.createPost(input);
+            return createdPost;
         }
         catch (error) {
             if (error instanceof AppError) {
