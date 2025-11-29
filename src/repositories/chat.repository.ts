@@ -44,6 +44,26 @@ export class ChatRepository {
         }
     };
 
+    public async getRoomById(roomId: string): Promise<RoomResponse> {
+        try {
+            const room = await RoomModel.findOne
+                ({ _id: roomId, isActive: true })
+
+                .populate('host', commonUserQuery)
+                .populate('currentParticipants.user', commonUserQuery)
+                .sort({ createdAt: -1 });
+            if (!room) {
+                throw new AppError('Room not found', 404, 'Chat Repository');
+            }
+            return room.toJSON() as unknown as RoomResponse;
+        } catch (error) {
+            if (error instanceof AppError) {
+                throw error;
+            }
+            throw new AppError('Failed to get Room by ID!', 500, 'Chat Repository');
+        }
+    }
+
     public async joinRoom(roomId: string, userId: string): Promise<void> {
         try {
             const room = await RoomModel.findById(roomId);

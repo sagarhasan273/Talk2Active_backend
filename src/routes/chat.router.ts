@@ -10,6 +10,9 @@ export class ChatRouter extends BaseRouter {
         this.router.get('/list', (req, res) =>
             this.chatController.getRooms(req, res)
         );
+        this.router.get('/:roomId', (req, res) =>
+            this.chatController.getRoomById(req, res)
+        );
         this.router.post('/create', (req, res) =>
             this.chatController.createRoom(req, res)
         );

@@ -50,6 +50,23 @@ export class ChatController {
         }
     }
 
+    public async getRoomById(req: Request, res: Response) {
+        const roomId = req.params.roomId;
+        try {
+            const room = await this.chatService.getRoomById(roomId);
+            res.status(200).json({ status: true, message: 'Room fetched successfully', data: room });
+        }
+        catch (error) {
+            if (error instanceof AppError) {
+                logger.error(`${error.at}: ${error.message}`);
+                res.status(error.statusCode).json({ message: error.message, status: false });
+                return;
+            }
+            logger.error('An error occurred while fetching room!');
+            res.status(500).json({ message: 'An error occurred while fetching room!', status: false });
+        }
+    }
+
     public async joinRoom(req: Request, res: Response) {
         const roomId = req.params.roomId;
         const userId = req.body.userId;

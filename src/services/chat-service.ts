@@ -29,6 +29,19 @@ export class ChatService {
         }
     }
 
+    async getRoomById(roomId: string): Promise<RoomResponse> {
+        try {
+            const room = await this.chatRepository.getRoomById(roomId);
+            return room;
+        } catch (error) {
+            if (error instanceof AppError) {
+
+                throw error;
+            }
+            throw new AppError('Failed to get room by ID!', 500, 'Chat Service');
+        }
+    }
+
     async joinRoom(roomId: string, userId: string): Promise<void> {
         try {
             await this.chatRepository.joinRoom(roomId, userId);
