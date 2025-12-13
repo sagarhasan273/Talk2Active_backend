@@ -36,7 +36,7 @@ const io = new Server(server, {
 
 setupVoiceHandlers(io);
 
-const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 5001;
+const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 5000;
 server.listen(PORT, () => {
   logger.info(`Server is running at http://${getLocalIp()}:${PORT}`);
 });
