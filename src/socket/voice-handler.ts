@@ -1,5 +1,6 @@
 import { Server } from 'socket.io';
 import logger from 'src/utils/logger';
+import { v4 as uuidv4 } from 'uuid';
 
 interface WebRTCData {
     target: string;
@@ -126,6 +127,28 @@ function setupVoiceHandlers(io: Server): void {
             });
         });
 
+        // Handle message broadcasting (remain the same) 
+        socket.on('send-private-message', (data: { targetSocketId: string; message: string; name: string }) => {
+            const { targetSocketId, message, name } = data;
+            socket.to(targetSocketId).emit('receive-private-message', {
+                message,
+                senderSocketId: socket.id,
+                name
+            });
+        });
+
+        socket.on('send-group-message', (data) => {
+            const { roomId } = data;
+            const messageId = uuidv4();
+            socket.to(roomId).emit('receive-group-message', {
+                ...data,
+                senderSocketId: socket.id,
+                id: messageId
+            });
+        });
+
+
+        // Handle leaving voice room
         socket.on('leave-voice-room', (data: { roomId: string, userId: string, name: string }) => {
             const { roomId, userId, name } = data;
             const userInfo = usersData.get(socket.id);
