@@ -34,11 +34,11 @@ function setupVoiceHandlers(io: Server): void {
 
     io.on('connection', (socket) => {
         socket.on('join-voice-room', (data: UserData) => {
-            const { roomId, userId, ...userBasicInfo } = data;
+            const { roomId, userId, name, ...userBasicInfo } = data;
 
             try {
                 // Store user data
-                usersData.set(socket.id, { roomId, userId, ...userBasicInfo });
+                usersData.set(socket.id, { roomId, userId, name, ...userBasicInfo });
 
                 // Leave previous room if any
                 if (usersRooms.has(socket.id)) {
@@ -97,6 +97,7 @@ function setupVoiceHandlers(io: Server): void {
                 socket.to(roomId).emit('user-joined', {
                     userId,
                     socketId: socket.id,
+                    name,
                     ...userBasicInfo,
                 });
             } catch (error) {
@@ -129,11 +130,13 @@ function setupVoiceHandlers(io: Server): void {
 
         // Handle message broadcasting (remain the same) 
         socket.on('send-private-message', (data: { targetSocketId: string; message: string; name: string }) => {
-            const { targetSocketId, message, name } = data;
+            const { targetSocketId, } = data;
+            const messageId = uuidv4();
+
             socket.to(targetSocketId).emit('receive-private-message', {
-                message,
+                ...data,
                 senderSocketId: socket.id,
-                name
+                id: messageId
             });
         });
 
@@ -174,9 +177,8 @@ function setupVoiceHandlers(io: Server): void {
         });
 
         // Handle audio toggle broadcast (NEW)
-        socket.on('user-audio-toggle', (data: { roomId: string; isMuted: boolean, name: string }) => {
-            const { roomId, isMuted, name } = data;
-
+        socket.on('user-audio-toggle', (data: { roomId: string; socketId: string, isMuted: boolean, name: string }) => {
+            const { roomId, isMuted, name, socketId } = data;
             // Update the mute status in the server-side map
             const userData = usersData.get(socket.id);
             if (userData) {
@@ -185,7 +187,7 @@ function setupVoiceHandlers(io: Server): void {
 
             // Broadcast the change to all others in the room
             socket.to(roomId).emit('user-audio-toggled', {
-                socketId: socket.id,
+                socketId,
                 isMuted,
                 name
             });
@@ -202,7 +204,7 @@ function setupVoiceHandlers(io: Server): void {
             }
 
             // Broadcast the change to all others in the room
-            socket.to(roomId).emit('user-status-select', {
+            socket.to(roomId).emit('user-status-selected', {
                 socketId: socket.id,
                 status,
                 name
