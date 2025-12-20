@@ -7,7 +7,7 @@ import { databaseMiddleware } from 'src/middlewares/database.middleware';
 import logger from 'src/utils/logger';
 import { errorMiddleware } from './middlewares/error.middleware';
 import { rootRouter } from './routes/root.router';
-import setupVoiceHandlers from './socket/voice-handler';
+import setupVoiceHandlers from './socket/socket-setup-handler';
 import { getLocalIp } from './utils/system';
 
 const app = express();
@@ -29,7 +29,7 @@ app.use('/', rootRouter);
 // socket.io setup
 const io = new Server(server, {
   cors: {
-    origin: "*",
+    origin: [`http://${getLocalIp()}:8081`, 'http://localhost:8081'],
     methods: ["GET", "POST"]
   }
 });

@@ -92,13 +92,41 @@ function setupVoiceHandlers(io: Server): void {
                     roomId
                 });
 
-
                 // Notify others about the new user
                 socket.to(roomId).emit('user-joined', {
                     userId,
                     socketId: socket.id,
                     name,
                     ...userBasicInfo,
+                });
+
+                const userInfo = {
+                    name: name,
+                    userId: userId,
+                    avatar: data.profilePhoto,
+                }
+                const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+                socket.to(roomId).emit('receive-group-message', {
+                    id: uuidv4(),
+                    sender: 'them',
+                    type: 'system',
+                    systemMessageType: 'user-joined',
+                    text: `${name} has joined the voice room.`,
+                    senderSocketId: socket.id,
+                    userInfo,
+                    time,
+                });
+
+                socket.emit('receive-group-message', {
+                    id: uuidv4(),
+                    sender: 'me',
+                    type: 'system',
+                    systemMessageType: 'you-joined',
+                    text: `You are in the voice room.`,
+                    senderSocketId: socket.id,
+                    userInfo,
+                    time,
                 });
             } catch (error) {
                 logger.error('❌ Error joining voice room:', error);
@@ -174,11 +202,28 @@ function setupVoiceHandlers(io: Server): void {
                 socketId: socket.id,
                 name: userInfo?.name || name
             });
+
+            const messageId = uuidv4();
+
+            socket.to(roomId).emit('receive-group-message', {
+                sender: 'them',
+                text: `${name} has left the voice room.`,
+                senderSocketId: socket.id,
+                id: messageId,
+                type: 'system',
+                systemMessageType: 'user-left',
+                userInfo: {
+                    name: name,
+                    userId,
+                },
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            });
         });
 
         // Handle audio toggle broadcast (NEW)
-        socket.on('user-audio-toggle', (data: { roomId: string; socketId: string, isMuted: boolean, name: string }) => {
-            const { roomId, isMuted, name, socketId } = data;
+        socket.on('user-audio-toggle', (data: { roomId: string; isMuted: boolean, name: string }) => {
+            const { roomId, isMuted, name } = data;
+
             // Update the mute status in the server-side map
             const userData = usersData.get(socket.id);
             if (userData) {
@@ -187,7 +232,7 @@ function setupVoiceHandlers(io: Server): void {
 
             // Broadcast the change to all others in the room
             socket.to(roomId).emit('user-audio-toggled', {
-                socketId,
+                socketId: socket.id,
                 isMuted,
                 name
             });
