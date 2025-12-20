@@ -682,3 +682,19 @@ DatabaseError: DatabaseError: User already exists! You can log in instead.
 [2025-12-20 22:30:23] [31merror[39m: Chat Repository: User already joined the room
 [2025-12-20 22:30:24] [31merror[39m: Chat Repository: User already joined the room
 [2025-12-20 23:09:19] [31merror[39m: Chat Repository: User already joined the room
+[2025-12-20 23:59:57] [31merror[39m: Relationship Service: Failed to get All Relations!
+[2025-12-20 23:59:59] [31merror[39m: Relationship Service: Failed to get All Relations!
+[2025-12-21 00:03:44] [31merror[39m: Relationship Service: Failed to get All Relations!
+[2025-12-21 00:03:56] [31merror[39m: Relationship Service: Failed to get All Relations!
+[2025-12-21 00:04:08] [31merror[39m: Relationship Service: Failed to get All Relations!
+[2025-12-21 00:04:10] [31merror[39m: Relationship Service: Failed to get All Relations!
+[2025-12-21 00:45:09] [31merror[39m: Chat Repository: User already joined the room
+[2025-12-21 01:10:55] [31merror[39m: Chat Repository: User already joined the room
+[2025-12-21 01:25:11] [31merror[39m: Chat Repository: Failed to leave Room!
+[2025-12-21 01:25:23] [31merror[39m: Chat Repository: User already joined the room
+[2025-12-21 01:27:45] [31merror[39m: Chat Repository: User already joined the room
+[2025-12-21 01:28:18] [31merror[39m: Chat Repository: User already joined the room
+[2025-12-21 01:31:01] [31merror[39m: Chat Repository: User already joined the room
+[2025-12-21 01:36:28] [31merror[39m: Chat Repository: User already joined the room
+[2025-12-21 02:11:04] [31merror[39m: Chat Repository: User already joined the room
+[2025-12-21 02:33:12] [31merror[39m: Chat Repository: User already joined the room

@@ -1,288 +1,142 @@
 import { Server } from 'socket.io';
-import logger from 'src/utils/logger';
-import { v4 as uuidv4 } from 'uuid';
+import {
+    AudioToggleData,
+    GroupMessageData,
+    PrivateMessageData,
+    StatusSelectData,
+    UserData,
+    WebRTCData
+} from '../types/socket.type';
+import { MessageHandler } from './message-handler.socket';
+import { UserStatusManager } from './user-status-manager.socket';
+import { VoiceRoomManager } from './voice-room-manager.socket';
+import { WebRTCSignaling } from './webRTC-Signaling.socket';
 
-interface WebRTCData {
-    target: string;
-    offer?: RTCSessionDescriptionInit;
-    answer?: RTCSessionDescriptionInit;
-    candidate?: RTCIceCandidateInit;
-    sender?: string;
+export class SocketHandler {
+    private io: Server;
+    private voiceRoomManager: VoiceRoomManager;
+    private webRTCSignaling: WebRTCSignaling;
+    private messageHandler: MessageHandler;
+    private userStatusManager: UserStatusManager;
+
+    constructor(io: Server) {
+        this.io = io;
+        this.voiceRoomManager = new VoiceRoomManager(io);
+        this.webRTCSignaling = new WebRTCSignaling(io);
+        this.messageHandler = new MessageHandler(io);
+        this.userStatusManager = new UserStatusManager(io, this.voiceRoomManager);
+
+        this.setupEventHandlers(io);
+    }
+
+    private setupEventHandlers(io: Server): void {
+        io.on('connection', (socket) => {
+            console.log('🟢 User connected:', socket.id);
+
+            // Voice Room Events
+            socket.on('join-voice-room', (data: UserData) => {
+                this.voiceRoomManager.handleJoinVoiceRoom(socket, data);
+            });
+
+            socket.on('leave-voice-room', (data: { roomId: string, userId: string, name: string }) => {
+                this.voiceRoomManager.handleLeaveVoiceRoom(socket, data);
+            });
+
+            // WebRTC Signaling Events
+            socket.on('webrtc-offer', (data: WebRTCData) => {
+                this.webRTCSignaling.handleOffer(socket, data);
+            });
+
+            socket.on('webrtc-answer', (data: WebRTCData) => {
+                this.webRTCSignaling.handleAnswer(socket, data);
+            });
+
+            socket.on('webrtc-ice-candidate', (data: WebRTCData) => {
+                this.webRTCSignaling.handleIceCandidate(socket, data);
+            });
+
+            // Message Events
+            socket.on('send-private-message', (data: PrivateMessageData) => {
+                this.messageHandler.handlePrivateMessage(socket, data);
+            });
+
+            socket.on('send-group-message', (data: GroupMessageData) => {
+                this.messageHandler.handleGroupMessage(socket, data);
+            });
+
+            // User Status Events
+            socket.on('user-audio-toggle', (data: AudioToggleData) => {
+                this.userStatusManager.handleAudioToggle(socket, data);
+            });
+
+            socket.on('user-status-select', (data: StatusSelectData) => {
+                this.userStatusManager.handleStatusSelect(socket, data);
+            });
+
+            // Disconnection
+            socket.on('disconnect', () => {
+                this.voiceRoomManager.handleDisconnect(socket);
+            });
+
+            // Error handling
+            socket.on('error', (error) => {
+                console.error('Socket error:', error);
+            });
+        });
+    }
+
+    /**
+     * Get Voice Room Manager instance
+     */
+    public getVoiceRoomManager(): VoiceRoomManager {
+        return this.voiceRoomManager;
+    }
+
+    /**
+     * Get WebRTC Signaling instance
+     */
+    public getWebRTCSignaling(): WebRTCSignaling {
+        return this.webRTCSignaling;
+    }
+
+    /**
+     * Get Message Handler instance
+     */
+    public getMessageHandler(): MessageHandler {
+        return this.messageHandler;
+    }
+
+    /**
+     * Get User Status Manager instance
+     */
+    public getUserStatusManager(): UserStatusManager {
+        return this.userStatusManager;
+    }
+
+    /**
+     * Broadcast message to all sockets in a room
+     */
+    public broadcastToRoom(roomId: string, event: string, data: any): void {
+        this.io.to(roomId).emit(event, data);
+    }
+
+    /**
+     * Send message to specific socket
+     */
+    public sendToSocket(socketId: string, event: string, data: any): void {
+        this.io.to(socketId).emit(event, data);
+    }
 }
 
-interface ParticipantData {
-    socketId: string;
-    id: string;
-    name: string;
-    profilePhoto: string;
-    isMuted: boolean; // Added for state tracking
+// Export a factory function for easy setup
+export function setupVoiceHandlers(io: Server): SocketHandler {
+    return new SocketHandler(io);
 }
 
-interface UserData {
-    roomId: string;
-    userId: string;
-    name: string;
-    profilePhoto: string;
-    isMuted: boolean;
-    status: string;
-}
+// Export individual managers if needed
+export {
+    MessageHandler,
+    UserStatusManager, VoiceRoomManager,
+    WebRTCSignaling
+};
 
-function setupVoiceHandlers(io: Server): void {
-    const voiceRooms = new Map<string, Set<string>>();
-    const usersRooms = new Map<string, string>();
-    const usersData = new Map<string, UserData>();
-
-    io.on('connection', (socket) => {
-        socket.on('join-voice-room', (data: UserData) => {
-            const { roomId, userId, name, ...userBasicInfo } = data;
-
-            try {
-                // Store user data
-                usersData.set(socket.id, { roomId, userId, name, ...userBasicInfo });
-
-                // Leave previous room if any
-                if (usersRooms.has(socket.id)) {
-                    const previousRoomId = usersRooms.get(socket.id) as string;
-                    socket.leave(previousRoomId);
-                    socket.to(previousRoomId).emit('user-left', {
-                        userId,
-                        socketId: socket.id,
-                        name
-                    });
-
-                    if (voiceRooms.has(previousRoomId)) {
-                        voiceRooms.get(previousRoomId)?.delete(socket.id);
-                    }
-                }
-
-                // Join new room
-                socket.join(roomId);
-                usersRooms.set(socket.id, roomId);
-
-                if (!voiceRooms.has(roomId)) {
-                    voiceRooms.set(roomId, new Set());
-                }
-                voiceRooms.get(roomId)?.add(socket.id);
-
-                // Get current participants in the room (excluding self)
-                const participants: ParticipantData[] = [];
-
-                Array.from(voiceRooms.get(roomId) || []).filter(socketId => {
-                    if (socketId !== socket.id) {
-                        const userData = usersData.get(socketId);
-                        if (userData) {
-                            participants.push({
-                                ...userData,
-                                socketId,
-                                id: userData.userId,
-                                isMuted: userData.isMuted,
-                            });
-                        }
-                        return true;
-                    }
-                    return false
-                });
-
-                logger.info(`📊 Room ${roomId} now has ${participants.length + 1} participants`);
-
-
-                // Send existing participants to the new user
-                socket.emit('existing-participants', {
-                    participants: participants,
-                    roomId
-                });
-
-                // Notify others about the new user
-                socket.to(roomId).emit('user-joined', {
-                    userId,
-                    socketId: socket.id,
-                    name,
-                    ...userBasicInfo,
-                });
-
-                const userInfo = {
-                    name: name,
-                    userId: userId,
-                    avatar: data.profilePhoto,
-                }
-                const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-                socket.to(roomId).emit('receive-group-message', {
-                    id: uuidv4(),
-                    sender: 'them',
-                    type: 'system',
-                    systemMessageType: 'user-joined',
-                    text: `${name} has joined the voice room.`,
-                    senderSocketId: socket.id,
-                    userInfo,
-                    time,
-                });
-
-                socket.emit('receive-group-message', {
-                    id: uuidv4(),
-                    sender: 'me',
-                    type: 'system',
-                    systemMessageType: 'you-joined',
-                    text: `You are in the voice room.`,
-                    senderSocketId: socket.id,
-                    userInfo,
-                    time,
-                });
-            } catch (error) {
-                logger.error('❌ Error joining voice room:', error);
-                socket.emit('join-error', { error: 'Failed to join voice room' });
-            }
-        });
-
-        // WebRTC signaling events (offer, answer, ice-candidate - remain the same)
-        socket.on('webrtc-offer', (data: WebRTCData) => {
-            socket.to(data.target).emit('webrtc-offer', {
-                ...data,
-                sender: socket.id
-            });
-        });
-
-        socket.on('webrtc-answer', (data: WebRTCData) => {
-            socket.to(data.target).emit('webrtc-answer', {
-                ...data,
-                sender: socket.id
-            });
-        });
-
-        socket.on('webrtc-ice-candidate', (data: WebRTCData) => {
-            socket.to(data.target).emit('webrtc-ice-candidate', {
-                ...data,
-                sender: socket.id
-            });
-        });
-
-        // Handle message broadcasting (remain the same) 
-        socket.on('send-private-message', (data: { targetSocketId: string; message: string; name: string }) => {
-            const { targetSocketId, } = data;
-            const messageId = uuidv4();
-
-            socket.to(targetSocketId).emit('receive-private-message', {
-                ...data,
-                senderSocketId: socket.id,
-                id: messageId
-            });
-        });
-
-        socket.on('send-group-message', (data) => {
-            const { roomId } = data;
-            const messageId = uuidv4();
-            socket.to(roomId).emit('receive-group-message', {
-                ...data,
-                senderSocketId: socket.id,
-                id: messageId
-            });
-        });
-
-
-        // Handle leaving voice room
-        socket.on('leave-voice-room', (data: { roomId: string, userId: string, name: string }) => {
-            const { roomId, userId, name } = data;
-            const userInfo = usersData.get(socket.id);
-
-            logger.info(`🚪 User ${userInfo?.name || name} (${socket.id}) leaving room ${roomId}`);
-
-            socket.leave(roomId);
-            usersRooms.delete(socket.id);
-            usersData.delete(socket.id);
-
-            if (voiceRooms.has(roomId)) {
-                voiceRooms.get(roomId)?.delete(socket.id);
-                if (voiceRooms.get(roomId)?.size === 0) {
-                    voiceRooms.delete(roomId);
-                }
-            }
-
-            socket.to(roomId).emit('user-left', {
-                userId,
-                socketId: socket.id,
-                name: userInfo?.name || name
-            });
-
-            const messageId = uuidv4();
-
-            socket.to(roomId).emit('receive-group-message', {
-                sender: 'them',
-                text: `${name} has left the voice room.`,
-                senderSocketId: socket.id,
-                id: messageId,
-                type: 'system',
-                systemMessageType: 'user-left',
-                userInfo: {
-                    name: name,
-                    userId,
-                },
-                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-            });
-        });
-
-        // Handle audio toggle broadcast (NEW)
-        socket.on('user-audio-toggle', (data: { roomId: string; isMuted: boolean, name: string }) => {
-            const { roomId, isMuted, name } = data;
-
-            // Update the mute status in the server-side map
-            const userData = usersData.get(socket.id);
-            if (userData) {
-                usersData.set(socket.id, { ...userData, isMuted });
-            }
-
-            // Broadcast the change to all others in the room
-            socket.to(roomId).emit('user-audio-toggled', {
-                socketId: socket.id,
-                isMuted,
-                name
-            });
-        });
-
-        // Handle user status select (NEW)
-        socket.on('user-status-select', (data: { roomId: string; status: string, name: string }) => {
-            const { roomId, status, name } = data;
-
-            // Update the mute status in the server-side map
-            const userData = usersData.get(socket.id);
-            if (userData) {
-                usersData.set(socket.id, { ...userData, status });
-            }
-
-            // Broadcast the change to all others in the room
-            socket.to(roomId).emit('user-status-selected', {
-                socketId: socket.id,
-                status,
-                name
-            });
-        });
-
-        // Cleanup on disconnect
-        socket.on('disconnect', () => {
-            logger.info('🔴 User disconnected:', socket.id);
-
-            const userInfo = usersData.get(socket.id);
-            const roomId = usersRooms.get(socket.id);
-            if (roomId) {
-                socket.leave(roomId);
-                usersRooms.delete(socket.id);
-
-                if (voiceRooms.has(roomId)) {
-                    voiceRooms.get(roomId)?.delete(socket.id);
-                    if (voiceRooms.get(roomId)?.size === 0) {
-                        voiceRooms.delete(roomId);
-                    }
-                }
-
-                socket.to(roomId).emit('user-left', {
-                    userId: userInfo?.userId,
-                    socketId: socket.id,
-                    name: userInfo?.name
-                });
-            }
-
-            usersData.delete(socket.id);
-        });
-    });
-}
-
-export default setupVoiceHandlers;
