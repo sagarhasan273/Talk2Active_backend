@@ -250,7 +250,7 @@ export class VoiceRoomManager {
         // Notify the user themselves
         socket.emit('receive-group-message', {
             id: uuidv4(),
-            sender: 'me',
+            sender: 'them',
             type: 'system',
             systemMessageType: 'you-joined',
             text: `You are in the voice room.`,

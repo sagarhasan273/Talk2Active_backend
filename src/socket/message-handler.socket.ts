@@ -1,4 +1,5 @@
 import { Server, Socket } from 'socket.io';
+import { ReactionMessageData } from 'src/types/chat.type';
 import { v4 as uuidv4 } from 'uuid';
 import { GroupMessageData, PrivateMessageData } from '../types/socket.type';
 
@@ -14,6 +15,13 @@ export class MessageHandler {
 
         socket.to(targetSocketId).emit('receive-private-message', {
             ...data,
+            sender: 'them',
+            senderSocketId: socket.id,
+            id: messageId
+        });
+        socket.emit('receive-private-message', {
+            ...data,
+            sender: 'me',
             senderSocketId: socket.id,
             id: messageId
         });
@@ -28,8 +36,23 @@ export class MessageHandler {
 
         socket.to(roomId).emit('receive-group-message', {
             ...data,
+            sender: 'them',
             senderSocketId: socket.id,
             id: messageId
+        });
+        socket.emit('receive-group-message', {
+            ...data,
+            sender: 'me',
+            senderSocketId: socket.id,
+            id: messageId
+        });
+    }
+
+    public handleReactionGroupMessage(socket: Socket, data: ReactionMessageData): void {
+        const { roomId } = data;
+
+        socket.to(roomId).emit('receive-reaction-group-message', {
+            ...data,
         });
     }
 

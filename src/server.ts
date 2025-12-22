@@ -7,7 +7,7 @@ import { databaseMiddleware } from 'src/middlewares/database.middleware';
 import logger from 'src/utils/logger';
 import { errorMiddleware } from './middlewares/error.middleware';
 import { rootRouter } from './routes/root.router';
-import { setupVoiceHandlers } from './socket/socket-setup-handler';
+import { setupVoiceHandlers } from './socket/setup-handler.socket';
 import { getLocalIp } from './utils/system';
 
 const app = express();

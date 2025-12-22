@@ -1,4 +1,5 @@
 import { Server } from 'socket.io';
+import { ReactionMessageData } from 'src/types/chat.type';
 import {
     AudioToggleData,
     GroupMessageData,
@@ -62,6 +63,10 @@ export class SocketHandler {
 
             socket.on('send-group-message', (data: GroupMessageData) => {
                 this.messageHandler.handleGroupMessage(socket, data);
+            });
+
+            socket.on('send-reaction-group-message', (data: ReactionMessageData) => {
+                this.messageHandler.handleReactionGroupMessage(socket, data);
             });
 
             // User Status Events
