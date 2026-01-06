@@ -722,3 +722,80 @@ DatabaseError: DatabaseError: User already exists! You can log in instead.
 [2025-12-22 23:59:42] [31merror[39m: Chat Repository: User already joined the room
 [2025-12-23 00:04:32] [31merror[39m: Chat Repository: User already joined the room
 [2025-12-23 00:04:33] [31merror[39m: Chat Repository: User already joined the room
+[2025-12-24 02:48:27] [31merror[39m: Chat Repository: Failed to leave Room!
+[2025-12-24 02:48:39] [31merror[39m: Chat Repository: User already joined the room
+[2025-12-24 02:48:41] [31merror[39m: Chat Repository: User already joined the room
+[2025-12-25 19:13:32] [31merror[39m: Chat Repository: User already joined the room
+[2025-12-25 19:13:33] [31merror[39m: Chat Repository: User already joined the room
+[2025-12-25 19:13:33] [31merror[39m: Chat Repository: User already joined the room
+[2025-12-25 19:13:33] [31merror[39m: Chat Repository: User already joined the room
+[2025-12-25 19:15:13] [31merror[39m: Chat Repository: User already joined the room
+[2025-12-25 19:15:13] [31merror[39m: Chat Repository: User already joined the room
+[2025-12-25 19:15:14] [31merror[39m: Chat Repository: User already joined the room
+[2025-12-25 19:15:15] [31merror[39m: Chat Repository: User already joined the room
+[2025-12-25 19:16:09] [31merror[39m: Chat Repository: User already joined the room
+[2025-12-25 19:16:12] [31merror[39m: Chat Repository: User already joined the room
+[2025-12-25 19:16:13] [31merror[39m: Chat Repository: User already joined the room
+[2025-12-25 19:16:13] [31merror[39m: Chat Repository: User already joined the room
+[2025-12-25 19:16:55] [31merror[39m: Chat Repository: User already joined the room
+[2025-12-25 19:16:58] [31merror[39m: Chat Repository: User already joined the room
+[2025-12-25 19:17:25] [31merror[39m: Chat Repository: User already joined the room
+[2025-12-25 19:18:30] [31merror[39m: Chat Repository: User already joined the room
+[2025-12-25 19:20:51] [31merror[39m: Chat Repository: User already joined the room
+[2025-12-25 19:20:52] [31merror[39m: Chat Repository: User already joined the room
+[2025-12-25 19:21:39] [31merror[39m: Chat Repository: User already joined the room
+[2025-12-25 19:21:43] [31merror[39m: Chat Repository: User already joined the room
+[2025-12-25 19:21:58] [31merror[39m: Chat Repository: User already joined the room
+[2025-12-25 19:27:09] [31merror[39m: Chat Repository: User already joined the room
+[2025-12-25 19:28:12] [31merror[39m: Chat Repository: User already joined the room
+[2025-12-25 19:28:43] [31merror[39m: Chat Repository: User already joined the room
+[2025-12-25 19:29:21] [31merror[39m: Chat Repository: User already joined the room
+[2025-12-26 04:06:58] [31merror[39m: Chat Repository: Failed to leave Room!
+[2025-12-26 04:32:48] [31merror[39m: Chat Repository: Failed to leave Room!
+[2025-12-26 04:33:16] [31merror[39m: Chat Repository: Failed to leave Room!
+[2025-12-26 04:46:44] [31merror[39m: Chat Repository: Failed to leave Room!
+[2025-12-26 04:57:23] [31merror[39m: Chat Repository: Failed to leave Room!
+[2025-12-27 14:59:56] [31merror[39m: Chat Repository: Failed to leave Room!
+[2025-12-27 15:57:11] [31merror[39m: Chat Repository: Failed to leave Room!
+[2025-12-28 22:00:13] [31merror[39m: Chat Repository: Failed to leave Room!
+[2025-12-28 22:05:56] [31merror[39m: Chat Repository: Failed to leave Room!
+[2025-12-28 22:05:56] [31merror[39m: Chat Repository: Failed to leave Room!
+[2025-12-28 22:05:56] [31merror[39m: Chat Repository: Failed to leave Room!
+[2025-12-29 02:47:41] [31merror[39m: Chat Repository: Failed to leave Room!
+[2025-12-29 03:46:05] [31merror[39m: Chat Repository: Failed to leave Room!
+[2025-12-29 03:46:05] [31merror[39m: Chat Repository: Failed to leave Room!
+[2025-12-29 03:46:43] [31merror[39m: Chat Repository: Failed to leave Room!
+[2025-12-29 04:24:08] [31merror[39m: Chat Repository: Failed to leave Room!
+[2025-12-29 04:31:20] [31merror[39m: Chat Repository: Failed to leave Room!
+[2025-12-29 04:33:50] [31merror[39m: Chat Repository: Failed to leave Room!
+[2025-12-29 04:37:04] [31merror[39m: User Service: Invalid password
+[2025-12-29 22:55:44] [31merror[39m: Chat Repository: Failed to leave Room!
+[2025-12-29 22:59:32] [31merror[39m: Chat Repository: Failed to leave Room!
+[2025-12-29 23:05:12] [31merror[39m: Chat Repository: Failed to leave Room!
+[2025-12-29 23:17:43] [31merror[39m: Chat Repository: Failed to leave Room!
+[2025-12-29 23:18:31] [31merror[39m: Chat Repository: Failed to leave Room!
+[2025-12-29 23:18:58] [31merror[39m: Chat Repository: Failed to leave Room!
+[2025-12-29 23:21:03] [31merror[39m: Chat Repository: Failed to leave Room!
+[2025-12-29 23:29:18] [31merror[39m: Chat Repository: Failed to leave Room!
+[2025-12-30 00:29:35] [31merror[39m: Chat Repository: Failed to leave Room!
+[2025-12-31 23:37:12] [31merror[39m: Chat Repository: Failed to leave Room!
+[2025-12-31 23:37:54] [31merror[39m: Chat Repository: Failed to leave Room!
+[2025-12-31 23:47:02] [31merror[39m: Chat Repository: Failed to leave Room!
+[2025-12-31 23:52:58] [31merror[39m: Chat Repository: Failed to leave Room!
+[2025-12-31 23:52:58] [31merror[39m: Chat Repository: Failed to leave Room!
+[2025-12-31 23:54:37] [31merror[39m: Chat Repository: Failed to leave Room!
+[2026-01-01 00:25:50] [31merror[39m: Chat Repository: Failed to leave Room!
+[2026-01-01 04:56:42] [31merror[39m: Chat Repository: Failed to leave Room!
+[2026-01-01 04:57:32] [31merror[39m: Chat Repository: Failed to leave Room!
+[2026-01-01 05:07:19] [31merror[39m: Chat Repository: Failed to leave Room!
+[2026-01-01 05:07:29] [31merror[39m: Chat Repository: Failed to leave Room!
+[2026-01-01 05:11:47] [31merror[39m: Chat Repository: Failed to leave Room!
+[2026-01-01 05:12:13] [31merror[39m: Chat Repository: Failed to leave Room!
+[2026-01-01 05:12:13] [31merror[39m: Chat Repository: Failed to leave Room!
+[2026-01-01 05:18:13] [31merror[39m: Chat Repository: Failed to leave Room!
+[2026-01-01 05:19:20] [31merror[39m: Chat Repository: Failed to leave Room!
+[2026-01-01 05:21:08] [31merror[39m: Chat Repository: Failed to leave Room!
+[2026-01-01 05:24:30] [31merror[39m: Chat Repository: Failed to leave Room!
+[2026-01-01 05:33:00] [31merror[39m: Chat Repository: Failed to leave Room!
+[2026-01-01 05:34:42] [31merror[39m: Chat Repository: Failed to leave Room!
+[2026-01-01 05:36:12] [31merror[39m: Chat Repository: Failed to leave Room!

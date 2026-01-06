@@ -72,12 +72,10 @@ export class ChatRepository {
             }
             const isAlreadyParticipant = room.currentParticipants.some(participant => participant.user.toString() === userId);
 
-            if (isAlreadyParticipant) {
-                throw new AppError('User already joined the room', 400, 'Chat Repository');
+            if (!isAlreadyParticipant) {
+                room.currentParticipants.push({ user: userId, joinedAt: new Date() });
+                await room.save();
             }
-
-            room.currentParticipants.push({ user: userId, joinedAt: new Date() });
-            await room.save();
         } catch (error) {
             if (error instanceof AppError) {
                 throw error;

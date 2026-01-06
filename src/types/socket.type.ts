@@ -1,3 +1,5 @@
+import { Message } from "./chat.type";
+
 export interface WebRTCData {
     target: string;
     offer?: RTCSessionDescriptionInit;
@@ -34,6 +36,12 @@ export interface GroupMessageData {
         userId: string;
         avatar?: string;
     };
+}
+
+export interface EditGroupMessageData {
+    roomId: string;
+    text?: string;
+    messageId: Message['id'];
 }
 
 export interface PrivateMessageData {

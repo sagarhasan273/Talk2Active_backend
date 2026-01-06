@@ -18,7 +18,7 @@ export class UserStatusManager {
         const userData = this.voiceRoomManager.getUserData(socket.id);
         if (userData) {
             // Update user data with new mute status
-            const updatedUserData = { ...userData, isMuted };
+            userData.isMuted = isMuted;
 
             // Store the update (you might want to add a method to VoiceRoomManager for this)
             // For now, we'll emit the event and let frontend handle state
@@ -49,7 +49,7 @@ export class UserStatusManager {
         const userData = this.voiceRoomManager.getUserData(socket.id);
         if (userData) {
             // Update user data with new status
-            const updatedUserData = { ...userData, status };
+            userData.status = status;
 
             // Broadcast the change to all others in the room
             socket.to(roomId).emit('user-status-selected', {

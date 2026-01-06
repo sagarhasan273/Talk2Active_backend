@@ -1,7 +1,7 @@
 import { Server, Socket } from 'socket.io';
 import { ReactionMessageData } from 'src/types/chat.type';
 import { v4 as uuidv4 } from 'uuid';
-import { GroupMessageData, PrivateMessageData } from '../types/socket.type';
+import { EditGroupMessageData, GroupMessageData, PrivateMessageData } from '../types/socket.type';
 
 export class MessageHandler {
     constructor(private io: Server) { }
@@ -48,10 +48,33 @@ export class MessageHandler {
         });
     }
 
+    public handleEditGroupMessage(socket: Socket, data: EditGroupMessageData): void {
+        const { roomId, messageId } = data;
+
+        socket.to(roomId).emit('receive-edit-group-message', {
+            ...data,
+            text: data?.text,
+            messageId
+        });
+        socket.emit('receive-edit-group-message', {
+            ...data,
+            text: data?.text,
+            messageId
+        });
+    }
+
     public handleReactionGroupMessage(socket: Socket, data: ReactionMessageData): void {
         const { roomId } = data;
 
         socket.to(roomId).emit('receive-reaction-group-message', {
+            ...data,
+        });
+    }
+
+    public handleReactionPopGroupMessage(socket: Socket, data: ReactionMessageData): void {
+        const { roomId } = data;
+
+        socket.to(roomId).emit('receive-reaction-pop-group-message', {
             ...data,
         });
     }

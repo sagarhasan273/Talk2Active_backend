@@ -2,6 +2,7 @@ import { Server } from 'socket.io';
 import { ReactionMessageData } from 'src/types/chat.type';
 import {
     AudioToggleData,
+    EditGroupMessageData,
     GroupMessageData,
     PrivateMessageData,
     StatusSelectData,
@@ -65,8 +66,16 @@ export class SocketHandler {
                 this.messageHandler.handleGroupMessage(socket, data);
             });
 
+            socket.on('send-edit-group-message', (data: EditGroupMessageData) => {
+                this.messageHandler.handleEditGroupMessage(socket, data);
+            })
+
             socket.on('send-reaction-group-message', (data: ReactionMessageData) => {
                 this.messageHandler.handleReactionGroupMessage(socket, data);
+            });
+
+            socket.on('send-reaction-pop-group-message', (data: ReactionMessageData) => {
+                this.messageHandler.handleReactionPopGroupMessage(socket, data);
             });
 
             // User Status Events
