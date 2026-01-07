@@ -62,12 +62,20 @@ export class SocketHandler {
                 this.messageHandler.handlePrivateMessage(socket, data);
             });
 
+            socket.on('send-edit-private-message', (data: PrivateMessageData) => {
+                this.messageHandler.handlePrivateMessage(socket, data);
+            });
+
             socket.on('send-group-message', (data: GroupMessageData) => {
                 this.messageHandler.handleGroupMessage(socket, data);
             });
 
             socket.on('send-edit-group-message', (data: EditGroupMessageData) => {
                 this.messageHandler.handleEditGroupMessage(socket, data);
+            })
+
+            socket.on('send-delete-group-message', (data: EditGroupMessageData) => {
+                this.messageHandler.handleDeleteGroupMessage(socket, data);
             })
 
             socket.on('send-reaction-group-message', (data: ReactionMessageData) => {

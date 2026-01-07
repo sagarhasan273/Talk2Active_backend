@@ -799,3 +799,4 @@ DatabaseError: DatabaseError: User already exists! You can log in instead.
 [2026-01-01 05:33:00] [31merror[39m: Chat Repository: Failed to leave Room!
 [2026-01-01 05:34:42] [31merror[39m: Chat Repository: Failed to leave Room!
 [2026-01-01 05:36:12] [31merror[39m: Chat Repository: Failed to leave Room!
+[2026-01-08 05:05:00] [31merror[39m: Relationship Service: Failed to get All Relations!

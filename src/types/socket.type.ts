@@ -44,6 +44,12 @@ export interface EditGroupMessageData {
     messageId: Message['id'];
 }
 
+export interface DeleteGroupMessageData {
+    roomId: string;
+    text?: string;
+    messageId: Message['id'];
+}
+
 export interface PrivateMessageData {
     targetSocketId: string;
     message: string;

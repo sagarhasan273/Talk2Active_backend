@@ -1,7 +1,7 @@
 import { Server, Socket } from 'socket.io';
 import { ReactionMessageData } from 'src/types/chat.type';
 import { v4 as uuidv4 } from 'uuid';
-import { EditGroupMessageData, GroupMessageData, PrivateMessageData } from '../types/socket.type';
+import { DeleteGroupMessageData, EditGroupMessageData, GroupMessageData, PrivateMessageData } from '../types/socket.type';
 
 export class MessageHandler {
     constructor(private io: Server) { }
@@ -20,6 +20,24 @@ export class MessageHandler {
             id: messageId
         });
         socket.emit('receive-private-message', {
+            ...data,
+            sender: 'me',
+            senderSocketId: socket.id,
+            id: messageId
+        });
+    }
+
+    public handleEditPrivateMessage(socket: Socket, data: PrivateMessageData): void {
+        const { targetSocketId } = data;
+        const messageId = uuidv4();
+
+        socket.to(targetSocketId).emit('receive-edit-private-message', {
+            ...data,
+            sender: 'them',
+            senderSocketId: socket.id,
+            id: messageId
+        });
+        socket.emit('receive-edit-private-message', {
             ...data,
             sender: 'me',
             senderSocketId: socket.id,
@@ -59,6 +77,19 @@ export class MessageHandler {
         socket.emit('receive-edit-group-message', {
             ...data,
             text: data?.text,
+            messageId
+        });
+    }
+
+    public handleDeleteGroupMessage(socket: Socket, data: DeleteGroupMessageData): void {
+        const { roomId, messageId } = data;
+
+        socket.to(roomId).emit('receive-delete-group-message', {
+            ...data,
+            messageId
+        });
+        socket.emit('receive-delete-group-message', {
+            ...data,
             messageId
         });
     }
