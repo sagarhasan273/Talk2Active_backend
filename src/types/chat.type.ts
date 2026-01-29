@@ -15,6 +15,7 @@ export type Reaction = {
 
 export type Message = {
     id?: string;
+    conversationId: string;
     text: string;
     sender: 'me' | 'them';
     time: string;
@@ -42,7 +43,9 @@ export type Message = {
         avatar?: string;
     }[];
     isEdited?: boolean;
+    isDeleted?: boolean;
     reactions?: Reaction[];
+    messageRepliedOf?: Partial<Message>;
 };
 
 export type ReactionMessageData = {

@@ -1,3 +1,4 @@
+import { UserMessage } from "src/models/message.model";
 import { Message } from "./chat.type";
 
 export interface WebRTCData {
@@ -26,10 +27,36 @@ export interface UserData {
     status: string;
 }
 
+export interface JoinIndividualMessageData {
+    userId: string;
+    targetUserId: string;
+}
+
+export interface LeaveIndividualMessageData {
+    userId: string;
+    targetUserId: string;
+}
+
+export type IndividualMessageData = UserMessage & {
+    userId: string;
+    text: string;
+    userInfo?: {
+        name: string;
+        userId: string;
+        avatar?: string;
+    };
+}
+
+export interface EditIndividualMessageData {
+    userId: string;
+    text?: string;
+    messageId: Message['id'];
+}
+
 export interface GroupMessageData {
     roomId: string;
     text: string;
-    type: 'text' | 'system';
+    type: 'message' | 'system';
     systemMessageType?: 'user-joined' | 'user-left' | 'you-joined';
     userInfo?: {
         name: string;
@@ -54,6 +81,24 @@ export interface PrivateMessageData {
     targetSocketId: string;
     message: string;
     name: string;
+}
+
+export interface EditIndividualMessageData {
+    userId: string;
+    text?: string;
+    messageId: Message['id'];
+}
+
+export interface DeleteIndividualMessageData {
+    userId: string;
+    text?: string;
+    messageId: Message['id'];
+}
+
+export interface ReactionIndividualMessageData {
+    userId: string;
+    messageId: number;
+    reaction: string;
 }
 
 export interface AudioToggleData {

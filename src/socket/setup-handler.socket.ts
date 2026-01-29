@@ -3,8 +3,13 @@ import { ReactionMessageData } from 'src/types/chat.type';
 import {
     AudioToggleData,
     EditGroupMessageData,
+    EditIndividualMessageData,
     GroupMessageData,
+    IndividualMessageData,
+    JoinIndividualMessageData,
+    LeaveIndividualMessageData,
     PrivateMessageData,
+    ReactionIndividualMessageData,
     StatusSelectData,
     UserData,
     WebRTCData
@@ -59,31 +64,58 @@ export class SocketHandler {
 
             // Message Events
             socket.on('send-private-message', (data: PrivateMessageData) => {
-                this.messageHandler.handlePrivateMessage(socket, data);
+                this.messageHandler.handlePrivateMessage(data);
             });
 
             socket.on('send-edit-private-message', (data: PrivateMessageData) => {
-                this.messageHandler.handlePrivateMessage(socket, data);
+                this.messageHandler.handlePrivateMessage(data);
+            });
+
+            socket.on('join-individual-message-room', (data: JoinIndividualMessageData) => {
+                this.messageHandler.handleJoinIndividualMessage(data);
+            });
+
+            socket.on('leave-individual-message-room', (data: LeaveIndividualMessageData) => {
+                this.messageHandler.handleLeaveIndividualMessage(data);
+            });
+
+            socket.on('send-individual-message', (data: IndividualMessageData) => {
+                this.messageHandler.handleIndividualMessage(data);
+            });
+
+            socket.on('send-delete-individual-message', (data: EditIndividualMessageData) => {
+                this.messageHandler.handleDeleteIndividualMessage(data);
+            });
+
+            socket.on('send-edit-individual-message', (data: EditIndividualMessageData) => {
+                this.messageHandler.handleEditIndividualMessage(data);
+            });
+            socket.on('send-reaction-individual-message', (data: ReactionIndividualMessageData) => {
+                this.messageHandler.handleReactionIndividualMessage(data);
+            });
+
+            socket.on('send-reaction-pop-individual-message', (data: ReactionIndividualMessageData) => {
+                this.messageHandler.handleReactionPopIndividualMessage(data);
             });
 
             socket.on('send-group-message', (data: GroupMessageData) => {
-                this.messageHandler.handleGroupMessage(socket, data);
+                this.messageHandler.handleGroupMessage(data);
             });
 
             socket.on('send-edit-group-message', (data: EditGroupMessageData) => {
-                this.messageHandler.handleEditGroupMessage(socket, data);
+                this.messageHandler.handleEditGroupMessage(data);
             })
 
             socket.on('send-delete-group-message', (data: EditGroupMessageData) => {
-                this.messageHandler.handleDeleteGroupMessage(socket, data);
+                this.messageHandler.handleDeleteGroupMessage(data);
             })
 
             socket.on('send-reaction-group-message', (data: ReactionMessageData) => {
-                this.messageHandler.handleReactionGroupMessage(socket, data);
+                this.messageHandler.handleReactionGroupMessage(data);
             });
 
             socket.on('send-reaction-pop-group-message', (data: ReactionMessageData) => {
-                this.messageHandler.handleReactionPopGroupMessage(socket, data);
+                this.messageHandler.handleReactionPopGroupMessage(data);
             });
 
             // User Status Events
@@ -150,15 +182,29 @@ export class SocketHandler {
     }
 }
 
+let socketHandlerInstance: SocketHandler | null = null;
+
 // Export a factory function for easy setup
 export function setupVoiceHandlers(io: Server): SocketHandler {
-    return new SocketHandler(io);
+    if (socketHandlerInstance) {
+        return socketHandlerInstance;
+    }
+    socketHandlerInstance = new SocketHandler(io);
+    return socketHandlerInstance;
+}
+
+export function getSocketHandler(): SocketHandler {
+    if (!socketHandlerInstance) {
+        throw new Error("❌ SocketHandler not initialized yet");
+    }
+    return socketHandlerInstance;
 }
 
 // Export individual managers if needed
 export {
     MessageHandler,
-    UserStatusManager, VoiceRoomManager,
+    UserStatusManager,
+    VoiceRoomManager,
     WebRTCSignaling
 };
 
