@@ -48,9 +48,14 @@ export type IndividualMessageData = UserMessage & {
 }
 
 export interface EditIndividualMessageData {
+    messageId: string;
     userId: string;
-    text?: string;
-    messageId: Message['id'];
+    text: string;
+    targetUserInfo: {
+        userId: string;
+        name: string;
+        avatar?: string;
+    };
 }
 
 export interface GroupMessageData {
@@ -81,12 +86,6 @@ export interface PrivateMessageData {
     targetSocketId: string;
     message: string;
     name: string;
-}
-
-export interface EditIndividualMessageData {
-    userId: string;
-    text?: string;
-    messageId: Message['id'];
 }
 
 export interface DeleteIndividualMessageData {

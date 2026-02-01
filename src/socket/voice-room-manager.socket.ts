@@ -73,7 +73,6 @@ export class VoiceRoomManager {
      */
     public handleDisconnect(socket: Socket): void {
         logger.info('🔴 User disconnected:', socket.id);
-
         const userInfo = this.usersData.get(socket.id);
         const roomId = this.usersRooms.get(socket.id);
 

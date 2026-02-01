@@ -1,10 +1,11 @@
+import { ObjectId } from "mongodb";
 import { MessageModel, UserMessage } from "src/models/message.model";
 
 
 import { AppError } from "src/utils/errors";
 
 export class MessageRepository {
-    public async saveMessage(input: Partial<UserMessage>): Promise<void> {
+    public async saveMessage(input: Partial<UserMessage>): Promise<UserMessage> {
         try {
             const { ...createFields } = input;
 
@@ -15,12 +16,46 @@ export class MessageRepository {
             if (!message) {
                 throw new AppError('Failed to create message', 404, 'Message Repository');
             }
+
+            return message as unknown as UserMessage;
         } catch (error) {
             if (error instanceof AppError) {
                 throw error;
             }
-            console.log('Error creating message:', error);
-            throw new AppError('Failed to create Message!', 500, 'Message Repository');
+            const errorMessage = error instanceof Error ? error.message : 'Failed to create message';
+            throw new AppError(errorMessage, 500, 'Message Repository');
+        }
+    }
+
+    public async editMessage(
+        messageId: string,
+        newText: string
+    ): Promise<UserMessage | null> {
+        try {
+            const message = await MessageModel.findOneAndUpdate(
+                {
+                    _id: new ObjectId(messageId)
+                },
+                {
+                    $set: {
+                        text: newText,
+                        updatedAt: new Date(),
+                    },
+                },
+                { new: true }
+            );
+
+            if (!message) {
+                throw new AppError('Failed to update message', 404, 'Message Repository');
+            }
+
+            return message as unknown as UserMessage;
+        } catch (error) {
+            if (error instanceof AppError) {
+                throw error;
+            }
+            const errorMessage = error instanceof Error ? error.message : 'Failed to update Message!';
+            throw new AppError(errorMessage, 500, 'Message Repository');
         }
     }
 

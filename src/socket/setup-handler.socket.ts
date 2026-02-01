@@ -1,7 +1,9 @@
 import { Server } from 'socket.io';
 import { ReactionMessageData } from 'src/types/chat.type';
+import logger from 'src/utils/logger';
 import {
     AudioToggleData,
+    DeleteGroupMessageData,
     EditGroupMessageData,
     EditIndividualMessageData,
     GroupMessageData,
@@ -38,7 +40,22 @@ export class SocketHandler {
 
     private setupEventHandlers(io: Server): void {
         io.on('connection', (socket) => {
-            console.log('🟢 User connected:', socket.id);
+            logger.info('🟢 User connected:', socket.id);
+
+            // User notification of connection
+            socket.on('join-room', ({ userId }) => {
+                const roomId = `user-room:${userId}`;
+                socket.join(roomId);
+                
+                logger.info(`User ${socket.id} joined room ${roomId}`);
+            });
+
+            socket.on('leave-room', ({ userId }) => {
+                const roomId = `user-room:${userId}`;
+                socket.leave(roomId);
+
+                logger.info(`User ${socket.id} left room ${roomId}`);
+            });
 
             // Voice Room Events
             socket.on('join-voice-room', (data: UserData) => {
@@ -64,58 +81,58 @@ export class SocketHandler {
 
             // Message Events
             socket.on('send-private-message', (data: PrivateMessageData) => {
-                this.messageHandler.handlePrivateMessage(data);
+                this.messageHandler.handlePrivateMessage(socket, data);
             });
 
             socket.on('send-edit-private-message', (data: PrivateMessageData) => {
-                this.messageHandler.handlePrivateMessage(data);
+                this.messageHandler.handlePrivateMessage(socket, data);
             });
 
             socket.on('join-individual-message-room', (data: JoinIndividualMessageData) => {
-                this.messageHandler.handleJoinIndividualMessage(data);
+                this.messageHandler.handleJoinIndividualMessage(socket, data);
             });
 
             socket.on('leave-individual-message-room', (data: LeaveIndividualMessageData) => {
-                this.messageHandler.handleLeaveIndividualMessage(data);
+                this.messageHandler.handleLeaveIndividualMessage(socket, data);
             });
 
             socket.on('send-individual-message', (data: IndividualMessageData) => {
-                this.messageHandler.handleIndividualMessage(data);
+                this.messageHandler.handleIndividualMessage(socket, data);
             });
 
             socket.on('send-delete-individual-message', (data: EditIndividualMessageData) => {
-                this.messageHandler.handleDeleteIndividualMessage(data);
+                this.messageHandler.handleDeleteIndividualMessage(socket, data);
             });
 
             socket.on('send-edit-individual-message', (data: EditIndividualMessageData) => {
-                this.messageHandler.handleEditIndividualMessage(data);
+                this.messageHandler.handleEditIndividualMessage(socket, data);
             });
             socket.on('send-reaction-individual-message', (data: ReactionIndividualMessageData) => {
-                this.messageHandler.handleReactionIndividualMessage(data);
+                this.messageHandler.handleReactionIndividualMessage(socket, data);
             });
 
             socket.on('send-reaction-pop-individual-message', (data: ReactionIndividualMessageData) => {
-                this.messageHandler.handleReactionPopIndividualMessage(data);
+                this.messageHandler.handleReactionPopIndividualMessage(socket, data);
             });
 
             socket.on('send-group-message', (data: GroupMessageData) => {
-                this.messageHandler.handleGroupMessage(data);
+                this.messageHandler.handleGroupMessage(socket, data);
             });
 
             socket.on('send-edit-group-message', (data: EditGroupMessageData) => {
-                this.messageHandler.handleEditGroupMessage(data);
+                this.messageHandler.handleEditGroupMessage(socket, data);
             })
 
-            socket.on('send-delete-group-message', (data: EditGroupMessageData) => {
-                this.messageHandler.handleDeleteGroupMessage(data);
+            socket.on('send-delete-group-message', (data: DeleteGroupMessageData) => {
+                this.messageHandler.handleDeleteGroupMessage(socket, data);
             })
 
             socket.on('send-reaction-group-message', (data: ReactionMessageData) => {
-                this.messageHandler.handleReactionGroupMessage(data);
+                this.messageHandler.handleReactionGroupMessage(socket, data);
             });
 
             socket.on('send-reaction-pop-group-message', (data: ReactionMessageData) => {
-                this.messageHandler.handleReactionPopGroupMessage(data);
+                this.messageHandler.handleReactionPopGroupMessage(socket, data);
             });
 
             // User Status Events

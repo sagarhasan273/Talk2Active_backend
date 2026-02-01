@@ -3,15 +3,8 @@ import mongoose, { Document, Model, Schema } from 'mongoose';
 export interface UserMessage extends Document {
     // Core message fields
     text: string;
-    sender: 'me' | 'them';
     time: Date;
     isUnread: boolean;
-    startOfUnread?: boolean;
-    isPrivate: boolean;
-
-    // User identifiers
-    senderSocketId?: string;
-    targetSocketId?: string;
 
     // Message type
     type: 'message';
@@ -32,6 +25,10 @@ export interface UserMessage extends Document {
     // Thread/conversation context
     conversationId: string;
 
+    // Reply/thread feature
+    parentMessageId?: mongoose.Types.ObjectId; // Reference to parent message
+    isReply: boolean;
+
     // Message state
     isEdited?: boolean;
     isDeleted?: boolean;
@@ -43,10 +40,6 @@ export interface UserMessage extends Document {
         emoji: string;
         createdAt: Date;
     }>;
-
-    // Reply/thread feature
-    parentMessageId?: mongoose.Types.ObjectId; // Reference to parent message
-    isReply: boolean;
 
     // Timestamps (automatically added by mongoose)
     createdAt: Date;
@@ -61,12 +54,6 @@ const MessageSchema: Schema<UserMessage> = new Schema(
             trim: true,
         },
 
-        sender: {
-            type: String,
-            enum: ['me', 'them'],
-            required: true,
-        },
-
         time: {
             type: Date,
             required: true,
@@ -77,19 +64,6 @@ const MessageSchema: Schema<UserMessage> = new Schema(
             type: Boolean,
             default: true,
         },
-
-        startOfUnread: {
-            type: Boolean,
-            default: false,
-        },
-
-        isPrivate: {
-            type: Boolean,
-            default: false,
-        },
-
-        senderSocketId: String,
-        targetSocketId: String,
 
         type: {
             type: String,
@@ -110,9 +84,14 @@ const MessageSchema: Schema<UserMessage> = new Schema(
         },
 
         targetUserInfo: {
-            socketId: String,
-            userId: String,
-            name: String,
+            userId: {
+                type: String,
+                required: true,
+            },
+            name: {
+                type: String,
+                required: true,
+            },
             avatar: String,
         },
 

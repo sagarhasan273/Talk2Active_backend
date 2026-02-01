@@ -12,8 +12,16 @@ export class MessageService {
     }
 
     // Save a new message
-    public async saveMessage(messageData: Partial<UserMessage>): Promise<void> {
-        await this.messageRepository.saveMessage(messageData);
+    public async saveMessage(messageData: Partial<UserMessage>): Promise<UserMessage> {
+        return await this.messageRepository.saveMessage(messageData);
+    }
+
+    // Edit an existing message
+    public async editMessage(
+        messageId: string,
+        newText: string
+    ): Promise<UserMessage | null> {
+        return await this.messageRepository.editMessage(messageId, newText);
     }
 
     // Get messages between two users

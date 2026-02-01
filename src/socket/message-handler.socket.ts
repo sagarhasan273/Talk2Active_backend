@@ -4,48 +4,39 @@ import { MessageService } from 'src/services/message.service';
 import { ReactionMessageData } from 'src/types/chat.type';
 import logger from 'src/utils/logger';
 import { v4 as uuidv4 } from 'uuid';
-import { DeleteGroupMessageData, DeleteIndividualMessageData, EditGroupMessageData, EditIndividualMessageData, GroupMessageData, IndividualMessageData, JoinIndividualMessageData, PrivateMessageData, ReactionIndividualMessageData } from '../types/socket.type';
+import { DeleteGroupMessageData, DeleteIndividualMessageData, EditGroupMessageData, EditIndividualMessageData, GroupMessageData, IndividualMessageData, JoinIndividualMessageData, LeaveIndividualMessageData, PrivateMessageData, ReactionIndividualMessageData } from '../types/socket.type';
 
 export class MessageHandler {
-    private socket!: Socket;
     private messageService = new MessageService();
 
-    constructor(private io: Server) {
-        this.io = io;
-        this.io.on('connection', (socket) => {
-            this.socket = socket;
-        });
-    }
+    constructor(private io: Server) { }
 
     /**
      * Handle individual message sending
      */
-    public handleJoinIndividualMessage(data: JoinIndividualMessageData): void {
+    public handleJoinIndividualMessage(socket: Socket, data: JoinIndividualMessageData): void {
         const { userId, targetUserId } = data;
         const conversationId = this.messageService.generateConversationId(userId, targetUserId);
         const roomId = `message:${conversationId}`;
-        this.socket.join(roomId);
-        // old message
+        socket.join(roomId);
     }
 
-    public handleLeaveIndividualMessage(data: JoinIndividualMessageData): void {
-        const { userId } = data;
-        // this.socket.leave(userId);
-        // console.log('User left individual room:', userId);
+    public handleLeaveIndividualMessage(socket: Socket, data: LeaveIndividualMessageData): void {
+        const { userId, targetUserId } = data;
+        const conversationId = this.messageService.generateConversationId(userId, targetUserId);
+        const roomId = `message:${conversationId}`;
+        socket.leave(roomId);
     }
 
-    public async handleIndividualMessage(data: IndividualMessageData): Promise<void> {
-        const { targetUserInfo, text, userId } = data;
-        const messageId = uuidv4();
+    public async handleIndividualMessage(socket: Socket, data: IndividualMessageData): Promise<void> {
+        const { targetUserInfo, text } = data;
 
         const conversationId = this.messageService.generateConversationId(data.senderInfo.userId, data.targetUserInfo.userId);
 
         const messageData: Partial<UserMessage> = {
             text,
-            sender: 'me', // This would be determined by your auth system
             time: new Date(),
             isUnread: true,
-            isPrivate: data.isPrivate || false,
             type: 'message',
             senderInfo: data.senderInfo,
             targetUserInfo: data.targetUserInfo,
@@ -54,68 +45,67 @@ export class MessageHandler {
             parentMessageId: data.parentMessageId,
         };
 
-        await this.messageService.saveMessage(messageData);
+        const message = await this.messageService.saveMessage(messageData);
 
-        const roomId = `message:${conversationId}`;
+        const targetRoomId = `user-room:${targetUserInfo.userId}`;
 
-        if (this.socket.rooms.has(roomId)) {
-            this.socket.to(roomId).emit('receive-individual-message', {
-                ...data,
-                sender: 'them',
-                senderSocketId: this.socket.id,
-                id: messageId
-            });
-        } else {
-            this.socket.to(targetUserInfo.userId).emit('receive-individual-message', {
-                ...data,
-                sender: 'them',
-                senderSocketId: this.socket.id,
-                id: messageId
-            });
-        }
+        socket.to(targetRoomId).emit('receive-individual-message', {
+            ...data,
+            sender: 'them',
+            messageId: message._id
+        });
 
+        socket.emit('receive-individual-message-self', {
+            ...data,
+            sender: 'me',
+            messageId: message._id
+        });
     }
 
-    public handleEditIndividualMessage(data: EditIndividualMessageData): void {
-        const { userId, messageId } = data;
+    public async handleEditIndividualMessage(socket: Socket, data: EditIndividualMessageData): Promise<void> {
+        const { messageId, targetUserInfo } = data;
 
-        this.socket.to(userId).emit('receive-edit-individual-message', {
+        const updatedMessage = await this.messageService.editMessage(messageId, data.text);
+
+        const targetRoomId = `user-room:${targetUserInfo.userId}`;
+
+        socket.to(targetRoomId).emit('receive-edit-individual-message', {
             ...data,
             text: data?.text,
-            messageId
+            messageId: updatedMessage?._id
         });
-        this.socket.emit('receive-edit-individual-message-self', {
+        socket.emit('receive-edit-individual-message-self', {
             ...data,
             text: data?.text,
-            messageId
+            messageId: updatedMessage?._id
         });
     }
 
-    public handleDeleteIndividualMessage(data: DeleteIndividualMessageData): void {
+    public handleDeleteIndividualMessage(socket: Socket, data: DeleteIndividualMessageData): void {
         const { userId, messageId } = data;
 
-        this.socket.to(userId).emit('receive-delete-individual-message', {
+        socket.to(userId).emit('receive-delete-individual-message', {
             ...data,
             messageId
         });
-        this.socket.emit('receive-delete-individual-message', {
+        socket.emit('receive-delete-individual-message', {
             ...data,
             messageId
         });
     }
 
-    public handleReactionIndividualMessage(data: ReactionIndividualMessageData): void {
+    public handleReactionIndividualMessage(socket: Socket, data: ReactionIndividualMessageData): void {
         const { userId } = data;
 
-        this.socket.to(userId).emit('receive-reaction-individual-message', {
+        socket.to(userId).emit('receive-reaction-individual-message', {
             ...data,
         });
     }
 
-    public handleReactionPopIndividualMessage(data: ReactionIndividualMessageData): void {
+    public handleReactionPopIndividualMessage(socket: Socket, data: ReactionIndividualMessageData): void {
         const { userId } = data;
 
-        this.socket.to(userId).emit('receive-reaction-pop-individual-message', {
+        socket.to(userId).emit('receive-reaction-pop-individual-message', {
             ...data,
         });
     }
@@ -123,38 +113,38 @@ export class MessageHandler {
     /**
     * Handle private message sending
     */
-    public handlePrivateMessage(data: PrivateMessageData): void {
+    public handlePrivateMessage(socket: Socket, data: PrivateMessageData): void {
         const { targetSocketId } = data;
         const messageId = uuidv4();
 
-        this.socket.to(targetSocketId).emit('receive-private-message', {
+        socket.to(targetSocketId).emit('receive-private-message', {
             ...data,
             sender: 'them',
-            senderSocketId: this.socket.id,
+            senderSocketId: socket.id,
             id: messageId
         });
-        this.socket.emit('receive-private-message', {
+        socket.emit('receive-private-message', {
             ...data,
             sender: 'me',
-            senderSocketId: this.socket.id,
+            senderSocketId: socket.id,
             id: messageId
         });
     }
 
-    public handleEditPrivateMessage(data: PrivateMessageData): void {
+    public handleEditPrivateMessage(socket: Socket, data: PrivateMessageData): void {
         const { targetSocketId } = data;
         const messageId = uuidv4();
 
-        this.socket.to(targetSocketId).emit('receive-edit-private-message', {
+        socket.to(targetSocketId).emit('receive-edit-private-message', {
             ...data,
             sender: 'them',
-            senderSocketId: this.socket.id,
+            senderSocketId: socket.id,
             id: messageId
         });
-        this.socket.emit('receive-edit-private-message', {
+        socket.emit('receive-edit-private-message', {
             ...data,
             sender: 'me',
-            senderSocketId: this.socket.id,
+            senderSocketId: socket.id,
             id: messageId
         });
     }
@@ -163,64 +153,64 @@ export class MessageHandler {
      * Handle group message sending
      */
 
-    public handleGroupMessage(data: GroupMessageData): void {
+    public handleGroupMessage(socket: Socket, data: GroupMessageData): void {
         const { roomId } = data;
         const messageId = uuidv4();
-
-        this.socket.to(roomId).emit('receive-group-message', {
+        console.log(socket.rooms);
+        socket.to(roomId).emit('receive-group-message', {
             ...data,
             sender: 'them',
-            senderSocketId: this.socket.id,
+            senderSocketId: socket.id,
             id: messageId
         });
-        this.socket.emit('receive-group-message', {
+        socket.emit('receive-group-message', {
             ...data,
             sender: 'me',
-            senderSocketId: this.socket.id,
+            senderSocketId: socket.id,
             id: messageId
         });
     }
 
-    public handleEditGroupMessage(data: EditGroupMessageData): void {
+    public handleEditGroupMessage(socket: Socket, data: EditGroupMessageData): void {
         const { roomId, messageId } = data;
 
-        this.socket.to(roomId).emit('receive-edit-group-message', {
+        socket.to(roomId).emit('receive-edit-group-message', {
             ...data,
             text: data?.text,
             messageId
         });
-        this.socket.emit('receive-edit-group-message', {
+        socket.emit('receive-edit-group-message', {
             ...data,
             text: data?.text,
             messageId
         });
     }
 
-    public handleDeleteGroupMessage(data: DeleteGroupMessageData): void {
+    public handleDeleteGroupMessage(socket: Socket, data: DeleteGroupMessageData): void {
         const { roomId, messageId } = data;
 
-        this.socket.to(roomId).emit('receive-delete-group-message', {
+        socket.to(roomId).emit('receive-delete-group-message', {
             ...data,
             messageId
         });
-        this.socket.emit('receive-delete-group-message', {
+        socket.emit('receive-delete-group-message', {
             ...data,
             messageId
         });
     }
 
-    public handleReactionGroupMessage(data: ReactionMessageData): void {
+    public handleReactionGroupMessage(socket: Socket, data: ReactionMessageData): void {
         const { roomId } = data;
 
-        this.socket.to(roomId).emit('receive-reaction-group-message', {
+        socket.to(roomId).emit('receive-reaction-group-message', {
             ...data,
         });
     }
 
-    public handleReactionPopGroupMessage(data: ReactionMessageData): void {
+    public handleReactionPopGroupMessage(socket: Socket, data: ReactionMessageData): void {
         const { roomId } = data;
 
-        this.socket.to(roomId).emit('receive-reaction-pop-group-message', {
+        socket.to(roomId).emit('receive-reaction-pop-group-message', {
             ...data,
         });
     }
@@ -228,10 +218,10 @@ export class MessageHandler {
     /**
      * Broadcast message to room
      */
-    public broadcastToRoom(roomId: string, event: string, data: any): void {
-        this.socket.to(roomId).emit(event, {
+    public broadcastToRoom(socket: Socket, roomId: string, event: string, data: any): void {
+        socket.to(roomId).emit(event, {
             ...data,
-            senderSocketId: this.socket.id
+            senderSocketId: socket.id
         });
     }
 
@@ -246,13 +236,13 @@ export class MessageHandler {
         }
     }
 
-    public handleDisconnect(data: { userId: string }): void {
+    public handleDisconnect(socket: Socket, data: { userId: string }): void {
         const { userId } = data;
 
         if (userId) {
             // Leave the room
-            this.socket.leave(userId);
+            socket.leave(userId);
         }
-        logger.info('🔴 Individual User disconnected:', this.socket.id);
+        logger.info('🔴 Individual User disconnected:', socket.id);
     }
 }
