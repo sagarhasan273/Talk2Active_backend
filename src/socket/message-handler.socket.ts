@@ -82,30 +82,35 @@ export class MessageHandler {
     }
 
     public handleDeleteIndividualMessage(socket: Socket, data: DeleteIndividualMessageData): void {
-        const { userId, messageId } = data;
+        const { receiverId, messageId } = data;
 
-        socket.to(userId).emit('receive-delete-individual-message', {
+        const targetRoomId = `user-room:${receiverId}`;
+
+        socket.to(targetRoomId).emit('receive-delete-individual-message', {
             ...data,
             messageId
         });
-        socket.emit('receive-delete-individual-message', {
+        socket.emit('receive-delete-individual-message-self', {
             ...data,
             messageId
         });
     }
 
     public handleReactionIndividualMessage(socket: Socket, data: ReactionIndividualMessageData): void {
-        const { userId } = data;
+        const { receiverId } = data;
 
-        socket.to(userId).emit('receive-reaction-individual-message', {
+        const targetRoomId = `user-room:${receiverId}`;
+
+        socket.to(targetRoomId).emit('receive-reaction-individual-message', {
             ...data,
         });
     }
 
     public handleReactionPopIndividualMessage(socket: Socket, data: ReactionIndividualMessageData): void {
-        const { userId } = data;
+        const { receiverId } = data;
 
-        socket.to(userId).emit('receive-reaction-pop-individual-message', {
+        const targetRoomId = `user-room:${receiverId}`;
+        socket.to(targetRoomId).emit('receive-reaction-pop-individual-message', {
             ...data,
         });
     }

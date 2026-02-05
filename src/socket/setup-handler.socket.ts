@@ -4,6 +4,7 @@ import logger from 'src/utils/logger';
 import {
     AudioToggleData,
     DeleteGroupMessageData,
+    DeleteIndividualMessageData,
     EditGroupMessageData,
     EditIndividualMessageData,
     GroupMessageData,
@@ -46,7 +47,7 @@ export class SocketHandler {
             socket.on('join-room', ({ userId }) => {
                 const roomId = `user-room:${userId}`;
                 socket.join(roomId);
-                
+
                 logger.info(`User ${socket.id} joined room ${roomId}`);
             });
 
@@ -100,7 +101,7 @@ export class SocketHandler {
                 this.messageHandler.handleIndividualMessage(socket, data);
             });
 
-            socket.on('send-delete-individual-message', (data: EditIndividualMessageData) => {
+            socket.on('send-delete-individual-message', (data: DeleteIndividualMessageData) => {
                 this.messageHandler.handleDeleteIndividualMessage(socket, data);
             });
 

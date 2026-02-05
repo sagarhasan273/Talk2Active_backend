@@ -89,13 +89,15 @@ export interface PrivateMessageData {
 }
 
 export interface DeleteIndividualMessageData {
-    userId: string;
+    senderId: string;
+    receiverId: string;
     text?: string;
     messageId: Message['id'];
 }
 
 export interface ReactionIndividualMessageData {
-    userId: string;
+    senderId: string;
+    receiverId: string;
     messageId: number;
     reaction: string;
 }
