@@ -1,6 +1,7 @@
 // utils/messageUtils.ts
 import { MessageModel, UserMessage } from 'src/models/message.model';
 import { MessageRepository } from 'src/repositories/message.repository';
+import { AllRelationsType } from 'src/types/social.type';
 
 export class MessageService {
     private messageRepository = new MessageRepository();
@@ -104,6 +105,46 @@ export class MessageService {
             },
             { new: true }
         );
+    }
+
+    public async sortFriendsByLatestMessage(friendsList: AllRelationsType[], userId: string): Promise<any[]> {
+        try {
+            // First, get all conversation IDs for these friends
+            const friendIds = friendsList.map(friend => friend.accountDetails.id);
+
+            // Query messages to find latest for each conversation
+            const conversations = await this.messageRepository.getConversationsByUserId(userId);
+
+            // Create a map of friendId -> latest message time
+            const latestMessageMap: { [key: string]: number } = {};
+            const latestMessagesMap: { [key: string]: AllRelationsType['latestMessage'] } = {};
+
+            conversations.forEach(msg => {
+                const friendId = msg.senderInfo.toString() === userId ? msg.targetUserInfo.toString() : msg.senderInfo.toString();
+                const msgTime = new Date(msg.createdAt).getTime();
+
+                if (!latestMessageMap[friendId] || msgTime > latestMessageMap[friendId]) {
+                    latestMessageMap[friendId] = msgTime;
+                    latestMessagesMap[friendId] = {
+                        _id: msg._id,
+                        text: msg.text,
+                        createdAt: msg.createdAt,
+                        time: msg.time,
+                    };
+                }
+            });
+
+            // Sort friends based on latest message time
+            return friendsList.sort((a, b) => {
+                const timeA = latestMessageMap[a.accountDetails.id.toString()] || 0;
+                const timeB = latestMessageMap[b.accountDetails.id.toString()] || 0;
+                a['latestMessage'] = latestMessagesMap[a.accountDetails.id.toString()] || null;
+                b['latestMessage'] = latestMessagesMap[b.accountDetails.id.toString()] || null;
+                return timeB - timeA;
+            });
+        } catch (error) {
+            return friendsList;
+        }
     }
 
     // // Update conversation last message

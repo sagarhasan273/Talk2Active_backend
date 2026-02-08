@@ -14,13 +14,13 @@ export interface UserMessage extends Document {
         userId: string;
         name: string;
         avatar?: string;
-    };
+    } | mongoose.mongo.ObjectId;
 
     targetUserInfo: {
         userId: string;
         name: string;
         avatar?: string;
-    };
+    } | mongoose.Types.ObjectId;
 
     // Thread/conversation context
     conversationId: string;
@@ -72,27 +72,17 @@ const MessageSchema: Schema<UserMessage> = new Schema(
         },
 
         senderInfo: {
-            userId: {
-                type: String,
-                required: true,
-            },
-            name: {
-                type: String,
-                required: true,
-            },
-            avatar: String,
+            type: Schema.Types.ObjectId,
+            ref: 'users',
+            required: true,
+            index: true
         },
 
         targetUserInfo: {
-            userId: {
-                type: String,
-                required: true,
-            },
-            name: {
-                type: String,
-                required: true,
-            },
-            avatar: String,
+            type: Schema.Types.ObjectId,
+            ref: 'users',
+            required: true,
+            index: true
         },
 
         // Conversation between two users

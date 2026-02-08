@@ -1,3 +1,4 @@
+import { ObjectId } from 'mongodb';
 import { Server, Socket } from 'socket.io';
 import { UserMessage } from 'src/models/message.model';
 import { MessageService } from 'src/services/message.service';
@@ -38,8 +39,8 @@ export class MessageHandler {
             time: new Date(),
             isUnread: true,
             type: 'message',
-            senderInfo: data.senderInfo,
-            targetUserInfo: data.targetUserInfo,
+            senderInfo: new ObjectId(data.senderInfo.userId),
+            targetUserInfo: new ObjectId(data.targetUserInfo.userId),
             conversationId: conversationId,
             isReply: data.parentMessageId ? true : false,
             parentMessageId: data.parentMessageId,

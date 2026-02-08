@@ -40,9 +40,16 @@ export interface LeaveIndividualMessageData {
 export type IndividualMessageData = UserMessage & {
     userId: string;
     text: string;
-    userInfo?: {
-        name: string;
+
+    senderInfo: {
         userId: string;
+        name: string;
+        avatar?: string;
+    };
+
+    targetUserInfo: {
+        userId: string;
+        name: string;
         avatar?: string;
     };
 }

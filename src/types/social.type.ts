@@ -1,4 +1,5 @@
 import { RelationshipStatusEnum, RelationshipTypeEnum } from "src/enums/social.enum";
+import { UserMessage } from "src/models/message.model";
 import { BatchRelationshipStatusSchema, CreateRelationshipSchema, RelationshipListSchema, RelationshipResponseSchema, RelationshipSchema, UpdateRelationshipSchema, UserStatsSchema } from "src/schemas/social.schema";
 import { z } from "zod";
 import { UserType } from "./user.type";
@@ -24,6 +25,7 @@ export type AuthorRelationship = {
 }
 export type AllRelationsType = {
     accountDetails: UserType;
+    latestMessage: Partial<UserMessage> | null;
     relation: 'friend' | 'following' | 'follower';
     status: RelationshipStatusEnum;
     type: RelationshipTypeEnum;

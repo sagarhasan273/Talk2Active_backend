@@ -84,4 +84,27 @@ export class MessageRepository {
             throw new AppError('Failed to fetch Messages!', 500, 'Message Repository');
         }
     };
+
+    public async getConversationsByUserId(userId: string): Promise<UserMessage[]> {
+        try {
+            const conversations = await MessageModel.find({
+                $or: [
+                    { "senderInfo": new ObjectId(userId) },
+                    { "targetUserInfo": new ObjectId(userId) }
+                ],
+                isDeleted: false,
+            })
+                // .populate('senderInfo', '_id name profilePhoto')
+                // .populate('targetUserInfo', '_id name profilePhoto')
+                .sort({ createdAt: -1 })
+                .lean();
+
+            return conversations as unknown as UserMessage[];
+        } catch (error) {
+            if (error instanceof AppError) {
+                throw error;
+            }
+            throw new AppError('Failed to fetch conversations!', 500, 'Message Repository');
+        }
+    }
 }
