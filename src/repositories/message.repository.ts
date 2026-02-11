@@ -1,5 +1,6 @@
 import { ObjectId } from "mongodb";
 import { MessageModel, UserMessage } from "src/models/message.model";
+import { Message } from "src/types/chat.type";
 
 
 import { AppError } from "src/utils/errors";
@@ -28,7 +29,7 @@ export class MessageRepository {
     }
 
     public async editMessage(
-        messageId: string,
+        messageId: Message['id'],
         newText: string
     ): Promise<UserMessage | null> {
         try {
@@ -39,6 +40,36 @@ export class MessageRepository {
                 {
                     $set: {
                         text: newText,
+                        isEdited: true,
+                        updatedAt: new Date(),
+                    },
+                },
+                { new: true }
+            );
+
+            if (!message) {
+                throw new AppError('Failed to update message', 404, 'Message Repository');
+            }
+
+            return message as unknown as UserMessage;
+        } catch (error) {
+            if (error instanceof AppError) {
+                throw error;
+            }
+            const errorMessage = error instanceof Error ? error.message : 'Failed to update Message!';
+            throw new AppError(errorMessage, 500, 'Message Repository');
+        }
+    }
+
+    public async updateMessage(messageId: Message['id'], input: Partial<UserMessage>) {
+        try {
+            const message = await MessageModel.findOneAndUpdate(
+                {
+                    _id: new ObjectId(messageId)
+                },
+                {
+                    $set: {
+                        ...input,
                         updatedAt: new Date(),
                     },
                 },
@@ -64,7 +95,6 @@ export class MessageRepository {
         try {
             const query: any = {
                 conversationId,
-                isDeleted: false,
             };
 
             if (before) {
@@ -72,6 +102,9 @@ export class MessageRepository {
             }
 
             const messages = await MessageModel.find(query)
+                .populate('senderInfo', '_id name profilePhoto')
+                .populate('receiverInfo', '_id name profilePhoto')
+                .populate('parentMessage', '_id text createdAt') // Populate parent message for threading
                 .sort({ createdAt: -1 })
                 .limit(limit)
                 .lean();
@@ -90,12 +123,12 @@ export class MessageRepository {
             const conversations = await MessageModel.find({
                 $or: [
                     { "senderInfo": new ObjectId(userId) },
-                    { "targetUserInfo": new ObjectId(userId) }
+                    { "receiverInfo": new ObjectId(userId) }
                 ],
                 isDeleted: false,
             })
                 // .populate('senderInfo', '_id name profilePhoto')
-                // .populate('targetUserInfo', '_id name profilePhoto')
+                // .populate('receiverInfo', '_id name profilePhoto')
                 .sort({ createdAt: -1 })
                 .lean();
 

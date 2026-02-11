@@ -1,6 +1,7 @@
 import express from "express";
 import { ChatRouter } from "./chat.router";
 import { InventoryRouter } from "./inventory.router";
+import { MessageRouter } from "./message.router";
 import { PostEngagementRoutes } from "./post-engagement.router";
 import { PostRoutes } from "./post.router";
 import { SettingRoutes } from "./settings.router";
@@ -33,5 +34,8 @@ app.use('/suggestion', userSuggestionRouters.router);
 
 const chatRouters = new ChatRouter();
 app.use('/room', chatRouters.router);
+
+const messageRouters = new MessageRouter();
+app.use('/message', messageRouters.router);
 
 export const rootRouter = app;

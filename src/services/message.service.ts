@@ -1,6 +1,7 @@
 // utils/messageUtils.ts
 import { MessageModel, UserMessage } from 'src/models/message.model';
 import { MessageRepository } from 'src/repositories/message.repository';
+import { Message } from 'src/types/chat.type';
 import { AllRelationsType } from 'src/types/social.type';
 
 export class MessageService {
@@ -19,10 +20,18 @@ export class MessageService {
 
     // Edit an existing message
     public async editMessage(
-        messageId: string,
+        messageId: Message['id'],
         newText: string
     ): Promise<UserMessage | null> {
         return await this.messageRepository.editMessage(messageId, newText);
+    }
+
+    // update message
+    public async updateMessage(
+        messageId: Message['id'],
+        input: Partial<UserMessage>
+    ): Promise<UserMessage | null> {
+        return await this.messageRepository.updateMessage(messageId, input);
     }
 
     // Get messages between two users
@@ -31,7 +40,7 @@ export class MessageService {
         userId2: string,
         limit: number = 20,
         before?: Date
-    ): Promise<UserMessage[]> {
+    ): Promise<Message[]> {
         const conversationId = this.generateConversationId(userId1, userId2);
 
         const query: any = {
@@ -43,7 +52,37 @@ export class MessageService {
             query.createdAt = { $lt: before };
         }
 
-        return await this.messageRepository.getMessages(conversationId, limit, before);
+        const messages = await this.messageRepository.getMessages(conversationId, limit, before);
+
+        const transformed: Message[] = messages.map(msg => ({
+            id: (msg as any)._id.toString() as string,
+            text: msg.text,
+            time: msg.time as Date,
+            isUnread: msg.isUnread,
+            isDeleted: msg.isDeleted,
+            isEdited: msg.isEdited,
+            type: msg.type,
+            conversationId: msg.conversationId,
+            sender: (msg.senderInfo as any)._id.toString() === userId1 ? 'me' : 'them',
+            senderInfo: msg.senderInfo && {
+                userId: (msg.senderInfo as any)._id as string,
+                name: (msg.senderInfo as any).name as string,
+                avatar: (msg.senderInfo as any).profilePhoto as string,
+            },
+            receiverInfo: msg.receiverInfo && {
+                userId: (msg.receiverInfo as any)._id as string,
+                name: (msg.receiverInfo as any).name as string,
+                avatar: (msg.receiverInfo as any).profilePhoto as string,
+            },
+            isReply: msg.isReply,
+            parentMessage: msg.isReply ? {
+                id: msg.parentMessage?._id?.toString() as string | undefined,
+                text: (msg.parentMessage as any)?.text as string | undefined,
+                createdAt: (msg.parentMessage as any)?.createdAt as Date | undefined,
+            } : undefined,
+        }));
+
+        return transformed.reverse() as Message[];
     }
 
     // Mark messages as read
@@ -109,9 +148,6 @@ export class MessageService {
 
     public async sortFriendsByLatestMessage(friendsList: AllRelationsType[], userId: string): Promise<any[]> {
         try {
-            // First, get all conversation IDs for these friends
-            const friendIds = friendsList.map(friend => friend.accountDetails.id);
-
             // Query messages to find latest for each conversation
             const conversations = await this.messageRepository.getConversationsByUserId(userId);
 
@@ -120,7 +156,7 @@ export class MessageService {
             const latestMessagesMap: { [key: string]: AllRelationsType['latestMessage'] } = {};
 
             conversations.forEach(msg => {
-                const friendId = msg.senderInfo.toString() === userId ? msg.targetUserInfo.toString() : msg.senderInfo.toString();
+                const friendId = msg.senderInfo.toString() === userId ? msg.receiverInfo.toString() : msg.senderInfo.toString();
                 const msgTime = new Date(msg.createdAt).getTime();
 
                 if (!latestMessageMap[friendId] || msgTime > latestMessageMap[friendId]) {
@@ -130,9 +166,20 @@ export class MessageService {
                         text: msg.text,
                         createdAt: msg.createdAt,
                         time: msg.time,
+                        isUnread: msg.senderInfo.toString() === userId ? false : msg.isUnread,
                     };
                 }
             });
+
+            if (friendsList.length === 1) {
+                return friendsList.map(friend => {
+                    const friendId = friend.accountDetails.id.toString();
+                    return {
+                        ...friend,
+                        latestMessage: latestMessagesMap[friendId] || null,
+                    };
+                });
+            }
 
             // Sort friends based on latest message time
             return friendsList.sort((a, b) => {
@@ -146,19 +193,4 @@ export class MessageService {
             return friendsList;
         }
     }
-
-    // // Update conversation last message
-    // static async updateConversation(
-    //     conversationId: string,
-    //     lastMessage: any
-    // ): Promise<void> {
-    //     await Conversation.findOneAndUpdate(
-    //         { _id: conversationId },
-    //         {
-    //             lastMessage,
-    //             updatedAt: new Date(),
-    //         },
-    //         { upsert: true, new: true }
-    //     );
-    // }
 }

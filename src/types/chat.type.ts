@@ -1,5 +1,6 @@
 import { RoomBaseSchema, RoomCreateSchema, RoomResponseSchema } from "src/schemas/chat.schema";
 import { z } from 'zod';
+import { UserType } from "./user.type";
 
 export type RoomBase = z.infer<typeof RoomBaseSchema>;
 export type CreateRoomInput = z.infer<typeof RoomCreateSchema>;
@@ -18,34 +19,22 @@ export type Message = {
     conversationId: string;
     text: string;
     sender: 'me' | 'them';
-    time: string;
+    time: Date | string;
     isUnread: boolean;
     startOfUnread?: boolean;
-    isPrivate: boolean;
+    isPrivate?: boolean;
     senderSocketId?: string;
-    targetSocketId?: string;
+    receiverSocketId?: string;
     type: 'system' | 'message';
     systemMessageType?: 'user-joined' | 'you-joined' | 'user-left';
-    userInfo: {
-        userId: string;
-        name: string;
-        avatar?: string;
-    };
-    targetUserInfo?: {
-        socketId: string;
-        userId: string;
-        name: string;
-        avatar?: string;
-    };
-    mentions: {
-        userId: string;
-        name: string;
-        avatar?: string;
-    }[];
+    senderInfo?: Partial<UserType>;
+    receiverInfo?: Partial<UserType>;
+    mentions?: UserType[];
     isEdited?: boolean;
     isDeleted?: boolean;
     reactions?: Reaction[];
     messageRepliedOf?: Partial<Message>;
+    parentMessage?: string | Partial<Message>; // For threading
 };
 
 export type ReactionMessageData = {

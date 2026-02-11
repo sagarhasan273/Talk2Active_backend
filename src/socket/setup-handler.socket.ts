@@ -9,8 +9,6 @@ import {
     EditIndividualMessageData,
     GroupMessageData,
     IndividualMessageData,
-    JoinIndividualMessageData,
-    LeaveIndividualMessageData,
     PrivateMessageData,
     ReactionIndividualMessageData,
     StatusSelectData,
@@ -89,14 +87,6 @@ export class SocketHandler {
                 this.messageHandler.handlePrivateMessage(socket, data);
             });
 
-            socket.on('join-individual-message-room', (data: JoinIndividualMessageData) => {
-                this.messageHandler.handleJoinIndividualMessage(socket, data);
-            });
-
-            socket.on('leave-individual-message-room', (data: LeaveIndividualMessageData) => {
-                this.messageHandler.handleLeaveIndividualMessage(socket, data);
-            });
-
             socket.on('send-individual-message', (data: IndividualMessageData) => {
                 this.messageHandler.handleIndividualMessage(socket, data);
             });
@@ -108,8 +98,13 @@ export class SocketHandler {
             socket.on('send-edit-individual-message', (data: EditIndividualMessageData) => {
                 this.messageHandler.handleEditIndividualMessage(socket, data);
             });
+
             socket.on('send-reaction-individual-message', (data: ReactionIndividualMessageData) => {
                 this.messageHandler.handleReactionIndividualMessage(socket, data);
+            });
+
+            socket.on('receiver-read-individual-message', (data: { messageId: string }) => {
+                this.messageHandler.handleReceiverReadIndividualMessage(socket, data)
             });
 
             socket.on('send-reaction-pop-individual-message', (data: ReactionIndividualMessageData) => {

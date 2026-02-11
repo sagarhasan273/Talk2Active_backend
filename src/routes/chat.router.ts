@@ -1,5 +1,3 @@
-
-
 import { ChatController } from 'src/controllers/chat.controller';
 import { BaseRouter } from './base.router';
 

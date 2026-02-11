@@ -5,7 +5,7 @@ import { MessageService } from 'src/services/message.service';
 import { ReactionMessageData } from 'src/types/chat.type';
 import logger from 'src/utils/logger';
 import { v4 as uuidv4 } from 'uuid';
-import { DeleteGroupMessageData, DeleteIndividualMessageData, EditGroupMessageData, EditIndividualMessageData, GroupMessageData, IndividualMessageData, JoinIndividualMessageData, LeaveIndividualMessageData, PrivateMessageData, ReactionIndividualMessageData } from '../types/socket.type';
+import { DeleteGroupMessageData, DeleteIndividualMessageData, EditGroupMessageData, EditIndividualMessageData, GroupMessageData, IndividualMessageData, PrivateMessageData, ReactionIndividualMessageData } from '../types/socket.type';
 
 export class MessageHandler {
     private messageService = new MessageService();
@@ -15,60 +15,53 @@ export class MessageHandler {
     /**
      * Handle individual message sending
      */
-    public handleJoinIndividualMessage(socket: Socket, data: JoinIndividualMessageData): void {
-        const { userId, targetUserId } = data;
-        const conversationId = this.messageService.generateConversationId(userId, targetUserId);
-        const roomId = `message:${conversationId}`;
-        socket.join(roomId);
-    }
-
-    public handleLeaveIndividualMessage(socket: Socket, data: LeaveIndividualMessageData): void {
-        const { userId, targetUserId } = data;
-        const conversationId = this.messageService.generateConversationId(userId, targetUserId);
-        const roomId = `message:${conversationId}`;
-        socket.leave(roomId);
-    }
 
     public async handleIndividualMessage(socket: Socket, data: IndividualMessageData): Promise<void> {
-        const { targetUserInfo, text } = data;
+        const { receiverInfo, senderInfo, text } = data;
 
-        const conversationId = this.messageService.generateConversationId(data.senderInfo.userId, data.targetUserInfo.userId);
+        const conversationId = this.messageService.generateConversationId(data.senderInfo.id as string, data.receiverInfo.id as string);
+
+        const time = new Date();
 
         const messageData: Partial<UserMessage> = {
             text,
-            time: new Date(),
-            isUnread: true,
+            time: time,
+            isUnread: true, // Mark as unread if not end-to-end
             type: 'message',
-            senderInfo: new ObjectId(data.senderInfo.userId),
-            targetUserInfo: new ObjectId(data.targetUserInfo.userId),
+            senderInfo: new ObjectId(senderInfo.id),
+            receiverInfo: new ObjectId(receiverInfo.id),
             conversationId: conversationId,
-            isReply: data.parentMessageId ? true : false,
-            parentMessageId: data.parentMessageId,
+            isReply: data.isReply ? true : false,
+            isEdited: data.isEdited ? true : false,
+            isDeleted: false,
+            parentMessage: data.parentMessage?.id ? new ObjectId(data.parentMessage.id) : undefined,
         };
 
         const message = await this.messageService.saveMessage(messageData);
 
-        const targetRoomId = `user-room:${targetUserInfo.userId}`;
+        const targetRoomId = `user-room:${receiverInfo.id}`;
 
         socket.to(targetRoomId).emit('receive-individual-message', {
             ...data,
             sender: 'them',
-            messageId: message._id
+            messageId: message._id,
+            time: time,
         });
 
         socket.emit('receive-individual-message-self', {
             ...data,
             sender: 'me',
-            messageId: message._id
+            messageId: message._id,
+            time: time,
         });
     }
 
     public async handleEditIndividualMessage(socket: Socket, data: EditIndividualMessageData): Promise<void> {
-        const { messageId, targetUserInfo } = data;
+        const { messageId, receiverInfo } = data;
 
         const updatedMessage = await this.messageService.editMessage(messageId, data.text);
 
-        const targetRoomId = `user-room:${targetUserInfo.userId}`;
+        const targetRoomId = `user-room:${receiverInfo.id}`;
 
         socket.to(targetRoomId).emit('receive-edit-individual-message', {
             ...data,
@@ -82,8 +75,10 @@ export class MessageHandler {
         });
     }
 
-    public handleDeleteIndividualMessage(socket: Socket, data: DeleteIndividualMessageData): void {
+    public async handleDeleteIndividualMessage(socket: Socket, data: DeleteIndividualMessageData): Promise<void> {
         const { receiverId, messageId } = data;
+
+        await this.messageService.updateMessage(messageId, { isDeleted: true, deletedAt: new Date() });
 
         const targetRoomId = `user-room:${receiverId}`;
 
@@ -114,6 +109,11 @@ export class MessageHandler {
         socket.to(targetRoomId).emit('receive-reaction-pop-individual-message', {
             ...data,
         });
+    }
+
+    public async handleReceiverReadIndividualMessage(socket: Socket, data: { messageId: string }): Promise<void> {
+        const { messageId, ...rest } = data;
+        await this.messageService.updateMessage(messageId, rest);
     }
 
     /**

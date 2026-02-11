@@ -1,16 +1,12 @@
 import { Request, Response } from 'express';
 import { UserMessage } from 'src/models/message.model';
 import { MessageService } from 'src/services/message.service';
-import { getSocketHandler, MessageHandler } from 'src/socket/setup-handler.socket';
 
 
 export class MessageController {
     private messageService = new MessageService();
-    private messageHandler: MessageHandler;
 
-    constructor() {
-        this.messageHandler = getSocketHandler().getMessageHandler();
-    }
+    constructor() { }
 
     sendMessage = async (req: Request, res: Response) => {
         try {
@@ -24,21 +20,17 @@ export class MessageController {
 
             const messageData: Partial<UserMessage> = {
                 text,
-                sender: 'me', // This would be determined by your auth system
                 time: req.body.time,
                 isUnread: true,
-                isPrivate: isPrivate || false,
                 type: 'message',
                 senderInfo: req.body.senderInfo,
-                targetUserInfo: req.body.targetUserInfo,
+                receiverInfo: req.body.receiverInfo,
                 conversationId,
-                isReply: req.body.parentMessageId ? true : false,
-                parentMessageId: req.body.parentMessageId,
+                isReply: req.body.parentMessage ? true : false,
+                parentMessage: req.body.parentMessage,
             };
 
             await this.messageService.saveMessage(messageData);
-
-            this.messageHandler.handleIndividualMessage(messageData as any);
 
             res.status(201).json({ success: true, message: 'Message sent successfully' });
         } catch (error) {
@@ -59,7 +51,7 @@ export class MessageController {
                 before ? new Date(before as string) : undefined
             );
 
-            res.json({ success: true, messages });
+            res.json({ success: true, messages, chatUserId: userId2 });
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
             res.status(500).json({ message: errorMessage });

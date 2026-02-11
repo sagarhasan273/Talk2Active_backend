@@ -1,5 +1,6 @@
 import { UserMessage } from "src/models/message.model";
 import { Message } from "./chat.type";
+import { UserType } from "./user.type";
 
 export interface WebRTCData {
     target: string;
@@ -27,9 +28,9 @@ export interface UserData {
     status: string;
 }
 
-export interface JoinIndividualMessageData {
-    userId: string;
-    targetUserId: string;
+export interface JoinLeaveIndividualMessageData {
+    listeningUserId?: string;
+    leaveListeningUserId?: string;
 }
 
 export interface LeaveIndividualMessageData {
@@ -41,28 +42,16 @@ export type IndividualMessageData = UserMessage & {
     userId: string;
     text: string;
 
-    senderInfo: {
-        userId: string;
-        name: string;
-        avatar?: string;
-    };
+    senderInfo: Partial<UserType>;
 
-    targetUserInfo: {
-        userId: string;
-        name: string;
-        avatar?: string;
-    };
+    receiverInfo: Partial<UserType>;
 }
 
 export interface EditIndividualMessageData {
     messageId: string;
     userId: string;
     text: string;
-    targetUserInfo: {
-        userId: string;
-        name: string;
-        avatar?: string;
-    };
+    receiverInfo: Partial<UserType>;
 }
 
 export interface GroupMessageData {

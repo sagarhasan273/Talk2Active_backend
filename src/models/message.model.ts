@@ -1,4 +1,5 @@
 import mongoose, { Document, Model, Schema } from 'mongoose';
+import { UserType } from 'src/types/user.type';
 
 export interface UserMessage extends Document {
     // Core message fields
@@ -14,24 +15,24 @@ export interface UserMessage extends Document {
         userId: string;
         name: string;
         avatar?: string;
-    } | mongoose.mongo.ObjectId;
+    } | mongoose.mongo.ObjectId | UserType;
 
-    targetUserInfo: {
+    receiverInfo: {
         userId: string;
         name: string;
         avatar?: string;
-    } | mongoose.Types.ObjectId;
+    } | mongoose.Types.ObjectId | UserType;
 
     // Thread/conversation context
     conversationId: string;
 
     // Reply/thread feature
-    parentMessageId?: mongoose.Types.ObjectId; // Reference to parent message
+    parentMessage?: mongoose.Types.ObjectId; // Reference to parent message
     isReply: boolean;
 
     // Message state
-    isEdited?: boolean;
-    isDeleted?: boolean;
+    isEdited: boolean;
+    isDeleted: boolean;
     deletedAt?: Date;
 
     // Reactions
@@ -78,7 +79,7 @@ const MessageSchema: Schema<UserMessage> = new Schema(
             index: true
         },
 
-        targetUserInfo: {
+        receiverInfo: {
             type: Schema.Types.ObjectId,
             ref: 'users',
             required: true,
@@ -113,9 +114,9 @@ const MessageSchema: Schema<UserMessage> = new Schema(
             },
         }],
 
-        parentMessageId: {
+        parentMessage: {
             type: Schema.Types.ObjectId,
-            ref: 'Message',
+            ref: 'message',
         },
 
         isReply: {
