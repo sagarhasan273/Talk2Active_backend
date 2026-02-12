@@ -54,35 +54,43 @@ export class MessageService {
 
         const messages = await this.messageRepository.getMessages(conversationId, limit, before);
 
-        const transformed: Message[] = messages.map(msg => ({
-            id: (msg as any)._id.toString() as string,
-            text: msg.text,
-            time: msg.time as Date,
-            isUnread: msg.isUnread,
-            isDeleted: msg.isDeleted,
-            isEdited: msg.isEdited,
-            type: msg.type,
-            conversationId: msg.conversationId,
-            sender: (msg.senderInfo as any)._id.toString() === userId1 ? 'me' : 'them',
-            senderInfo: msg.senderInfo && {
-                userId: (msg.senderInfo as any)._id as string,
-                name: (msg.senderInfo as any).name as string,
-                avatar: (msg.senderInfo as any).profilePhoto as string,
-            },
-            receiverInfo: msg.receiverInfo && {
-                userId: (msg.receiverInfo as any)._id as string,
-                name: (msg.receiverInfo as any).name as string,
-                avatar: (msg.receiverInfo as any).profilePhoto as string,
-            },
-            isReply: msg.isReply,
-            parentMessage: msg.isReply ? {
-                id: msg.parentMessage?._id?.toString() as string | undefined,
-                text: (msg.parentMessage as any)?.text as string | undefined,
-                createdAt: (msg.parentMessage as any)?.createdAt as Date | undefined,
-            } : undefined,
-        }));
+        let startOfUnread = -1;
 
-        return transformed.reverse() as Message[];
+        const transformed: Message[] = messages.reverse().map(msg => {
+            if (msg.isUnread) {
+                startOfUnread += 1;
+            }
+            return {
+                id: (msg as any)._id.toString() as string,
+                text: msg.text,
+                time: msg.time as Date,
+                startOfUnread: startOfUnread === 0,
+                isUnread: msg.isUnread,
+                isDeleted: msg.isDeleted,
+                isEdited: msg.isEdited,
+                type: msg.type,
+                conversationId: msg.conversationId,
+                sender: (msg.senderInfo as any)._id.toString() === userId1 ? 'me' : 'them',
+                senderInfo: msg.senderInfo && {
+                    id: (msg.senderInfo as any)._id as string,
+                    name: (msg.senderInfo as any).name as string,
+                    profilePhoto: (msg.senderInfo as any).profilePhoto as string,
+                },
+                receiverInfo: msg.receiverInfo && {
+                    id: (msg.receiverInfo as any)._id as string,
+                    name: (msg.receiverInfo as any).name as string,
+                    profilePhoto: (msg.receiverInfo as any).profilePhoto as string,
+                },
+                isReply: msg.isReply,
+                parentMessage: msg.isReply ? {
+                    id: msg.parentMessage?._id?.toString() as string | undefined,
+                    text: (msg.parentMessage as any)?.text as string | undefined,
+                    createdAt: (msg.parentMessage as any)?.createdAt as Date | undefined,
+                } : undefined,
+            }
+        });
+
+        return transformed;
     }
 
     // Mark messages as read
