@@ -8,10 +8,10 @@ export type RoomResponse = z.infer<typeof RoomResponseSchema>;
 
 // Message
 export type Reaction = {
+    reactId: string;
     emoji: string;
     userId: string;
     name?: string;
-    timestamp?: Date;
 };
 
 export type Message = {

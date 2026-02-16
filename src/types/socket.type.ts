@@ -45,6 +45,8 @@ export type IndividualMessageData = UserMessage & {
     senderInfo: Partial<UserType>;
 
     receiverInfo: Partial<UserType>;
+
+    unreadMessageIds?: string[];
 }
 
 export interface EditIndividualMessageData {
@@ -94,8 +96,11 @@ export interface DeleteIndividualMessageData {
 export interface ReactionIndividualMessageData {
     senderId: string;
     receiverId: string;
-    messageId: number;
-    reaction: string;
+    messageId: string;
+    reaction: {
+        userId: string;
+        emoji: string;
+    };
 }
 
 export interface AudioToggleData {

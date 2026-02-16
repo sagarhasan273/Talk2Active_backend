@@ -39,7 +39,7 @@ export interface UserMessage extends Document {
     reactions?: Array<{
         userId: string;
         emoji: string;
-        createdAt: Date;
+        createdAt?: Date;
     }>;
 
     // Timestamps (automatically added by mongoose)
@@ -106,12 +106,13 @@ const MessageSchema: Schema<UserMessage> = new Schema(
         deletedAt: Date,
 
         reactions: [{
-            userId: String,
-            emoji: String,
-            createdAt: {
-                type: Date,
-                default: Date.now,
+            userId: {
+                type: Schema.Types.ObjectId,
+                required: true,
+                ref: 'users',
+                index: true, // Index for faster queries
             },
+            emoji: String,
         }],
 
         parentMessage: {

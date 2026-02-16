@@ -17,7 +17,7 @@ export class MessageHandler {
      */
 
     public async handleIndividualMessage(socket: Socket, data: IndividualMessageData): Promise<void> {
-        const { receiverInfo, senderInfo, text } = data;
+        const { receiverInfo, senderInfo, text, unreadMessageIds } = data;
 
         const conversationId = this.messageService.generateConversationId(data.senderInfo.id as string, data.receiverInfo.id as string);
 
@@ -36,6 +36,10 @@ export class MessageHandler {
             isDeleted: false,
             parentMessage: data.parentMessage?.id ? new ObjectId(data.parentMessage.id) : undefined,
         };
+
+        if (unreadMessageIds && unreadMessageIds.length > 0) {
+            await this.messageService.updateMessages(unreadMessageIds, { isUnread: true });
+        }
 
         const message = await this.messageService.saveMessage(messageData);
 
@@ -92,20 +96,25 @@ export class MessageHandler {
         });
     }
 
-    public handleReactionIndividualMessage(socket: Socket, data: ReactionIndividualMessageData): void {
-        const { receiverId } = data;
+    public async handleReactionIndividualMessage(socket: Socket, data: ReactionIndividualMessageData): Promise<void> {
+        const { receiverId, messageId } = data;
 
         const targetRoomId = `user-room:${receiverId}`;
+
+        await this.messageService.updateReactions(messageId, data.reaction);
 
         socket.to(targetRoomId).emit('receive-reaction-individual-message', {
             ...data,
         });
     }
 
-    public handleReactionPopIndividualMessage(socket: Socket, data: ReactionIndividualMessageData): void {
+    public async handleReactionPopIndividualMessage(socket: Socket, data: ReactionIndividualMessageData): Promise<void> {
         const { receiverId } = data;
 
+        await this.messageService.updateReactions(data.messageId, data.reaction);
+
         const targetRoomId = `user-room:${receiverId}`;
+
         socket.to(targetRoomId).emit('receive-reaction-pop-individual-message', {
             ...data,
         });

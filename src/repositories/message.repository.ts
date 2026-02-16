@@ -90,6 +90,89 @@ export class MessageRepository {
         }
     }
 
+    public async updateMessages(messageIds: Message['id'][], input: Partial<UserMessage>): Promise<void> {
+        try {
+            const objectIds = messageIds.map(id => new ObjectId(id));
+            await MessageModel.updateMany(
+                { _id: { $in: objectIds } },
+                {
+                    $set: {
+                        ...input,
+                        updatedAt: new Date(),
+                    },
+                }
+            );
+        } catch (error) {
+            if (error instanceof AppError) {
+                throw error;
+            }
+            const errorMessage = error instanceof Error ? error.message : 'Failed to update Messages!';
+            throw new AppError(errorMessage, 500, 'Message Repository');
+        }
+    }
+
+    public async updateReactions(messageId: Message['id'], reactionData: { userId: string; emoji: string }): Promise<UserMessage | null> {
+        try {
+            const message = await MessageModel.findOneAndUpdate(
+                {
+                    _id: new ObjectId(messageId),
+                    // Check if reaction doesn't exist (for adding)
+                    'reactions': {
+                        $not: {
+                            $elemMatch: {
+                                userId: new ObjectId(reactionData.userId),
+                                emoji: reactionData.emoji
+                            }
+                        }
+                    }
+                },
+                {
+                    $push: {
+                        reactions: {
+                            userId: new ObjectId(reactionData.userId),
+                            emoji: reactionData.emoji
+                        }
+                    }
+                },
+                { new: true }
+            );
+
+            // If no message was updated (reaction exists), then remove it
+            if (!message) {
+                const updatedMessage = await MessageModel.findOneAndUpdate(
+                    {
+                        _id: new ObjectId(messageId),
+                        'reactions': {
+                            $elemMatch: {
+                                userId: new ObjectId(reactionData.userId),
+                                emoji: reactionData.emoji
+                            }
+                        }
+                    },
+                    {
+                        $pull: {
+                            reactions: {
+                                userId: new ObjectId(reactionData.userId),
+                                emoji: reactionData.emoji
+                            }
+                        }
+                    },
+                    { new: true }
+                );
+
+                return updatedMessage;
+            }
+
+            return message;
+        } catch (error) {
+            if (error instanceof AppError) {
+                throw error;
+            }
+            const errorMessage = error instanceof Error ? error.message : 'Failed to update Message Reactions!';
+            throw new AppError(errorMessage, 500, 'Message Repository');
+        }
+    }
+
     // Get all active rooms
     public async getMessages(conversationId: string, limit: number = 20, before?: Date): Promise<UserMessage[]> {
         try {

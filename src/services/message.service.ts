@@ -34,6 +34,20 @@ export class MessageService {
         return await this.messageRepository.updateMessage(messageId, input);
     }
 
+    public async updateMessages(
+        messageIds: Message['id'][],
+        input: Partial<UserMessage>
+    ): Promise<void> {
+        return await this.messageRepository.updateMessages(messageIds, input);
+    }
+
+    public async updateReactions(
+        messageId: Message['id'],
+        reactionData: { userId: string; emoji: string }
+    ): Promise<UserMessage | null> {
+        return await this.messageRepository.updateReactions(messageId, reactionData);
+    }
+
     // Get messages between two users
     public async getMessages(
         userId1: string,
@@ -87,6 +101,11 @@ export class MessageService {
                     text: (msg.parentMessage as any)?.text as string | undefined,
                     createdAt: (msg.parentMessage as any)?.createdAt as Date | undefined,
                 } : undefined,
+                reactions: msg.reactions?.map(reaction => ({
+                    reactId: (reaction as any)._id.toString(),
+                    userId: reaction.userId.toString(),
+                    emoji: reaction.emoji,
+                })) || [],
             }
         });
 
