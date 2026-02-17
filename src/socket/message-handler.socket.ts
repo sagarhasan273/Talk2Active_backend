@@ -10,11 +10,24 @@ import { DeleteGroupMessageData, DeleteIndividualMessageData, EditGroupMessageDa
 export class MessageHandler {
     private messageService = new MessageService();
 
+    private listeningTo = new Map<string, string>(); // userId -> Set of socketIds
+
     constructor(private io: Server) { }
 
     /**
      * Handle individual message sending
      */
+
+    public async handleListenToUser(userId: string, listenerId: string): Promise<void> {
+
+        this.listeningTo.set(userId, listenerId);
+        logger.info(`User ${userId} is now listening to user ${listenerId}`);
+    }
+
+    public async handleStopListenToUser(userId: string): Promise<void> {
+        this.listeningTo.delete(userId);
+        logger.info(`User ${userId} stopped listening to any user`);
+    }
 
     public async handleIndividualMessage(socket: Socket, data: IndividualMessageData): Promise<void> {
         const { receiverInfo, senderInfo, text, unreadMessageIds } = data;
@@ -22,11 +35,17 @@ export class MessageHandler {
         const conversationId = this.messageService.generateConversationId(data.senderInfo.id as string, data.receiverInfo.id as string);
 
         const time = new Date();
+        let isUnread = true;
+
+        if (this.listeningTo.get(receiverInfo.id as string) === senderInfo.id) {
+            logger.info(`User ${receiverInfo.id} is listening to user ${senderInfo.id}, marking message as read`);
+            isUnread = false;
+        }
 
         const messageData: Partial<UserMessage> = {
             text,
             time: time,
-            isUnread: true, // Mark as unread if not end-to-end
+            isUnread, // Mark as unread if not end-to-end
             type: 'message',
             senderInfo: new ObjectId(senderInfo.id),
             receiverInfo: new ObjectId(receiverInfo.id),

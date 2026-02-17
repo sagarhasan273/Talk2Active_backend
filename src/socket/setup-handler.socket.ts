@@ -87,6 +87,14 @@ export class SocketHandler {
                 this.messageHandler.handlePrivateMessage(socket, data);
             });
 
+            socket.on('listening-to-user', (data: { userId: string, listenerId: string }) => {
+                this.messageHandler.handleListenToUser(data.userId, data.listenerId);
+            });
+
+            socket.on('stop-listening-to-user', (data: { userId: string }) => {
+                this.messageHandler.handleStopListenToUser(data.userId);
+            });
+
             socket.on('send-individual-message', (data: IndividualMessageData) => {
                 this.messageHandler.handleIndividualMessage(socket, data);
             });
