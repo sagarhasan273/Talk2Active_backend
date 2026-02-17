@@ -58,6 +58,17 @@ export class MessageController {
         }
     };
 
+    readMessages = async (req: Request, res: Response) => {
+        try {
+            const { userId1, userId2 } = req.params;
+            await this.messageService.readMessages(userId1, userId2);
+            res.json({ success: true, message: 'Messages marked as read' });
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+            res.status(500).json({ message: errorMessage });
+        }
+    };
+
     deleteMessage = async (req: Request, res: Response) => {
         try {
             const { messageId } = req.params;

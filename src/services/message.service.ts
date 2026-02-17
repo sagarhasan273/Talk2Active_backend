@@ -220,4 +220,10 @@ export class MessageService {
             return friendsList;
         }
     }
+
+    public async readMessages(userId1: string, userId2: string): Promise<void> {
+        const conversationId = this.generateConversationId(userId1, userId2);
+
+        await this.messageRepository.readMessages(conversationId);
+    }
 }

@@ -29,4 +29,5 @@ export type AllRelationsType = {
     relation: 'friend' | 'following' | 'follower';
     status: RelationshipStatusEnum;
     type: RelationshipTypeEnum;
+
 }

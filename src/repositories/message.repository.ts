@@ -201,6 +201,49 @@ export class MessageRepository {
         }
     };
 
+    public async deleteMessage(messageId: Message['id'], userId: string): Promise<UserMessage | null> {
+        try {
+            const message = await MessageModel.findOneAndUpdate(
+                {
+                    _id: new ObjectId(messageId),
+                    senderInfo: new ObjectId(userId), // Only allow sender to delete
+                },
+                {
+                    $set: {
+                        isDeleted: true,
+                        deletedAt: new Date(),
+                    },
+                },
+                { new: true }
+            );
+            return message;
+        } catch (error) {
+            if (error instanceof AppError) {
+                throw error;
+            }
+            const errorMessage = error instanceof Error ? error.message : 'Failed to delete Message!';
+            throw new AppError(errorMessage, 500, 'Message Repository');
+        }
+    }
+
+    public async readMessages(conversationId: string): Promise<void> {
+        try {
+            await MessageModel.updateMany({
+                conversationId,
+                isUnread: true,
+            }, {
+                $set: {
+                    isUnread: false
+                }
+            });
+        } catch (error) {
+            if (error instanceof AppError) {
+                throw error;
+            }
+            throw new AppError('Failed to mark messages as read!', 500, 'Message Repository');
+        }
+    }
+
     public async getConversationsByUserId(userId: string): Promise<UserMessage[]> {
         try {
             const conversations = await MessageModel.find({

@@ -1313,3 +1313,33 @@ DatabaseError: DatabaseError: User already exists! You can log in instead.
 [2026-02-16 09:22:27] [31merror[39m: Relationship Service: Failed to get friends!
 [2026-02-16 09:22:27] [31merror[39m: Relationship Service: Failed to get NewUsers Suggestions!
 [2026-02-16 09:22:27] [31merror[39m: Invalid input for posts!
+[2026-02-17 08:24:09] [31merror[39m: Relationship Service: Failed to get All Relations!
+[2026-02-17 08:24:09] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-02-17 08:24:09] [31merror[39m: Relationship Service: Failed to get All Relations!
+[2026-02-17 08:24:09] [31merror[39m: Relationship Service: Failed to get NewUsers Suggestions!
+[2026-02-17 08:24:09] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-02-17 08:24:09] [31merror[39m: Invalid input for posts!
+[2026-02-17 08:24:25] [31merror[39m: Relationship Service: Failed to get All Relations!
+[2026-02-17 08:24:25] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-02-17 08:24:25] [31merror[39m: Relationship Service: Failed to get All Relations!
+[2026-02-17 08:24:25] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-02-17 08:24:26] [31merror[39m: Relationship Service: Failed to get NewUsers Suggestions!
+[2026-02-17 08:24:26] [31merror[39m: Invalid input for posts!
+[2026-02-17 08:24:33] [31merror[39m: Relationship Service: Failed to get All Relations!
+[2026-02-17 08:24:33] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-02-17 08:24:33] [31merror[39m: Relationship Service: Failed to get All Relations!
+[2026-02-17 08:24:33] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-02-17 08:24:33] [31merror[39m: Relationship Service: Failed to get NewUsers Suggestions!
+[2026-02-17 08:24:33] [31merror[39m: Invalid input for posts!
+[2026-02-17 08:29:46] [31merror[39m: Relationship Service: Failed to get All Relations!
+[2026-02-17 08:29:46] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-02-17 08:29:46] [31merror[39m: Relationship Service: Failed to get All Relations!
+[2026-02-17 08:29:46] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-02-17 08:29:46] [31merror[39m: Relationship Service: Failed to get NewUsers Suggestions!
+[2026-02-17 08:29:46] [31merror[39m: Invalid input for posts!
+[2026-02-17 08:30:07] [31merror[39m: Relationship Service: Failed to get All Relations!
+[2026-02-17 08:30:07] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-02-17 08:30:07] [31merror[39m: Relationship Service: Failed to get All Relations!
+[2026-02-17 08:30:07] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-02-17 08:30:07] [31merror[39m: Relationship Service: Failed to get NewUsers Suggestions!
+[2026-02-17 08:30:07] [31merror[39m: Invalid input for posts!
