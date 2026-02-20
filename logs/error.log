@@ -1343,3 +1343,40 @@ DatabaseError: DatabaseError: User already exists! You can log in instead.
 [2026-02-17 08:30:07] [31merror[39m: Relationship Service: Failed to get friends!
 [2026-02-17 08:30:07] [31merror[39m: Relationship Service: Failed to get NewUsers Suggestions!
 [2026-02-17 08:30:07] [31merror[39m: Invalid input for posts!
+[2026-02-18 05:39:23] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-02-19 08:05:15] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-02-19 08:05:29] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-02-19 08:06:13] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-02-19 08:06:43] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-02-19 08:07:02] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-02-19 08:07:38] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-02-19 08:07:52] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-02-19 08:09:04] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-02-19 08:09:20] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-02-19 08:12:52] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-02-19 08:14:05] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-02-19 08:14:09] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-02-19 08:18:18] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-02-19 08:21:51] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-02-19 08:21:51] [31merror[39m: Chat Repository: Failed to get Room by ID!
+[2026-02-19 09:21:55] [31merror[39m: Chat Repository: Failed to get Room by ID!
+[2026-02-19 09:21:55] [31merror[39m: Chat Repository: Failed to leave Room!
+[2026-02-19 09:21:55] [31merror[39m: Chat Repository: Failed to get Room by ID!
+[2026-02-19 09:21:57] [31merror[39m: Chat Repository: Failed to join Room!
+[2026-02-19 09:21:57] [31merror[39m: Chat Repository: Failed to get Room by ID!
+[2026-02-19 10:31:54] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-02-19 11:02:40] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-02-19 11:08:13] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-02-19 11:10:26] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-02-19 11:10:48] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-02-19 11:11:49] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-02-19 15:08:48] [31merror[39m: User Repository: User doesn't exist!
+[2026-02-19 15:25:53] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-02-19 15:25:53] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-02-19 15:25:54] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-02-19 15:26:16] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-02-19 15:26:17] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-02-19 15:26:18] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-02-19 15:26:29] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-02-19 15:26:29] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-02-19 15:26:30] [31merror[39m: Relationship Service: Failed to get friends!
