@@ -19,9 +19,7 @@ export class MessageHandler {
      */
 
     public async handleListenToUser(userId: string, listenerId: string): Promise<void> {
-
         this.listeningTo.set(userId, listenerId);
-        logger.info(`User ${userId} is now listening to user ${listenerId}`);
     }
 
     public async handleStopListenToUser(userId: string): Promise<void> {
