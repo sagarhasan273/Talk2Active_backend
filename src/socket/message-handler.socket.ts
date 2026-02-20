@@ -35,7 +35,6 @@ export class MessageHandler {
         let isUnread = true;
 
         if (this.listeningTo.get(receiverInfo.id as string) === senderInfo.id) {
-            logger.info(`User ${receiverInfo.id} is listening to user ${senderInfo.id}, marking message as read`);
             isUnread = false;
         }
 
