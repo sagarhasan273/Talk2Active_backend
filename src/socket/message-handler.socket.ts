@@ -24,7 +24,6 @@ export class MessageHandler {
 
     public async handleStopListenToUser(userId: string): Promise<void> {
         this.listeningTo.delete(userId);
-        logger.info(`User ${userId} stopped listening to any user`);
     }
 
     public async handleIndividualMessage(socket: Socket, data: IndividualMessageData): Promise<void> {
