@@ -35,7 +35,7 @@ export class VoiceRoomManager {
             this.sendExistingParticipants(socket, roomId, participants);
 
             // Notify others about the new user
-            this.broadcastUserJoined(socket, roomId, { userId, name, ...userBasicInfo });
+            this.broadcastUserJoined(socket, roomId, { userId, name, isLocal: false, ...userBasicInfo });
 
             // Send system messages
             this.sendSystemMessages(socket, roomId, { userId, name, profilePhoto: data.profilePhoto });
@@ -129,6 +129,7 @@ export class VoiceRoomManager {
                         socketId,
                         id: userData.userId,
                         isMuted: userData.isMuted,
+                        isLocal: false
                     });
                 }
             }

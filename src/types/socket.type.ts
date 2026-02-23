@@ -17,6 +17,7 @@ export interface ParticipantData {
     profilePhoto: string;
     isMuted: boolean;
     status: string;
+    isLocal?: boolean
 }
 
 export interface UserData {
