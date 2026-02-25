@@ -270,6 +270,7 @@ export class VoiceRoomManager {
         socket.to(roomId).emit('deliver-user-actions-in-voice', {
             type,
             senderInfo: {
+                ...senderInfo,
                 userId: senderInfo.userId,
                 emoji: senderInfo.emoji,
             }
@@ -278,6 +279,7 @@ export class VoiceRoomManager {
 
     private sendUserLeftSystemMessage(socket: Socket, roomId: string, userId: string, name: string, broadcast = true): void {
         const messageId = uuidv4();
+
         const messageData = {
             sender: 'them',
             text: `${name} has left the voice room.`,
