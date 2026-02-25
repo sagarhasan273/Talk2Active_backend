@@ -148,6 +148,10 @@ export class SocketHandler {
                 this.userStatusManager.handleStatusSelect(socket, data);
             });
 
+            socket.on('send-user-actions-in-voice', (data: any) => {
+                this.voiceRoomManager.sendActionsInVoice(socket, data);
+            })
+
             // Disconnection
             socket.on('disconnect', () => {
                 this.voiceRoomManager.handleDisconnect(socket);

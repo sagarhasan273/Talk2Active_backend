@@ -227,8 +227,8 @@ export class VoiceRoomManager {
         });
     }
 
-    private sendSystemMessages(socket: Socket, roomId: string, userInfo: { userId: string, name: string, profilePhoto: string }): void {
-        const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    private sendSystemMessages(socket: Socket, roomId: string, senderInfo: { userId: string, name: string, profilePhoto: string }): void {
+        const time = new Date();
 
         // Notify others
         socket.to(roomId).emit('receive-group-message', {
@@ -236,12 +236,12 @@ export class VoiceRoomManager {
             sender: 'them',
             type: 'system',
             systemMessageType: 'user-joined',
-            text: `${userInfo.name} has joined the voice room.`,
+            text: `${senderInfo.name} has joined the voice room.`,
             senderSocketId: socket.id,
-            userInfo: {
-                name: userInfo.name,
-                userId: userInfo.userId,
-                avatar: userInfo.profilePhoto,
+            senderInfo: {
+                name: senderInfo.name,
+                userId: senderInfo.userId,
+                avatar: senderInfo.profilePhoto,
             },
             time,
         });
@@ -254,12 +254,25 @@ export class VoiceRoomManager {
             systemMessageType: 'you-joined',
             text: `You are in the voice room.`,
             senderSocketId: socket.id,
-            userInfo: {
-                name: userInfo.name,
-                userId: userInfo.userId,
-                avatar: userInfo.profilePhoto,
+            senderInfo: {
+                name: senderInfo.name,
+                userId: senderInfo.userId,
+                avatar: senderInfo.profilePhoto,
             },
             time,
+        });
+    }
+
+    public sendActionsInVoice(socket: Socket, data: any): void {
+        const { roomId, type, senderInfo } = data;
+
+        // Notify others
+        socket.to(roomId).emit('deliver-user-actions-in-voice', {
+            type,
+            senderInfo: {
+                userId: senderInfo.userId,
+                emoji: senderInfo.emoji,
+            }
         });
     }
 
@@ -272,11 +285,11 @@ export class VoiceRoomManager {
             id: messageId,
             type: 'system' as const,
             systemMessageType: 'user-left' as const,
-            userInfo: {
+            senderInfo: {
                 name,
                 userId,
             },
-            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            time: new Date()
         };
 
         if (broadcast) {

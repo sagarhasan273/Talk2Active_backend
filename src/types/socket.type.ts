@@ -82,7 +82,7 @@ export interface DeleteGroupMessageData {
 }
 
 export interface PrivateMessageData {
-    targetSocketId: string;
+    receiverSocketId: string;
     message: string;
     name: string;
 }
