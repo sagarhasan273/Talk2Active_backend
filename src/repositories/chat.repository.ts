@@ -1,5 +1,6 @@
+import { ObjectId } from "mongodb";
 import { RoomModel } from "src/models/chat.model";
-import { CreateRoomInput, RoomResponse } from "src/types/chat.type";
+import { CreateRoomInput, RoomResponse, UpdateRoomInput } from "src/types/chat.type";
 import { AppError } from "src/utils/errors";
 
 const commonUserQuery = 'email username name profilePhoto bio status lastActive verified'
@@ -13,6 +14,33 @@ export class ChatRepository {
                 ...createFields,
                 isActive: true,
             });
+
+            if (!room) {
+                throw new AppError('Failed to create room', 404, 'Chat Repository');
+            }
+        } catch (error) {
+            if (error instanceof AppError) {
+                throw error;
+            }
+            throw new AppError('Failed to create Room!', 500, 'Chat Repository');
+        }
+    }
+
+    public async updateRoom(input: UpdateRoomInput): Promise<void> {
+        try {
+            const { roomId, ...updateFields } = input;
+
+            const room = await RoomModel.findOneAndUpdate(
+                {
+                    _id: new ObjectId(roomId),
+                },
+                {
+                    $set: {
+                        ...updateFields
+                    },
+                },
+                { new: true }
+            );
 
             if (!room) {
                 throw new AppError('Failed to create room', 404, 'Chat Repository');

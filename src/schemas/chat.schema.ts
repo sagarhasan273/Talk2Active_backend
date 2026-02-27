@@ -34,6 +34,19 @@ export const RoomCreateSchema = RoomBaseSchema.pick({
     roomType: true
 });
 
+export const RoomUpdateSchema = RoomBaseSchema.pick({
+    name: true,
+    description: true,
+    languages: true,
+    level: true,
+    maxParticipants: true,
+    host: true,
+    roomType: true,
+    isActive: true,
+}).partial().extend({
+    roomId: objectIdSchema
+});
+
 // Schema to validate objects returned from DB (includes mongoose timestamps)
 export const RoomResponseSchema = RoomBaseSchema.extend({
     _id: objectIdSchema,

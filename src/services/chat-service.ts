@@ -1,6 +1,6 @@
 
 import { ChatRepository } from "src/repositories/chat.repository";
-import { CreateRoomInput, RoomResponse } from "src/types/chat.type";
+import { CreateRoomInput, RoomResponse, UpdateRoomInput } from "src/types/chat.type";
 import { AppError } from "src/utils/errors";
 
 export class ChatService {
@@ -14,6 +14,18 @@ export class ChatService {
                 throw error;
             }
             throw new AppError('Failed to create room!', 500, 'Chat Service');
+        }
+    }
+
+    async updateRoom(input: UpdateRoomInput): Promise<void> {
+        try {
+            await this.chatRepository.updateRoom(input);
+        } catch (error) {
+            if (error instanceof AppError) {
+                throw error;
+            }
+
+            throw new AppError('Failed to update room!', 500, 'Chat Service')
         }
     }
 

@@ -16,6 +16,7 @@ import {
     WebRTCData
 } from '../types/socket.type';
 import { MessageHandler } from './message-handler.socket';
+import { RoomMonitorService } from './room-monitor.socket'; // New import
 import { UserStatusManager } from './user-status-manager.socket';
 import { VoiceRoomManager } from './voice-room-manager.socket';
 import { WebRTCSignaling } from './webRTC-Signaling.socket';
@@ -26,6 +27,7 @@ export class SocketHandler {
     private webRTCSignaling: WebRTCSignaling;
     private messageHandler: MessageHandler;
     private userStatusManager: UserStatusManager;
+    private roomMonitor: RoomMonitorService; // New property
 
     constructor(io: Server) {
         this.io = io;
@@ -33,6 +35,7 @@ export class SocketHandler {
         this.webRTCSignaling = new WebRTCSignaling(io);
         this.messageHandler = new MessageHandler(io);
         this.userStatusManager = new UserStatusManager(io, this.voiceRoomManager);
+        this.roomMonitor = new RoomMonitorService(io, this.voiceRoomManager); // Initialize monitor
 
         this.setupEventHandlers(io);
     }
@@ -59,10 +62,14 @@ export class SocketHandler {
             // Voice Room Events
             socket.on('join-voice-room', (data: UserData) => {
                 this.voiceRoomManager.handleJoinVoiceRoom(socket, data);
+                // Notify monitor that room is active
+                this.roomMonitor.notifyRoomActivity(data.roomId);
             });
 
             socket.on('leave-voice-room', (data: { roomId: string, userId: string, name: string }) => {
                 this.voiceRoomManager.handleLeaveVoiceRoom(socket, data);
+                // Check if room is empty after leave
+                this.roomMonitor.checkRoomEmpty(data.roomId);
             });
 
             // WebRTC Signaling Events
@@ -152,9 +159,19 @@ export class SocketHandler {
                 this.voiceRoomManager.sendActionsInVoice(socket, data);
             })
 
+            // Room activity ping (from client)
+            socket.on('room-activity-ping', (data: { roomId: string }) => {
+                this.roomMonitor.notifyRoomActivity(data.roomId);
+            });
+
             // Disconnection
             socket.on('disconnect', () => {
                 this.voiceRoomManager.handleDisconnect(socket);
+                // Check rooms after disconnect
+                const roomId = this.voiceRoomManager.getRoomForSocket(socket.id);
+                if (roomId) {
+                    this.roomMonitor.checkRoomEmpty(roomId);
+                }
             });
 
             // Error handling
@@ -193,6 +210,13 @@ export class SocketHandler {
     }
 
     /**
+     * Get Room Monitor instance
+     */
+    public getRoomMonitor(): RoomMonitorService {
+        return this.roomMonitor;
+    }
+
+    /**
      * Broadcast message to all sockets in a room
      */
     public broadcastToRoom(roomId: string, event: string, data: any): void {
@@ -227,8 +251,7 @@ export function getSocketHandler(): SocketHandler {
 
 // Export individual managers if needed
 export {
-    MessageHandler,
-    UserStatusManager,
+    MessageHandler, RoomMonitorService, UserStatusManager,
     VoiceRoomManager,
     WebRTCSignaling
 };
