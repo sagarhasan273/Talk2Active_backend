@@ -10,3 +10,14 @@ export const ModerationModeEnum = Object.freeze({
     MODERATED: 'moderated',
     PUSH_TO_TALK: 'push-to-talk'
 });
+
+export const RoomTypesEnum = Object.freeze({
+    CONVERSATION: 'conversation',
+    PRONUNCIATION: 'pronunciation',
+    GRAMMAR: 'grammar',
+    VOCABULARY: 'vocabulary',
+    DEBATE: 'debate',
+    STORYTELLING: 'storytelling',
+    BUSINESS: 'business',
+    EXAM_PREP: 'exam-prep'
+});

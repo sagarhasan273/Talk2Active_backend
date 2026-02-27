@@ -9,7 +9,7 @@ export class ChatController {
 
     public async createRoom(req: Request, res: Response) {
         let validatedInput;
-        console.log(req.body);
+
         try {
             validatedInput = RoomCreateSchema.parse(req.body);
         } catch (error) {

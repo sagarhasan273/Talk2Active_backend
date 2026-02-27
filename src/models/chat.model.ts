@@ -1,6 +1,6 @@
 // models/Relationship.model.ts
 import mongoose, { Document, Schema } from 'mongoose';
-import { LanguageLevelEnum, ModerationModeEnum } from 'src/enums/chat.enum';
+import { LanguageLevelEnum, RoomTypesEnum } from 'src/enums/chat.enum';
 import { RoomBase } from 'src/types/chat.type';
 
 
@@ -13,10 +13,10 @@ const RoomSchema: Schema = new Schema<RoomBase & Document>({
         type: String,
         required: true
     },
-    language: {
+    languages: [{
         type: String,
         required: true
-    },
+    }],
     level: {
         type: String,
         enum: Object.values(LanguageLevelEnum),
@@ -25,35 +25,6 @@ const RoomSchema: Schema = new Schema<RoomBase & Document>({
     maxParticipants: {
         type: Number,
         default: 10
-    },
-    public: {
-        type: Boolean,
-        default: true
-    },
-    pushToTalk: {
-        type: Boolean,
-        default: false
-    },
-    noiseSuppression: {
-        type: Boolean,
-        default: true
-    },
-    echoCancellation: {
-        type: Boolean,
-        default: true
-    },
-    autoGainControl: {
-        type: Boolean,
-        default: true
-    },
-    maxSimutaneousSpeakers: {
-        type: Number,
-        default: 10
-    },
-    moderationMode: {
-        type: String,
-        enum: Object.values(ModerationModeEnum),
-        default: 'open'
     },
     host: {
         type: Schema.Types.ObjectId,
@@ -74,12 +45,9 @@ const RoomSchema: Schema = new Schema<RoomBase & Document>({
         type: Boolean,
         default: true
     },
-    tags: [{
-        type: String
-    }],
     roomType: {
         type: String,
-        enum: ['conversation', 'pronunciation', 'grammar'],
+        enum: Object.values(RoomTypesEnum),
         default: 'conversation'
     }
 }, {
