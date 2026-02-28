@@ -4,11 +4,14 @@ import { ParticipantData, UserData } from '../types/socket.type';
 import logger from '../utils/logger';
 
 export class VoiceRoomManager {
+    private io: Server;
     private voiceRooms = new Map<string, Set<string>>(); // roomId -> socketIds
     private usersRooms = new Map<string, string>(); // socketId -> roomId
     private usersData = new Map<string, UserData>(); // socketId -> UserData
 
-    constructor(private io: Server) { }
+    constructor(io: Server) {
+        this.io = io;
+    }
 
     /**
      * Handle user joining a voice room
@@ -21,7 +24,7 @@ export class VoiceRoomManager {
             this.usersData.set(socket.id, { roomId, userId, name, ...userBasicInfo });
 
             // Leave previous room if any
-            this.leavePreviousRoom(socket);
+            const previousRoomId = this.leavePreviousRoom(socket);
 
             // Join new room
             this.joinRoom(socket, roomId);
@@ -35,7 +38,7 @@ export class VoiceRoomManager {
             this.sendExistingParticipants(socket, roomId, participants);
 
             // Notify others about the new user
-            this.broadcastUserJoined(socket, roomId, { userId, name, isLocal: false, ...userBasicInfo });
+            this.broadcastUserJoined(socket, roomId, previousRoomId, { userId, name, isLocal: false, ...userBasicInfo });
 
             // Send system messages
             this.sendSystemMessages(socket, roomId, { userId, name, profilePhoto: data.profilePhoto });
@@ -149,7 +152,7 @@ export class VoiceRoomManager {
     /**
      * Private helper methods
      */
-    private leavePreviousRoom(socket: Socket): void {
+    private leavePreviousRoom(socket: Socket): string | undefined {
         const previousRoomId = this.usersRooms.get(socket.id);
         if (previousRoomId) {
             socket.leave(previousRoomId);
@@ -166,7 +169,9 @@ export class VoiceRoomManager {
             if (this.voiceRooms.has(previousRoomId)) {
                 this.voiceRooms.get(previousRoomId)?.delete(socket.id);
             }
+            return previousRoomId
         }
+        return undefined
     }
 
     private joinRoom(socket: Socket, roomId: string): void {
@@ -212,11 +217,24 @@ export class VoiceRoomManager {
         });
     }
 
-    private broadcastUserJoined(socket: Socket, roomId: string, userData: any): void {
+    private broadcastUserJoined(socket: Socket, roomId: string, previousRoomId: string | undefined, userData: any): void {
         socket.to(roomId).emit('user-joined', {
             ...userData,
             socketId: socket.id
         });
+
+        this.io.emit('room-updated-with-participant', {
+            joinInfo: {
+                roomId,
+                participant: userData
+            },
+            ...(previousRoomId && {
+                leaveInfo: {
+                    roomId: previousRoomId,
+                    participant: userData
+                }
+            })
+        })
     }
 
     private broadcastUserLeft(socket: Socket, roomId: string, userId: string, name: string): void {
@@ -225,6 +243,13 @@ export class VoiceRoomManager {
             socketId: socket.id,
             name
         });
+
+        this.io.emit('room-updated-with-participant', {
+            leaveInfo: {
+                roomId,
+                participant: { userId, name, }
+            }
+        })
     }
 
     private sendSystemMessages(socket: Socket, roomId: string, senderInfo: { userId: string, name: string, profilePhoto: string }): void {

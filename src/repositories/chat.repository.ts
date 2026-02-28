@@ -151,4 +151,23 @@ export class ChatRepository {
             // Don't throw - broadcasting failure shouldn't stop room creation
         }
     }
+
+    private broadcastRoomUpdatedWithParticipant(data: any): void {
+        try {
+            // Get socket handler instance
+            const socketHandler = getSocketHandler();
+
+            // Option 1: If SocketHandler exposes io
+            if (socketHandler['io']) {
+                socketHandler['io'].emit('room-updated-with-participant', {
+                    joinInfo: data.joinInfo,
+                    leaveInfo: data?.leaveInfo,
+                    message: 'Room updated with participants'
+                });
+            }
+        } catch (error) {
+            logger.error('Failed to broadcast new room:', error);
+            // Don't throw - broadcasting failure shouldn't stop room creation
+        }
+    }
 }
