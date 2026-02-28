@@ -194,8 +194,6 @@ export class RoomMonitorService {
     private async notifyServerRoomDeactivated(roomId: string): Promise<void> {
         try {
             // You can make an HTTP call to your backend API
-            // to update the room status in database
-            // Example:
 
             await this.chatService.updateRoom({ roomId, isActive: false });
 
