@@ -199,6 +199,10 @@ export class RoomMonitorService {
 
             await this.chatService.updateRoom({ roomId, isActive: false });
 
+            this.io.emit('room-remove-from-list', {
+                roomId,
+            })
+
             logger.info(`📡 Server notified: Room ${roomId} deactivated`);
         } catch (error) {
             logger.error(`❌ Failed to notify server for room ${roomId}:`, error);

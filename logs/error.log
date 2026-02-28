@@ -1456,3 +1456,4 @@ AppError: Failed to create Room!
     at processTicksAndRejections (node:internal/process/task_queues:105:5)
     at async ChatService.updateRoom (D:\Workplace\Talk2Active_backend\src\services\chat-service.ts:22:13)
     at async RoomMonitorService.notifyServerRoomDeactivated (D:\Workplace\Talk2Active_backend\src\socket\room-monitor.socket.ts:200:13)
+[2026-03-01 02:13:16] [31merror[39m: Relationship Service: Failed to get friends!
