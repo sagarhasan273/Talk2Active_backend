@@ -2,7 +2,7 @@
 
 import { UserRepository } from 'src/repositories/user.repository';
 import { ReturnResponseType } from 'src/types/base.type';
-import { CreateUserInput, LogInUserInput, UpdateUserInput, UserAccessToken, UserAccountActivateInput, UserAccountSessionInput, UserAccountUpdateInput, UserType, UserWithoutPassword } from 'src/types/user.type';
+import { CreateUserInput, LogInUserInput, UpdateUserInput, UpdateUserRecentRoomsInput, UserAccessToken, UserAccountActivateInput, UserAccountSessionInput, UserAccountUpdateInput, UserType, UserWithoutPassword } from 'src/types/user.type';
 import { AppError } from 'src/utils/errors';
 import { JwtService } from './auth/jwt.service';
 import { PasswordService } from './auth/password.service';
@@ -94,6 +94,20 @@ export class UserService {
       if (!input.id) throw new AppError('User ID is required', 400, 'User Repository');
 
       return await this.repository.updateUser(input);
+    } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+
+      throw new AppError('Failed to update user!', 500, 'User Service');
+    }
+  }
+
+  public async updateUserRecentRooms(input: UpdateUserRecentRoomsInput): Promise<ReturnResponseType> {
+    try {
+      if (!input.id) throw new AppError('User ID is required', 400, 'User Repository');
+
+      return await this.repository.updateUserRecentRooms(input);
     } catch (error) {
       if (error instanceof AppError) {
         throw error;

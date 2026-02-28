@@ -111,6 +111,11 @@ export const UserSchema = zod.object({
     tags: zod.array(zod.enum(Object.values(PostTagsEnum) as [string, ...string[]]))
         .max(30, "Cannot have more than 30 tags")
         .default([]),
+
+    recentRooms: zod.array(zod.object({
+        roomId: zod.string(),
+        joinedAt: zod.date()
+    })).optional()
 }).strict();
 
 // Derived Schemas
@@ -142,8 +147,17 @@ export const UpdateUserSchema = UserSchema.pick({
     status: true,
     website: true,
     tags: true,
+    recentRooms: true,
 }).partial().required({
     id: true,
+});
+
+export const UpdateUserRecentRoomsSchema = UserSchema.pick({
+    id: true,
+}).partial().required({
+    id: true,
+}).extend({
+    roomId: zod.string()
 });
 
 export const UserAccountUpdateSchema = UserSchema.pick({

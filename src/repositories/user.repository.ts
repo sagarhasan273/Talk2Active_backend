@@ -1,5 +1,5 @@
 import { ObjectId } from 'mongodb';
-import { CreateUserInput, LogInUserInput, UpdateUserInput, UserAccountActivateInput, UserAccountSessionInput, UserAccountUpdateInput, UserType } from 'src/types/user.type';
+import { CreateUserInput, LogInUserInput, UpdateUserInput, UpdateUserRecentRoomsInput, UserAccountActivateInput, UserAccountSessionInput, UserAccountUpdateInput, UserType } from 'src/types/user.type';
 
 import { UserModel } from 'src/models/user.model';
 import { PasswordService } from 'src/services/auth/password.service';
@@ -106,6 +106,68 @@ export class UserRepository {
     }
   }
 
+  public async updateUserRecentRooms(input: UpdateUserRecentRoomsInput): Promise<ReturnResponseType> {
+    try {
+      const { id, roomId } = input; // Assuming you pass roomId to add to recent rooms
+
+      // First, remove any rooms older than 1 hour
+      const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000); // 1 hour in milliseconds
+
+      await UserModel.updateOne(
+        { _id: new ObjectId(id) },
+        {
+          $pull: {
+            recentRooms: {
+              joinedAt: { $lt: oneHourAgo.toISOString() } // Remove if joinedAt < 1 hour ago
+            }
+          }
+        }
+      );
+
+      // Then add the new room to recentRooms (if roomId is provided)
+      if (roomId) {
+        // First, remove any existing entry with same roomId to avoid duplicates
+        await UserModel.updateOne(
+          { _id: new ObjectId(id) },
+          {
+            $pull: {
+              recentRooms: {
+                roomId: new ObjectId(roomId)
+              }
+            }
+          }
+        );
+
+        // Then add the new room entry
+        await UserModel.updateOne(
+          { _id: new ObjectId(id) },
+          {
+            $push: {
+              recentRooms: {
+                $each: [{
+                  roomId: new ObjectId(roomId),
+                  joinedAt: new Date().toISOString()
+                }],
+                $position: 0, // Add to beginning of array
+                $slice: 10 // Keep only last 10 recent rooms (optional)
+              }
+            }
+          }
+        );
+      }
+
+      return {
+        message: 'Recent rooms updated successfully',
+        status: true
+      };
+
+    } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+      throw new AppError('Failed to update recent rooms!', 500, 'User Repository');
+    }
+  }
 
   public async getUser(userId: string): Promise<UserType> {
 

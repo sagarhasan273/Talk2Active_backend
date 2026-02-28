@@ -138,6 +138,19 @@ const UserModalSchema = new Schema<UserType & Document>({
   themeMode: { type: Boolean, default: false },
 
   tags: [{ type: String, enum: Object.values(PostTagsEnum), lowercase: true }],
+
+  recentRooms: [
+    {
+      roomId: {
+        type: Schema.Types.ObjectId,
+        ref: 'rooms',
+      },
+      joinedAt: {
+        type: String,
+        default: new Date()
+      }
+    }
+  ]
 }, {
   timestamps: true,
   toJSON: {

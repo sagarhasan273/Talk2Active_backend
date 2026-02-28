@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { CreateUserSchema, LogInUserSchema, UpdateUserSchema, UserAccountActivateSchema, UserAccountSessionSchema, UserAccountUpdateSchema } from 'src/schemas/user.schema';
+import { CreateUserSchema, LogInUserSchema, UpdateUserRecentRoomsSchema, UpdateUserSchema, UserAccountActivateSchema, UserAccountSessionSchema, UserAccountUpdateSchema } from 'src/schemas/user.schema';
 import { UserService } from 'src/services/user.service';
 import { AppError } from 'src/utils/errors';
 import logger from 'src/utils/logger';
@@ -120,6 +120,32 @@ export class UserController {
 
     try {
       const result = await this.service.updateUser(validatedInput);
+
+      res.status(201).json(result);
+    } catch (error) {
+      if (error instanceof AppError) {
+        logger.error(`${error.at}: ${error.message}`);
+        res.status(error.statusCode).json({ message: error.message, status: false });
+        return;
+      }
+
+      logger.error('An error occurred while updating the user profile!');
+      res.status(500).json({ message: 'An error occurred while updating the user profile!', status: false });
+    }
+  }
+
+  public async updateUserRecentRooms(req: Request, res: Response): Promise<void> {
+    let validatedInput;
+    try {
+      validatedInput = UpdateUserRecentRoomsSchema.parse(req.body);
+    } catch (error) {
+      logger.error('Invalid user data provided for update!');
+      res.status(400).json({ status: false, message: 'Invalid user data provided for update!' });
+      return;
+    }
+
+    try {
+      const result = await this.service.updateUserRecentRooms(validatedInput);
 
       res.status(201).json(result);
     } catch (error) {
