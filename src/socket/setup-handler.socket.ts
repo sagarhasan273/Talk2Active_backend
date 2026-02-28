@@ -42,8 +42,6 @@ export class SocketHandler {
 
     private setupEventHandlers(io: Server): void {
         io.on('connection', (socket) => {
-            logger.info('🟢 User connected:', socket.id);
-
             // User notification of connection
             socket.on('join-room', ({ userId }) => {
                 const roomId = `user-room:${userId}`;

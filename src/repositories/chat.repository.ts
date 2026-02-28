@@ -1,7 +1,9 @@
 import { ObjectId } from "mongodb";
 import { RoomModel } from "src/models/chat.model";
+import { getSocketHandler } from "src/socket/setup-handler.socket";
 import { CreateRoomInput, RoomResponse, UpdateRoomInput } from "src/types/chat.type";
 import { AppError } from "src/utils/errors";
+import logger from "src/utils/logger";
 
 const commonUserQuery = 'email username name profilePhoto bio status lastActive verified'
 
@@ -15,9 +17,13 @@ export class ChatRepository {
                 isActive: true,
             });
 
+            await room.populate('host', commonUserQuery);
+
             if (!room) {
                 throw new AppError('Failed to create room', 404, 'Chat Repository');
             }
+
+            this.broadcastNewRoom(room);
         } catch (error) {
             if (error instanceof AppError) {
                 throw error;
@@ -38,12 +44,11 @@ export class ChatRepository {
                     $set: {
                         ...updateFields
                     },
-                },
-                { new: true }
+                }
             );
 
             if (!room) {
-                throw new AppError('Failed to create room', 404, 'Chat Repository');
+                throw new AppError('Failed to update room', 404, 'Chat Repository');
             }
         } catch (error) {
             if (error instanceof AppError) {
@@ -125,6 +130,25 @@ export class ChatRepository {
                 throw error;
             }
             throw new AppError('Failed to leave Room!', 500, 'Chat Repository');
+        }
+    }
+
+    private broadcastNewRoom(roomData: any): void {
+        try {
+            // Get socket handler instance
+            const socketHandler = getSocketHandler();
+
+            // Option 1: If SocketHandler exposes io
+            if (socketHandler['io']) {
+                socketHandler['io'].emit('new-room-created', {
+                    room: roomData,
+                    timestamp: new Date(),
+                    message: 'A new voice room has been created!'
+                });
+            }
+        } catch (error) {
+            logger.error('Failed to broadcast new room:', error);
+            // Don't throw - broadcasting failure shouldn't stop room creation
         }
     }
 }

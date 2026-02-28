@@ -1434,3 +1434,25 @@ DatabaseError: DatabaseError: User already exists! You can log in instead.
 [2026-02-26 05:35:38] [31merror[39m: Relationship Service: Failed to get friends!
 [2026-02-26 05:35:38] [31merror[39m: Relationship Service: Failed to get friends!
 [2026-02-26 05:35:39] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-02-28 14:49:16] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-02-28 14:49:16] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-02-28 14:49:25] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-02-28 14:49:25] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-02-28 14:49:30] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-02-28 14:49:30] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-02-28 14:49:35] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-02-28 14:49:35] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-02-28 14:51:29] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-02-28 14:51:29] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-02-28 14:57:30] [31merror[39m: ❌ Failed to notify server for room 691a5711695eba6b9fc32e07: Failed to create Room!
+AppError: Failed to create Room!
+    at ChatRepository.updateRoom (D:\Workplace\Talk2Active_backend\src\repositories\chat.repository.ts:58:19)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async ChatService.updateRoom (D:\Workplace\Talk2Active_backend\src\services\chat-service.ts:22:13)
+    at async RoomMonitorService.notifyServerRoomDeactivated (D:\Workplace\Talk2Active_backend\src\socket\room-monitor.socket.ts:200:13)
+[2026-02-28 14:57:53] [31merror[39m: ❌ Failed to notify server for room 69a227305c385b9e0bbf186a: Failed to create Room!
+AppError: Failed to create Room!
+    at ChatRepository.updateRoom (D:\Workplace\Talk2Active_backend\src\repositories\chat.repository.ts:58:19)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async ChatService.updateRoom (D:\Workplace\Talk2Active_backend\src\services\chat-service.ts:22:13)
+    at async RoomMonitorService.notifyServerRoomDeactivated (D:\Workplace\Talk2Active_backend\src\socket\room-monitor.socket.ts:200:13)
