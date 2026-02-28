@@ -199,7 +199,7 @@ export class RoomMonitorService {
 
             this.io.emit('room-remove-from-list', {
                 roomId,
-            })
+            });
 
             logger.info(`📡 Server notified: Room ${roomId} deactivated`);
         } catch (error) {
