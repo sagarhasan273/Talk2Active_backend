@@ -97,7 +97,7 @@ export const UserSchema = zod.object({
         .default([]),
 
     recentRooms: zod.array(zod.object({
-        roomId: zod.string(),
+        room: zod.string(),
         joinedAt: zod.date()
     })).optional()
 }).strict();

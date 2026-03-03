@@ -135,10 +135,28 @@ const UserModalSchema = new Schema<UserType & Document>({
   timestamps: true,
   toJSON: {
     transform: function (doc, ret: any) {
-      ret.id = ret._id.toString();
-      if ('_id' in ret) delete ret._id;
+      // Handle main document
+      if (ret._id) {
+        ret.id = ret._id.toString();
+        delete ret._id;
+      }
       if ('__v' in ret) delete ret.__v;
       if ('password' in ret) delete ret.password;
+
+      // Recursively transform any nested documents that might be populated
+      if (ret.recentRooms && Array.isArray(ret.recentRooms)) {
+        ret.recentRooms = ret.recentRooms.map((room: any) => {
+          if (room.room && room.room.host && room.room.host._id) {
+            room.room.host.id = room.room.host._id.toString();
+            delete room.room.host._id;
+          }
+          if (room.room && room.room._id) {
+            room.room.id = room.room._id.toString();
+            delete room.room._id;
+          }
+          return room;
+        });
+      }
 
       if (!ret.blockedUsers && doc.blockedUsers) {
         ret.blockedUsers = doc.blockedUsers;
@@ -147,10 +165,11 @@ const UserModalSchema = new Schema<UserType & Document>({
   },
   toObject: {
     transform: function (doc, ret: any) {
-      ret.id = ret._id.toString();
-      if ('_id' in ret) delete ret._id;
+      if (ret._id) {
+        ret.id = ret._id.toString();
+        delete ret._id;
+      }
       if ('__v' in ret) delete ret.__v;
-      // if ('password' in ret) delete ret.password;
     }
   }
 });

@@ -1501,3 +1501,59 @@ AppError: Failed to create Room!
 [2026-03-04 02:55:53] [31merror[39m: User Service: Failed to get user by ID!
 [2026-03-04 02:55:53] [31merror[39m: User Service: Failed to get user by ID!
 [2026-03-04 02:55:53] [31merror[39m: User Service: Failed to get user by ID!
+[2026-03-04 04:00:22] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-03-04 04:00:29] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-03-04 04:00:30] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-03-04 04:00:38] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-03-04 04:00:38] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-03-04 04:00:50] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-03-04 04:00:50] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-03-04 04:25:10] [31merror[39m: User Service: Failed to get user by ID!
+[2026-03-04 04:25:10] [31merror[39m: User Service: Failed to get user by ID!
+[2026-03-04 04:25:10] [31merror[39m: Chat Repository: Failed to get Room by ID!
+[2026-03-04 04:27:27] [31merror[39m: User Service: Failed to get user by ID!
+[2026-03-04 04:27:27] [31merror[39m: User Service: Failed to get user by ID!
+[2026-03-04 04:27:27] [31merror[39m: User Service: Failed to get user by ID!
+[2026-03-04 04:27:39] [31merror[39m: User Service: Failed to get user by ID!
+[2026-03-04 04:27:39] [31merror[39m: User Service: Failed to get user by ID!
+[2026-03-04 04:28:16] [31merror[39m: User Service: Failed to get user by ID!
+[2026-03-04 04:28:16] [31merror[39m: User Service: Failed to get user by ID!
+[2026-03-04 04:28:33] [31merror[39m: Chat Repository: Failed to get Room by ID!
+[2026-03-04 04:28:45] [31merror[39m: User Service: Failed to get user by ID!
+[2026-03-04 04:28:46] [31merror[39m: User Service: Failed to get user by ID!
+[2026-03-04 04:28:46] [31merror[39m: User Service: Failed to get user by ID!
+[2026-03-04 04:28:50] [31merror[39m: Chat Repository: Failed to get Room by ID!
+[2026-03-04 04:30:16] [31merror[39m: User Service: Failed to get user by ID!
+[2026-03-04 04:30:16] [31merror[39m: User Service: Failed to get user by ID!
+[2026-03-04 04:30:58] [31merror[39m: User Service: Failed to get user by ID!
+[2026-03-04 04:30:58] [31merror[39m: User Service: Failed to get user by ID!
+[2026-03-04 04:32:16] [31merror[39m: User Service: Failed to get user by ID!
+[2026-03-04 04:32:17] [31merror[39m: User Service: Failed to get user by ID!
+[2026-03-04 04:32:17] [31merror[39m: User Service: Failed to get user by ID!
+[2026-03-04 04:33:24] [31merror[39m: User Service: Failed to get user by ID!
+[2026-03-04 04:33:24] [31merror[39m: User Service: Failed to get user by ID!
+[2026-03-04 04:33:27] [31merror[39m: User Service: Failed to get user by ID!
+[2026-03-04 04:33:28] [31merror[39m: User Service: Failed to get user by ID!
+[2026-03-04 04:33:28] [31merror[39m: User Service: Failed to get user by ID!
+[2026-03-04 04:35:33] [31merror[39m: User Service: Failed to get user by ID!
+[2026-03-04 04:35:33] [31merror[39m: User Service: Failed to get user by ID!
+[2026-03-04 04:36:56] [31merror[39m: User Repository: User not found!
+[2026-03-04 04:36:56] [31merror[39m: User Repository: User not found!
+[2026-03-04 04:42:47] [31merror[39m: User Service: Failed to get user by ID!
+[2026-03-04 04:42:47] [31merror[39m: User Service: Failed to get user by ID!
+[2026-03-04 04:43:10] [31merror[39m: ❌ Failed to notify server for room 69a752f6c7a007e09f5bb432: Failed to update room
+AppError: Failed to update room
+    at ChatRepository.updateRoom (D:\Workplace\Talk2Active_backend\src\repositories\chat.repository.ts:51:23)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async ChatService.updateRoom (D:\Workplace\Talk2Active_backend\src\services\chat-service.ts:22:13)
+    at async RoomMonitorService.notifyServerRoomDeactivated (D:\Workplace\Talk2Active_backend\src\socket\room-monitor.socket.ts:198:13)
+[2026-03-04 04:44:46] [31merror[39m: User Service: Failed to get user by ID!
+[2026-03-04 04:44:46] [31merror[39m: User Service: Failed to get user by ID!
+[2026-03-04 04:44:51] [31merror[39m: User Service: Failed to get user by ID!
+[2026-03-04 04:44:51] [31merror[39m: User Service: Failed to get user by ID!
+[2026-03-04 04:45:26] [31merror[39m: User Service: Failed to get user by ID!
+[2026-03-04 04:45:26] [31merror[39m: User Service: Failed to get user by ID!
+[2026-03-04 04:46:42] [31merror[39m: User Service: Failed to get user by ID!
+[2026-03-04 04:46:42] [31merror[39m: User Service: Failed to get user by ID!
+[2026-03-04 04:47:50] [31merror[39m: User Service: Failed to get user by ID!
+[2026-03-04 04:47:50] [31merror[39m: User Service: Failed to get user by ID!

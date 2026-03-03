@@ -139,7 +139,7 @@ export class UserRepository {
           {
             $pull: {
               recentRooms: {
-                roomId: new ObjectId(roomId),
+                room: new ObjectId(roomId),
               },
             },
           }
@@ -153,7 +153,7 @@ export class UserRepository {
               recentRooms: {
                 $each: [
                   {
-                    roomId: new ObjectId(roomId),
+                    room: new ObjectId(roomId),
                     joinedAt: new Date().toISOString(),
                   },
                 ],
@@ -180,10 +180,10 @@ export class UserRepository {
   public async getUserWithRooms(userId: string): Promise<UserType> {
     const user = await UserModel.findById(userId).populate({
       path: 'recentRooms.room',
-      select: 'name description language level maxParticipants host participants',
+      select: 'name description languages level maxParticipants host',
       populate: {
         path: 'host',
-        select: 'name userId profilePhoto',
+        select: '_id name userId profilePhoto',
       },
     });
 
