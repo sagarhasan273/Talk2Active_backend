@@ -78,15 +78,13 @@ export class UserService {
 
       const user = await this.repository.getUser(userId);
 
-      console.log(user)
-
       const { password, ...userWithoutPassword } = user;
       return userWithoutPassword;
     } catch (error) {
       if (error instanceof AppError) {
         throw error;
       }
-      console.log(error);
+
       throw new AppError('Failed to get user by ID!', 500, 'User Service');
     }
   }
