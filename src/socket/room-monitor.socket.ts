@@ -20,9 +20,9 @@ export class RoomMonitorService {
 
     private inactiveRooms: Map<string, RoomInactivityData> = new Map();
 
-    private readonly EMPTY_TIMEOUT = 1 * 60 * 1000; // 5 minutes (300000 ms)
-    private readonly WARNING_TIMEOUT = 60 * 1000; // Send warning after 4 minutes
-    private readonly CHECK_INTERVAL = 30 * 1000; // Check every 60 seconds
+    private readonly EMPTY_TIMEOUT = 10 * 60 * 1000; // 10 minutes (300000 ms)
+    private readonly WARNING_TIMEOUT = 4 * 60 * 1000; // Send warning after 4 minutes
+    private readonly CHECK_INTERVAL = 60 * 1000; // Check every 60 seconds
 
     constructor(io: Server, voiceRoomManager: VoiceRoomManager) {
         this.io = io;

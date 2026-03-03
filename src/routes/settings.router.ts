@@ -7,7 +7,5 @@ export class SettingRoutes extends BaseRouter {
 
     protected routes(): void {
         this.router.post('/privacy', authMiddleware, (req, res) => this.settingsController.updateUserPrivacySettings(req, res));
-        this.router.post('/notification', authMiddleware, (req, res) => this.settingsController.updateUserNotificationSettings(req, res))
-        this.router.post('/appearance', authMiddleware, (req, res) => this.settingsController.updateUserAppearanceSettings(req, res))
     }
 }

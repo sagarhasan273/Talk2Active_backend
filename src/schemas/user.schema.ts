@@ -69,6 +69,9 @@ export const UserSchema = zod.object({
     accountActive: zod.boolean(),
     sessionTimeOut: zod.number().int().nonnegative(),
 
+    accountType: zod
+        .enum(['admin', 'supporter', 'member']),
+
     followerCount: zod.number().int().nonnegative(),
     followingCount: zod.number().int().nonnegative(),
     friendCount: zod.number().int().nonnegative(),
@@ -87,25 +90,6 @@ export const UserSchema = zod.object({
     showLastSeen: zod.boolean().default(true),
     createdAt: zod.date().optional(),
     updatedAt: zod.date().optional(),
-
-    // Notification types
-    pushNotification: zod.boolean(),
-    smsNotification: zod.boolean(),
-    likesNotification: zod.boolean(),
-    repostNotification: zod.boolean(),
-    commentsNotification: zod.boolean(),
-    newFollowersNotification: zod.boolean(),
-
-    directMessage: zod.boolean(),
-    roomInvitations: zod.boolean(),
-    liveEvents: zod.boolean(),
-
-    soundNotification: zod.boolean(),
-    vibrationForNotification: zod.boolean(),
-
-    // Appearance types
-    primaryColor: zod.enum(['blue', 'cyan', 'orange', 'purple', 'red']).default('blue'),
-    themeMode: zod.boolean(),
 
     // categories
     tags: zod.array(zod.enum(Object.values(PostTagsEnum) as [string, ...string[]]))

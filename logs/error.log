@@ -1469,3 +1469,35 @@ AppError: Failed to create Room!
 [2026-03-01 05:21:30] [31merror[39m: Relationship Service: Failed to get friends!
 [2026-03-01 05:21:30] [31merror[39m: Relationship Service: Failed to get friends!
 [2026-03-01 05:21:30] [31merror[39m: Chat Repository: Failed to get Room by ID!
+[2026-03-01 05:44:30] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-03-01 05:44:30] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-03-03 05:01:17] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-03-03 05:01:17] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-03-03 05:01:26] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-03-03 05:01:26] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-03-03 05:11:14] [31merror[39m: User Service: Failed to get user by ID!
+[2026-03-03 05:20:07] [31merror[39m: User Service: Failed to get user by ID!
+[2026-03-04 02:40:08] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-03-04 02:40:08] [31merror[39m: Relationship Service: Failed to get NewUsers Suggestions!
+[2026-03-04 02:40:08] [31merror[39m: Invalid input for posts!
+[2026-03-04 02:48:17] [31merror[39m: User Service: Failed to get user by ID!
+[2026-03-04 02:48:17] [31merror[39m: User Service: Failed to get user by ID!
+[2026-03-04 02:48:19] [31merror[39m: User Service: Failed to get user by ID!
+[2026-03-04 02:48:20] [31merror[39m: User Service: Failed to get user by ID!
+[2026-03-04 02:48:20] [31merror[39m: User Service: Failed to get user by ID!
+[2026-03-04 02:52:58] [31merror[39m: User Service: Failed to get user by ID!
+[2026-03-04 02:52:59] [31merror[39m: User Service: Failed to get user by ID!
+[2026-03-04 02:52:59] [31merror[39m: User Service: Failed to get user by ID!
+[2026-03-04 02:53:12] [31merror[39m: User Service: Failed to get user by ID!
+[2026-03-04 02:53:12] [31merror[39m: User Service: Failed to get user by ID!
+[2026-03-04 02:53:12] [31merror[39m: User Service: Failed to get user by ID!
+[2026-03-04 02:54:55] [31merror[39m: User Service: Failed to get user by ID!
+[2026-03-04 02:54:55] [31merror[39m: User Service: Failed to get user by ID!
+[2026-03-04 02:54:58] [31merror[39m: User Service: Failed to get user by ID!
+[2026-03-04 02:54:58] [31merror[39m: User Service: Failed to get user by ID!
+[2026-03-04 02:55:07] [31merror[39m: User Service: Failed to get user by ID!
+[2026-03-04 02:55:07] [31merror[39m: User Service: Failed to get user by ID!
+[2026-03-04 02:55:07] [31merror[39m: User Service: Failed to get user by ID!
+[2026-03-04 02:55:53] [31merror[39m: User Service: Failed to get user by ID!
+[2026-03-04 02:55:53] [31merror[39m: User Service: Failed to get user by ID!
+[2026-03-04 02:55:53] [31merror[39m: User Service: Failed to get user by ID!

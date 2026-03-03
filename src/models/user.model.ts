@@ -68,9 +68,15 @@ const UserModalSchema = new Schema<UserType & Document>({
     enum: ['online', 'offline', 'busy', 'brb', 'afk', 'zzz'],
     default: 'online'
   },
+
   verified: { type: Boolean, default: false },
   accountActive: { type: Boolean, default: true },
   sessionTimeOut: { type: Number, default: 10, min: 0 },
+  accountType: {
+    type: String,
+    enum: ['admin', 'supporter', 'member'],
+    default: 'member'
+  },
 
   followerCount: {
     type: Number,
@@ -110,38 +116,12 @@ const UserModalSchema = new Schema<UserType & Document>({
   },
   website: { type: String },
   socialLinks: { type: SocialLinksSchema },
-  blockedUsers: [{
-    type: Schema.Types.ObjectId,
-    ref: 'blockedUsers'
-  }],
-
-  // Notification types
-  pushNotification: { type: Boolean, default: true },
-  smsNotification: { type: Boolean, default: true },
-  likesNotification: { type: Boolean, default: true },
-  repostNotification: { type: Boolean, default: true },
-  commentsNotification: { type: Boolean, default: true },
-  newFollowersNotification: { type: Boolean, default: true },
-
-  directMessage: { type: Boolean, default: true },
-  roomInvitations: { type: Boolean, default: true },
-  liveEvents: { type: Boolean, default: true },
-
-  soundNotification: { type: Boolean, default: false },
-  vibrationForNotification: { type: Boolean, default: false },
-
-  primaryColor: {
-    type: String,
-    enum: ['blue', 'cyan', 'orange', 'purple', 'red'],
-    default: 'blue'
-  },
-  themeMode: { type: Boolean, default: false },
 
   tags: [{ type: String, enum: Object.values(PostTagsEnum), lowercase: true }],
 
   recentRooms: [
     {
-      roomId: {
+      room: {
         type: Schema.Types.ObjectId,
         ref: 'rooms',
       },

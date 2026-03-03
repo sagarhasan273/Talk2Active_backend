@@ -1,5 +1,14 @@
 import { ObjectId } from 'mongodb';
-import { CreateUserInput, LogInUserInput, UpdateUserInput, UpdateUserRecentRoomsInput, UserAccountActivateInput, UserAccountSessionInput, UserAccountUpdateInput, UserType } from 'src/types/user.type';
+import {
+  CreateUserInput,
+  LogInUserInput,
+  UpdateUserInput,
+  UpdateUserRecentRoomsInput,
+  UserAccountActivateInput,
+  UserAccountSessionInput,
+  UserAccountUpdateInput,
+  UserType,
+} from 'src/types/user.type';
 
 import { UserModel } from 'src/models/user.model';
 import { PasswordService } from 'src/services/auth/password.service';
@@ -8,7 +17,6 @@ import { AppError } from 'src/utils/errors';
 import { generateUserId } from 'src/utils/generate.userId';
 
 export class UserRepository {
-
   public async logInUser(input: LogInUserInput): Promise<UserType> {
     try {
       const { email } = input;
@@ -32,10 +40,7 @@ export class UserRepository {
   public async createUser(input: CreateUserInput): Promise<UserType> {
     try {
       const existingUser = await UserModel.findOne({
-        $or: [
-          { email: input.email },
-          { username: input.username }
-        ]
+        $or: [{ email: input.email }, { username: input.username }],
       });
 
       if (existingUser) {
@@ -66,7 +71,7 @@ export class UserRepository {
         throw error;
       }
 
-      throw new AppError('Failed to create user!', 500, 'User Repository')
+      throw new AppError('Failed to create user!', 500, 'User Repository');
     }
   }
 
@@ -106,7 +111,9 @@ export class UserRepository {
     }
   }
 
-  public async updateUserRecentRooms(input: UpdateUserRecentRoomsInput): Promise<ReturnResponseType> {
+  public async updateUserRecentRooms(
+    input: UpdateUserRecentRoomsInput
+  ): Promise<ReturnResponseType> {
     try {
       const { id, roomId } = input; // Assuming you pass roomId to add to recent rooms
 
@@ -118,9 +125,9 @@ export class UserRepository {
         {
           $pull: {
             recentRooms: {
-              joinedAt: { $lt: oneHourAgo.toISOString() } // Remove if joinedAt < 1 hour ago
-            }
-          }
+              joinedAt: { $lt: oneHourAgo.toISOString() }, // Remove if joinedAt < 1 hour ago
+            },
+          },
         }
       );
 
@@ -132,9 +139,9 @@ export class UserRepository {
           {
             $pull: {
               recentRooms: {
-                roomId: new ObjectId(roomId)
-              }
-            }
+                roomId: new ObjectId(roomId),
+              },
+            },
           }
         );
 
@@ -144,23 +151,24 @@ export class UserRepository {
           {
             $push: {
               recentRooms: {
-                $each: [{
-                  roomId: new ObjectId(roomId),
-                  joinedAt: new Date().toISOString()
-                }],
+                $each: [
+                  {
+                    roomId: new ObjectId(roomId),
+                    joinedAt: new Date().toISOString(),
+                  },
+                ],
                 $position: 0, // Add to beginning of array
-                $slice: 10 // Keep only last 10 recent rooms (optional)
-              }
-            }
+                $slice: 10, // Keep only last 10 recent rooms (optional)
+              },
+            },
           }
         );
       }
 
       return {
         message: 'Recent rooms updated successfully',
-        status: true
+        status: true,
       };
-
     } catch (error) {
       if (error instanceof AppError) {
         throw error;
@@ -169,12 +177,23 @@ export class UserRepository {
     }
   }
 
-  public async getUser(userId: string): Promise<UserType> {
+  public async getUserWithRooms(userId: string): Promise<UserType> {
+    const user = await UserModel.findById(userId).populate({
+      path: 'recentRooms.room',
+      select: 'name description language level maxParticipants host participants',
+      populate: {
+        path: 'host',
+        select: 'name userId profilePhoto',
+      },
+    });
 
-    const user = await UserModel.findOne({ _id: new ObjectId(userId) });
     if (!user) throw new AppError('User not found!', 404, 'User Repository');
 
     return user.toJSON();
+  }
+
+  public async getUser(userId: string): Promise<UserType> {
+    return this.getUserWithRooms(userId);
   }
 
   public async updateUserAccount(input: UserAccountUpdateInput): Promise<ReturnResponseType> {
@@ -182,15 +201,16 @@ export class UserRepository {
 
     const { id, userId, password, newPassword, ...updatableFields } = input;
 
-
     const user = await UserModel.findOne({ _id: new ObjectId(id), userId }).select('+password');
     if (!user) throw new AppError('User not found', 404, 'User Repository');
 
-    if (!password || !newPassword) throw new AppError('Password and new password are required', 400, 'User Repository');
+    if (!password || !newPassword)
+      throw new AppError('Password and new password are required', 400, 'User Repository');
 
     const isPasswordValid = await PasswordService.verifyPassword(password, user.password);
 
-    if (!isPasswordValid) throw new AppError('Current password is incorrect.', 401, 'User Repository');
+    if (!isPasswordValid)
+      throw new AppError('Current password is incorrect.', 401, 'User Repository');
 
     // Hash password
     const hashedPassword = await PasswordService.hashPassword(newPassword);
@@ -212,7 +232,9 @@ export class UserRepository {
     return { message: 'Profile updated successfully', status: true };
   }
 
-  public async updateUserAccountActivate(input: UserAccountActivateInput): Promise<ReturnResponseType> {
+  public async updateUserAccountActivate(
+    input: UserAccountActivateInput
+  ): Promise<ReturnResponseType> {
     const { id, accountActive } = input;
 
     const user = await UserModel.findOne({ _id: new ObjectId(id) });
@@ -229,12 +251,15 @@ export class UserRepository {
       { new: true }
     );
 
-    if (!updatedUser) throw new AppError('Failed to update user account activation status', 404, 'User Repository');
+    if (!updatedUser)
+      throw new AppError('Failed to update user account activation status', 404, 'User Repository');
 
     return { message: 'Account activation status updated successfully', status: true };
   }
 
-  public async updateUserAccountSession(input: UserAccountSessionInput): Promise<ReturnResponseType> {
+  public async updateUserAccountSession(
+    input: UserAccountSessionInput
+  ): Promise<ReturnResponseType> {
     const { id, sessionTimeOut } = input;
 
     const user = await UserModel.findOne({ _id: new ObjectId(id) });
@@ -251,7 +276,8 @@ export class UserRepository {
       { new: true }
     );
 
-    if (!updatedUser) throw new AppError('Failed to update user account session', 404, 'User Repository');
+    if (!updatedUser)
+      throw new AppError('Failed to update user account session', 404, 'User Repository');
 
     return { message: 'Account session updated successfully', status: true };
   }
