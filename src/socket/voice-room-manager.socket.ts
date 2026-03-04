@@ -234,7 +234,20 @@ export class VoiceRoomManager {
                     participant: userData
                 }
             })
-        })
+        });
+
+        this.io.emit('recent-room-updated-with-participant', {
+            joinInfo: {
+                roomId,
+                participant: userData
+            },
+            ...(previousRoomId && {
+                leaveInfo: {
+                    roomId: previousRoomId,
+                    participant: userData
+                }
+            })
+        });
     }
 
     private broadcastUserLeft(socket: Socket, roomId: string, userId: string, name: string): void {
@@ -247,9 +260,16 @@ export class VoiceRoomManager {
         this.io.emit('room-updated-with-participant', {
             leaveInfo: {
                 roomId,
-                participant: { userId, name, }
+                participant: { userId, name }
             }
-        })
+        });
+
+        this.io.emit('recent-room-updated-with-participant', {
+            leaveInfo: {
+                roomId,
+                participant: { userId, name }
+            }
+        });
     }
 
     private sendSystemMessages(socket: Socket, roomId: string, senderInfo: { userId: string, name: string, profilePhoto: string }): void {
