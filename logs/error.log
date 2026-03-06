@@ -1557,3 +1557,150 @@ AppError: Failed to update room
 [2026-03-04 04:46:42] [31merror[39m: User Service: Failed to get user by ID!
 [2026-03-04 04:47:50] [31merror[39m: User Service: Failed to get user by ID!
 [2026-03-04 04:47:50] [31merror[39m: User Service: Failed to get user by ID!
+[2026-03-05 22:37:34] [31merror[39m: Chat Repository: Room not found
+[2026-03-05 22:37:36] [31merror[39m: Chat Repository: Room not found
+[2026-03-05 22:37:39] [31merror[39m: Chat Repository: Room not found
+[2026-03-05 22:37:42] [31merror[39m: Chat Repository: Room not found
+[2026-03-05 22:37:47] [31merror[39m: Chat Repository: Room not found
+[2026-03-05 22:37:49] [31merror[39m: Chat Repository: Room not found
+[2026-03-05 22:37:56] [31merror[39m: Chat Repository: Room not found
+[2026-03-05 22:38:00] [31merror[39m: Chat Repository: Room not found
+[2026-03-05 22:38:03] [31merror[39m: Chat Repository: Room not found
+[2026-03-05 22:51:49] [31merror[39m: Chat Repository: Room not found
+[2026-03-05 22:51:51] [31merror[39m: Chat Repository: Room not found
+[2026-03-05 22:51:59] [31merror[39m: Chat Repository: Room not found
+[2026-03-05 22:51:59] [31merror[39m: Chat Repository: Room not found
+[2026-03-05 22:52:07] [31merror[39m: Chat Repository: Room not found
+[2026-03-05 22:52:11] [31merror[39m: Chat Repository: Room not found
+[2026-03-05 22:52:13] [31merror[39m: Chat Repository: Room not found
+[2026-03-05 22:52:17] [31merror[39m: Chat Repository: Room not found
+[2026-03-05 22:52:20] [31merror[39m: Chat Repository: Room not found
+[2026-03-05 22:52:26] [31merror[39m: Chat Repository: Room not found
+[2026-03-05 22:52:27] [31merror[39m: Chat Repository: Room not found
+[2026-03-05 22:52:27] [31merror[39m: Chat Repository: Room not found
+[2026-03-05 22:52:34] [31merror[39m: Chat Repository: Room not found
+[2026-03-05 22:52:35] [31merror[39m: Chat Repository: Room not found
+[2026-03-05 22:52:46] [31merror[39m: Chat Repository: Room not found
+[2026-03-05 22:53:02] [31merror[39m: Chat Repository: Room not found
+[2026-03-05 22:53:04] [31merror[39m: Chat Repository: Room not found
+[2026-03-05 22:53:10] [31merror[39m: Chat Repository: Room not found
+[2026-03-05 22:53:19] [31merror[39m: Chat Repository: Room not found
+[2026-03-05 22:53:20] [31merror[39m: Chat Repository: Room not found
+[2026-03-05 22:53:23] [31merror[39m: Chat Repository: Room not found
+[2026-03-05 22:53:27] [31merror[39m: Chat Repository: Room not found
+[2026-03-05 22:53:28] [31merror[39m: Chat Repository: Room not found
+[2026-03-05 22:53:29] [31merror[39m: Chat Repository: Room not found
+[2026-03-05 22:53:32] [31merror[39m: Chat Repository: Room not found
+[2026-03-05 22:53:35] [31merror[39m: Chat Repository: Room not found
+[2026-03-05 22:56:57] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-03-05 22:56:57] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-03-05 23:02:35] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-03-05 23:02:35] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-03-05 23:03:05] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-03-05 23:03:05] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-03-05 23:04:31] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-03-05 23:04:31] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-03-05 23:04:48] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-03-05 23:04:48] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-03-05 23:07:47] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-03-05 23:07:47] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-03-05 23:08:28] [31merror[39m: Chat Repository: Room not found
+[2026-03-05 23:13:42] [31merror[39m: Chat Repository: Room not found
+[2026-03-05 23:14:31] [31merror[39m: Chat Repository: Room not found
+[2026-03-05 23:17:28] [31merror[39m: Chat Repository: Room not found
+[2026-03-05 23:17:29] [31merror[39m: Chat Repository: Room not found
+[2026-03-05 23:17:29] [31merror[39m: Chat Repository: Room not found
+[2026-03-05 23:19:33] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-03-05 23:19:33] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-03-05 23:32:47] [31merror[39m: Chat Repository: Room not found
+[2026-03-05 23:32:48] [31merror[39m: Chat Repository: Room not found
+[2026-03-05 23:32:49] [31merror[39m: Chat Repository: Room not found
+[2026-03-05 23:32:51] [31merror[39m: Chat Repository: Room not found
+[2026-03-05 23:32:52] [31merror[39m: Chat Repository: Room not found
+[2026-03-05 23:32:53] [31merror[39m: Chat Repository: Room not found
+[2026-03-05 23:32:54] [31merror[39m: Chat Repository: Room not found
+[2026-03-05 23:32:56] [31merror[39m: Chat Repository: Room not found
+[2026-03-05 23:32:58] [31merror[39m: Chat Repository: Room not found
+[2026-03-05 23:33:00] [31merror[39m: Chat Repository: Room not found
+[2026-03-05 23:33:01] [31merror[39m: Chat Repository: Room not found
+[2026-03-05 23:33:01] [31merror[39m: Chat Repository: Room not found
+[2026-03-05 23:33:02] [31merror[39m: Chat Repository: Room not found
+[2026-03-05 23:33:04] [31merror[39m: Chat Repository: Room not found
+[2026-03-05 23:33:12] [31merror[39m: Chat Repository: Room not found
+[2026-03-05 23:53:57] [31merror[39m: ❌ Failed to notify server for room null: Failed to update room
+AppError: Failed to update room
+    at ChatRepository.updateRoom (D:\Workplace\Talk2Active_backend\src\repositories\chat.repository.ts:51:23)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async ChatService.updateRoom (D:\Workplace\Talk2Active_backend\src\services\chat-service.ts:22:13)
+    at async RoomMonitorService.notifyServerRoomDeactivated (D:\Workplace\Talk2Active_backend\src\socket\room-monitor.socket.ts:198:13)
+[2026-03-06 00:03:54] [31merror[39m: Chat Repository: Failed to leave Room!
+[2026-03-06 00:04:12] [31merror[39m: Chat Repository: Failed to leave Room!
+[2026-03-06 00:04:53] [31merror[39m: Chat Repository: Failed to leave Room!
+[2026-03-06 00:07:56] [31merror[39m: Chat Repository: Failed to leave Room!
+[2026-03-06 00:08:19] [31merror[39m: Chat Repository: Failed to leave Room!
+[2026-03-06 00:08:19] [31merror[39m: Chat Repository: Failed to leave Room!
+[2026-03-06 00:09:17] [31merror[39m: Chat Repository: Failed to leave Room!
+[2026-03-06 00:09:36] [31merror[39m: Chat Repository: Failed to leave Room!
+[2026-03-06 00:09:45] [31merror[39m: Chat Repository: Failed to leave Room!
+[2026-03-06 00:10:13] [31merror[39m: Chat Repository: Failed to leave Room!
+[2026-03-06 00:10:13] [31merror[39m: Chat Repository: Failed to leave Room!
+[2026-03-06 00:10:17] [31merror[39m: Chat Repository: Failed to leave Room!
+[2026-03-06 00:14:20] [31merror[39m: Chat Repository: Failed to leave Room!
+[2026-03-06 02:25:32] [31merror[39m: Chat Repository: Failed to leave Room!
+[2026-03-06 02:25:34] [31merror[39m: Chat Repository: Failed to leave Room!
+[2026-03-06 03:04:50] [31merror[39m: Chat Repository: Failed to leave Room!
+[2026-03-06 03:04:50] [31merror[39m: Chat Repository: Failed to leave Room!
+[2026-03-06 03:05:06] [31merror[39m: Chat Repository: Failed to leave Room!
+[2026-03-06 03:05:07] [31merror[39m: Chat Repository: Failed to leave Room!
+[2026-03-06 03:05:27] [31merror[39m: Chat Repository: Failed to leave Room!
+[2026-03-06 03:05:36] [31merror[39m: Chat Repository: Failed to leave Room!
+[2026-03-06 03:05:36] [31merror[39m: Chat Repository: Failed to leave Room!
+[2026-03-06 03:06:01] [31merror[39m: Chat Repository: Failed to leave Room!
+[2026-03-06 03:06:24] [31merror[39m: Chat Repository: Failed to leave Room!
+[2026-03-06 03:06:24] [31merror[39m: Chat Repository: Failed to leave Room!
+[2026-03-06 03:07:06] [31merror[39m: Chat Repository: Failed to leave Room!
+[2026-03-06 03:07:09] [31merror[39m: Chat Repository: Failed to leave Room!
+[2026-03-06 03:07:37] [31merror[39m: Chat Repository: Failed to leave Room!
+[2026-03-06 03:07:37] [31merror[39m: Chat Repository: Failed to leave Room!
+[2026-03-06 03:07:42] [31merror[39m: Chat Repository: Failed to leave Room!
+[2026-03-06 03:07:54] [31merror[39m: Chat Repository: Failed to leave Room!
+[2026-03-06 03:08:00] [31merror[39m: Chat Repository: Failed to leave Room!
+[2026-03-06 03:08:03] [31merror[39m: Chat Repository: Failed to leave Room!
+[2026-03-06 03:08:24] [31merror[39m: Chat Repository: Failed to leave Room!
+[2026-03-06 03:08:28] [31merror[39m: Chat Repository: Failed to leave Room!
+[2026-03-06 03:10:24] [31merror[39m: Chat Repository: Failed to leave Room!
+[2026-03-06 03:13:02] [31merror[39m: Chat Repository: Failed to leave Room!
+[2026-03-06 03:13:03] [31merror[39m: Chat Repository: Failed to leave Room!
+[2026-03-06 03:13:27] [31merror[39m: Chat Repository: Failed to leave Room!
+[2026-03-06 03:13:39] [31merror[39m: Chat Repository: Failed to leave Room!
+[2026-03-06 03:13:45] [31merror[39m: Chat Repository: Failed to leave Room!
+[2026-03-06 03:13:58] [31merror[39m: Chat Repository: Failed to leave Room!
+[2026-03-06 03:19:00] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-03-06 03:19:00] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-03-06 03:20:20] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-03-06 03:20:20] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-03-06 03:26:55] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-03-06 03:26:55] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-03-06 03:33:42] [31merror[39m: Chat Repository: Failed to leave Room!
+[2026-03-06 03:33:59] [31merror[39m: Chat Repository: Failed to leave Room!
+[2026-03-06 03:34:56] [31merror[39m: Chat Repository: Failed to leave Room!
+[2026-03-06 03:34:56] [31merror[39m: Chat Repository: Failed to leave Room!
+[2026-03-06 03:35:00] [31merror[39m: Chat Repository: Failed to leave Room!
+[2026-03-06 03:35:00] [31merror[39m: Chat Repository: Failed to leave Room!
+[2026-03-06 03:35:13] [31merror[39m: Chat Repository: Failed to leave Room!
+[2026-03-06 03:35:16] [31merror[39m: Chat Repository: Failed to leave Room!
+[2026-03-06 03:35:27] [31merror[39m: Chat Repository: Failed to leave Room!
+[2026-03-06 03:35:56] [31merror[39m: Chat Repository: Failed to leave Room!
+[2026-03-06 03:35:56] [31merror[39m: Chat Repository: Failed to leave Room!
+[2026-03-06 03:43:20] [31merror[39m: ❌ Failed to notify server for room null: Failed to update room
+AppError: Failed to update room
+    at ChatRepository.updateRoom (D:\Workplace\Talk2Active_backend\src\repositories\chat.repository.ts:51:23)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async ChatService.updateRoom (D:\Workplace\Talk2Active_backend\src\services\chat-service.ts:22:13)
+    at async RoomMonitorService.notifyServerRoomDeactivated (D:\Workplace\Talk2Active_backend\src\socket\room-monitor.socket.ts:198:13)
+[2026-03-06 03:55:31] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-03-06 03:55:31] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-03-07 02:21:02] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-03-07 02:21:02] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-03-07 02:21:34] [31merror[39m: Relationship Service: Failed to get friends!
+[2026-03-07 02:21:34] [31merror[39m: Relationship Service: Failed to get friends!

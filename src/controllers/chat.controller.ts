@@ -88,8 +88,9 @@ export class ChatController {
     public async leaveRoom(req: Request, res: Response) {
         const roomId = req.params.roomId;
         const userId = req.body.userId;
+        const name = req.body.name;
         try {
-            await this.chatService.leaveRoom(roomId, userId);
+            await this.chatService.leaveRoom(roomId, userId, name);
             res.status(200).json({ status: true, message: 'Left room successfully' });
         }
         catch (error) {

@@ -65,9 +65,9 @@ export class ChatService {
         }
     }
 
-    async leaveRoom(roomId: string, userId: string): Promise<void> {
+    async leaveRoom(roomId: string, userId: string, name: string): Promise<void> {
         try {
-            await this.chatRepository.leaveRoom(roomId, userId);
+            await this.chatRepository.leaveRoom(roomId, userId, name);
         } catch (error) {
             if (error instanceof AppError) {
                 throw error;

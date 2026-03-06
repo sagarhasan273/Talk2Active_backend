@@ -80,7 +80,7 @@ export class ChatRepository {
     public async getRoomById(roomId: string): Promise<RoomResponse> {
         try {
             const room = await RoomModel.findOne
-                ({ _id: roomId, isActive: true })
+                ({ _id: new ObjectId(roomId) })
 
                 .populate('host', commonUserQuery)
                 .populate('currentParticipants.user', commonUserQuery)
@@ -117,14 +117,17 @@ export class ChatRepository {
         }
     }
 
-    public async leaveRoom(roomId: string, userId: string): Promise<void> {
+    public async leaveRoom(roomId: string, userId: string, name: string): Promise<void> {
         try {
             const room = await RoomModel.findById(roomId);
             if (!room) {
                 throw new AppError('Room not found', 404, 'Chat Repository');
             }
             room.currentParticipants = room.currentParticipants.filter(participant => participant.user.toString() !== userId);
+
             await room.save();
+
+            this.broadcastLeaveVoiceRoom({ roomId, userId, name });
         } catch (error) {
             if (error instanceof AppError) {
                 throw error;
@@ -163,6 +166,29 @@ export class ChatRepository {
                     joinInfo: data.joinInfo,
                     leaveInfo: data?.leaveInfo,
                     message: 'Room updated with participants'
+                });
+            }
+        } catch (error) {
+            logger.error('Failed to broadcast new room:', error);
+            // Don't throw - broadcasting failure shouldn't stop room creation
+        }
+    }
+
+    private broadcastLeaveVoiceRoom(data: any): void {
+        try {
+            // Get socket handler instance
+            const socketHandler = getSocketHandler();
+
+            const { roomId, userId, name } = data
+
+            // Option 1: If SocketHandler exposes io
+            if (socketHandler['io']) {
+                socketHandler['io'].emit('leave-voice-room', data);
+                socketHandler['io'].emit('room-updated-with-participant', {
+                    leaveInfo: {
+                        roomId,
+                        participant: { userId, name }
+                    }
                 });
             }
         } catch (error) {
