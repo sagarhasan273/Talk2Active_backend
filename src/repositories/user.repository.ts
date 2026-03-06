@@ -193,7 +193,10 @@ export class UserRepository {
   }
 
   public async getUser(userId: string): Promise<UserType> {
-    return this.getUserWithRooms(userId);
+
+    const user = await this.getUserWithRooms(userId);
+
+    return user
   }
 
   public async updateUserAccount(input: UserAccountUpdateInput): Promise<ReturnResponseType> {

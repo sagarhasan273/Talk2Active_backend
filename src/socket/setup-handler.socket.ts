@@ -1,6 +1,5 @@
 import { Server } from 'socket.io';
 import { ReactionMessageData } from 'src/types/chat.type';
-import logger from 'src/utils/logger';
 import {
     AudioToggleData,
     DeleteGroupMessageData,
@@ -43,18 +42,22 @@ export class SocketHandler {
     private setupEventHandlers(io: Server): void {
         io.on('connection', (socket) => {
             // User notification of connection
-            socket.on('join-room', ({ userId }) => {
+            socket.on('join-room', ({ userId, roomIds }) => {
                 const roomId = `user-room:${userId}`;
+
                 socket.join(roomId);
 
-                logger.info(`User ${socket.id} joined room ${roomId}`);
+                this.voiceRoomManager.getRoomsParticipants(socket, roomIds)
+
+                // logger.info(`User ${socket.id} joined room ${roomId}`);
             });
 
             socket.on('leave-room', ({ userId }) => {
                 const roomId = `user-room:${userId}`;
+
                 socket.leave(roomId);
 
-                logger.info(`User ${socket.id} left room ${roomId}`);
+                // logger.info(`User ${socket.id} left room ${roomId}`);
             });
 
             // Voice Room Events

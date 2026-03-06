@@ -32,8 +32,6 @@ export class VoiceRoomManager {
             // Get current participants
             const participants = this.getRoomParticipants(roomId, socket.id);
 
-            logger.info(`📊 Room ${roomId} now has ${participants.length + 1} participants`);
-
             // Send existing participants to the new user
             this.sendExistingParticipants(socket, roomId, participants);
 
@@ -69,6 +67,17 @@ export class VoiceRoomManager {
 
         // Send system message
         this.sendUserLeftSystemMessage(socket, roomId, userId, name);
+    }
+
+    public getRoomsParticipants(socket: Socket, roomIds: string[]): void {
+        const result = new Map<string, ParticipantData[]>();
+        roomIds?.forEach(roomId => {
+            result.set(roomId, this.getRoomParticipants(roomId, socket.id));
+        });
+
+        socket.emit('send-rooms-existing-participants', {
+            participants: result
+        })
     }
 
     /**
@@ -115,6 +124,8 @@ export class VoiceRoomManager {
     public getRoomForSocket(socketId: string): string | undefined {
         return this.usersRooms.get(socketId);
     }
+
+
 
     /**
      * Get all participants in a room
