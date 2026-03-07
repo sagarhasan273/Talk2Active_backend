@@ -20,9 +20,6 @@ export class UserStatusManager {
             // Update user data with new mute status
             userData.isMuted = isMuted;
 
-            // Store the update (you might want to add a method to VoiceRoomManager for this)
-            // For now, we'll emit the event and let frontend handle state
-
             // Broadcast the change to all others in the room
             socket.to(roomId).emit('user-audio-toggled', {
                 socketId: socket.id,
