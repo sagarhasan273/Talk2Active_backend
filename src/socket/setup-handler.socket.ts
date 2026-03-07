@@ -168,8 +168,9 @@ export class SocketHandler {
             // Disconnection
             socket.on('disconnect', () => {
                 this.voiceRoomManager.handleDisconnect(socket);
-                // Check rooms after disconnect
+
                 const roomId = this.voiceRoomManager.getRoomForSocket(socket.id);
+
                 if (roomId) {
                     this.roomMonitor.checkRoomEmpty(roomId);
                 }
