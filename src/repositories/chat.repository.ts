@@ -5,7 +5,7 @@ import { CreateRoomInput, RoomResponse, UpdateRoomInput } from "src/types/chat.t
 import { AppError } from "src/utils/errors";
 import logger from "src/utils/logger";
 
-const commonUserQuery = 'email username name profilePhoto bio status lastActive verified'
+const commonUserQuery = 'email username name profilePhoto bio status lastActive verified accountType'
 
 export class ChatRepository {
     public async createRoom(input: CreateRoomInput): Promise<void> {

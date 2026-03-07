@@ -125,8 +125,6 @@ export class VoiceRoomManager {
         return this.usersRooms.get(socketId);
     }
 
-
-
     /**
      * Get all participants in a room
      */
