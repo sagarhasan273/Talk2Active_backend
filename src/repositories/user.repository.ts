@@ -183,7 +183,7 @@ export class UserRepository {
       select: 'name description languages level maxParticipants host isActive',
       populate: {
         path: 'host',
-        select: '_id name userId profilePhoto accountType',
+        select: '_id name userId profilePhoto verified accountType',
       },
     });
 

@@ -75,8 +75,10 @@ export class VoiceRoomManager {
             result.set(roomId, this.getRoomParticipants(roomId, socket.id));
         });
 
-        socket.emit('send-rooms-existing-participants', {
-            participants: result
+        const participantsObject = Object.fromEntries(result)
+
+        socket.emit('receive-rooms-existing-participants', {
+            participants: participantsObject
         })
     }
 
