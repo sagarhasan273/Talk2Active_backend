@@ -87,24 +87,30 @@ export class PostRepository {
 
     public async getPosts(): Promise<PostResponseType[]> {
         try {
-            const skip = 0;
             const limit = 120;
 
-            const posts = await PostModel.find({ isDeleted: false })
-                .populate('authorDetails')
-                .sort({ createdAt: -1 })
-                .skip(skip)
-                .limit(limit);
+            // Using MongoDB's aggregation pipeline with $sample for random documents
+            const posts = await PostModel.aggregate([
+                { $match: { isDeleted: false } },
+                { $sample: { size: limit } },
+                {
+                    $lookup: {
+                        from: 'users', // or whatever your users collection is named
+                        localField: 'author',
+                        foreignField: '_id',
+                        as: 'authorDetails'
+                    }
+                },
+                { $unwind: { path: '$authorDetails', preserveNullAndEmptyArrays: true } },
+                { $sort: { createdAt: -1 } } // Optional: sort randomly selected posts by date
+            ]);
 
-            return posts.map((post) => {
-                const obj = post.toJSON();
-                return {
-                    ...obj,
-                    postId: obj._id.toString(),
-                    authorDetails: (obj as any).authorDetails ?? null,
-                    authorRelationship: (obj as any).authorRelationship ?? null,
-                } as PostResponseType;
-            });
+            return posts.map((post) => ({
+                ...post,
+                postId: post._id.toString(),
+                authorDetails: post.authorDetails ?? null,
+                authorRelationship: post.authorRelationship ?? null,
+            })) as PostResponseType[];
         } catch (error) {
             throw new AppError('Failed to fetch posts', 500, 'Post Repository');
         }
