@@ -27,6 +27,7 @@ export interface UserData {
     profilePhoto: string;
     isMuted: boolean;
     status: string;
+    isHost: boolean;
 }
 
 export interface JoinLeaveIndividualMessageData {

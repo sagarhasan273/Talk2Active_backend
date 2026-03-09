@@ -102,13 +102,41 @@ export class PostRepository {
                     }
                 },
                 { $unwind: { path: '$authorDetails', preserveNullAndEmptyArrays: true } },
+                {
+                    $project: {
+                        // Include all post fields
+                        author: 1,
+                        media: 1,
+                        tags: 1,
+                        engagement: 1,
+                        isDeleted: 1,
+                        deletedAt: 1,
+                        createdAt: 1,
+                        updatedAt: 1,
+                        // Only select specific fields from authorDetails
+                        'authorDetails._id': 1,
+                        'authorDetails.email': 1,
+                        'authorDetails.username': 1,
+                        'authorDetails.name': 1,
+                        'authorDetails.profilePhoto': 1,
+                        'authorDetails.coverPhoto': 1,
+                        'authorDetails.bio': 1,
+                        'authorDetails.status': 1,
+                        'authorDetails.lastActive': 1,
+                        'authorDetails.verified': 1,
+                        'authorDetails.followerCount': 1,
+                        'authorDetails.followingCount': 1,
+                        'authorDetails.friendCount': 1,
+                        'authorDetails.accountType': 1,
+                    }
+                },
                 { $sort: { createdAt: -1 } } // Optional: sort randomly selected posts by date
             ]);
 
             return posts.map((post) => ({
                 ...post,
                 postId: post._id.toString(),
-                authorDetails: post.authorDetails ?? null,
+                authorDetails: { ...(post.authorDetails ?? null), _id: undefined, id: post.authorDetails._id },
                 authorRelationship: post.authorRelationship ?? null,
             })) as PostResponseType[];
         } catch (error) {

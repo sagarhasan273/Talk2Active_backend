@@ -1,208 +1,421 @@
 import { Server, Socket } from 'socket.io';
 import { v4 as uuidv4 } from 'uuid';
-import { ParticipantData, UserData } from '../types/socket.type';
+
+import type { ParticipantData, UserData } from '../types/socket.type';
 import logger from '../utils/logger';
+
+// ─── Extra types ──────────────────────────────────────────────────────────────
+
+type BlockedMics = Map<string, Set<string>>; // roomId → Set<socketId>
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 export class VoiceRoomManager {
     private io: Server;
-    private voiceRooms = new Map<string, Set<string>>(); // roomId -> socketIds
-    private usersRooms = new Map<string, string>(); // socketId -> roomId
-    private usersData = new Map<string, UserData>(); // socketId -> UserData
+    private voiceRooms = new Map<string, Set<string>>();   // roomId  → socketIds
+    private usersRooms = new Map<string, string>();         // socketId → roomId
+    private usersData = new Map<string, UserData>();       // socketId → UserData
+    private screenSharers = new Map<string, string>();         // roomId  → sharerSocketId
+    private blockedMics: BlockedMics = new Map();             // roomId  → Set<socketId>
 
     constructor(io: Server) {
         this.io = io;
     }
 
-    /**
-     * Handle user joining a voice room
-     */
+    // ══════════════════════════════════════════════════════════════════════════
+    // Join / Leave
+    // ══════════════════════════════════════════════════════════════════════════
+
     public handleJoinVoiceRoom(socket: Socket, data: UserData): void {
-        const { roomId, userId, name, ...userBasicInfo } = data;
-
+        const { roomId, userId, name, ...rest } = data;
         try {
-            // Store user data
-            this.usersData.set(socket.id, { roomId, userId, name, ...userBasicInfo });
+            this.usersData.set(socket.id, { roomId, userId, name, ...rest });
 
-            // Leave previous room if any
             const previousRoomId = this.leavePreviousRoom(socket);
-
-            // Join new room
             this.joinRoom(socket, roomId);
 
-            // Get current participants
             const participants = this.getRoomParticipants(roomId, socket.id);
-
-            // Send existing participants to the new user
             this.sendExistingParticipants(socket, roomId, participants);
 
-            // Notify others about the new user
-            this.broadcastUserJoined(socket, roomId, previousRoomId, { userId, name, isLocal: false, ...userBasicInfo });
+            // Tell the joiner who is currently screen-sharing (if anyone)
+            const currentSharer = this.screenSharers.get(roomId);
+            if (currentSharer && currentSharer !== socket.id) {
+                socket.emit('screen-share-started', { sharerSocketId: currentSharer, roomId });
+            }
 
-            // Send system messages
-            this.sendSystemMessages(socket, roomId, { userId, name, profilePhoto: data.profilePhoto });
-
-        } catch (error) {
-            logger.error('❌ Error joining voice room:', error);
+            this.broadcastUserJoined(socket, roomId, previousRoomId, {
+                userId,
+                name,
+                isLocal: false,
+                ...rest,
+            });
+            this.sendSystemMessages(socket, roomId, {
+                userId,
+                name,
+                profilePhoto: data.profilePhoto,
+            });
+        } catch (err) {
+            logger.error('❌ handleJoinVoiceRoom:', err);
             socket.emit('join-error', { error: 'Failed to join voice room' });
         }
     }
 
-    /**
-     * Handle user leaving a voice room
-     */
-    public handleLeaveVoiceRoom(socket: Socket, data: { roomId: string, userId: string, name: string }): void {
+    public handleLeaveVoiceRoom(
+        socket: Socket,
+        data: { roomId: string; userId: string; name: string }
+    ): void {
         const { roomId, userId, name } = data;
         const userInfo = this.usersData.get(socket.id);
+        logger.info(`🚪 ${userInfo?.name ?? name} (${socket.id}) leaving ${roomId}`);
 
-        logger.info(`🚪 User ${userInfo?.name || name} (${socket.id}) leaving room ${roomId}`);
-
-        // Leave the room
+        this.clearScreenShare(socket, roomId); // stop share on manual leave
         this.leaveRoom(socket, roomId);
-
-        // Remove user data
         this.removeUserData(socket.id);
-
-        // Broadcast user left to room
-        this.broadcastUserLeft(socket, roomId, userId, userInfo?.name || name);
-
-        // Send system message
+        this.broadcastUserLeft(socket, roomId, userId, userInfo?.name ?? name);
         this.sendUserLeftSystemMessage(socket, roomId, userId, name);
     }
 
-    public getRoomsParticipants(socket: Socket, roomIds: string[]): void {
-        const result = new Map<string, ParticipantData[]>();
-        roomIds?.forEach(roomId => {
-            result.set(roomId, this.getRoomParticipants(roomId, socket.id));
-        });
-
-        const participantsObject = Object.fromEntries(result)
-
-        socket.emit('receive-rooms-existing-participants', {
-            participants: participantsObject
-        })
-    }
-
-    /**
-     * Handle user disconnection
-     */
     public handleDisconnect(socket: Socket): void {
         const userInfo = this.usersData.get(socket.id);
         const roomId = this.usersRooms.get(socket.id);
 
         if (roomId) {
-            // Leave the room
+            this.clearScreenShare(socket, roomId);
             socket.leave(roomId);
             this.usersRooms.delete(socket.id);
-
-            // Clean up room data
             this.cleanupRoomData(roomId, socket.id);
 
-            // Broadcast user left
             socket.to(roomId).emit('user-left', {
                 userId: userInfo?.userId,
                 socketId: socket.id,
-                name: userInfo?.name
+                name: userInfo?.name,
             });
 
-            // Send system message if needed
             if (userInfo) {
                 this.sendUserLeftSystemMessage(socket, roomId, userInfo.userId, userInfo.name, false);
             }
         }
-
         this.usersData.delete(socket.id);
     }
 
+    // ══════════════════════════════════════════════════════════════════════════
+    // Screen Share
+    // ══════════════════════════════════════════════════════════════════════════
+
     /**
-     * Get user data by socket ID
+     * Client emits: 'user-screen-share'
+     * Payload: { roomId: string, socketId: string, isSharing: boolean }
      */
+    public handleScreenShare(
+        socket: Socket,
+        data: { roomId: string; socketId: string; isSharing: boolean }
+    ): void {
+        const { roomId, isSharing } = data;
+
+        if (!this.isUserInRoom(socket.id, roomId)) {
+            socket.emit('screen-share-error', { error: 'Not in room' });
+            return;
+        }
+
+        if (isSharing) {
+            // Only one sharer at a time
+            const existing = this.screenSharers.get(roomId);
+            if (existing && existing !== socket.id) {
+                socket.emit('screen-share-error', {
+                    error: 'Someone else is already sharing',
+                    sharerSocketId: existing,
+                });
+                return;
+            }
+
+            this.screenSharers.set(roomId, socket.id);
+            logger.info(`🖥️  ${socket.id} started screen share in ${roomId}`);
+
+            // Tell everyone else in the room (including sender for confirmation)
+            this.io.to(roomId).emit('screen-share-started', {
+                sharerSocketId: socket.id,
+                roomId,
+            });
+        } else {
+            this.clearScreenShare(socket, roomId);
+        }
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // Host Actions
+    // ══════════════════════════════════════════════════════════════════════════
+
+    /**
+     * Client emits: 'host-force-mute'
+     * Payload: { roomId: string, targetSocketId: string }
+     * Target can unmute themselves after receiving 'force-muted'.
+     */
+    public handleForceMute(
+        socket: Socket,
+        data: { roomId: string; targetSocketId: string }
+    ): void {
+        const { roomId, targetSocketId } = data;
+        if (!this.verifyHostAction(socket, roomId)) return;
+
+        logger.info(`🔇 Host ${socket.id} force-muting ${targetSocketId} in ${roomId}`);
+
+        // Update server-side mute state so new joiners see correct state
+        const targetData = this.usersData.get(targetSocketId);
+        if (targetData) {
+            this.usersData.set(targetSocketId, { ...targetData, isMuted: true });
+        }
+
+        // Tell the target
+        this.io.to(targetSocketId).emit('force-muted', {
+            bySocketId: socket.id,
+            roomId,
+        });
+
+        // Tell room so UI reflects the muted state
+        this.io.to(roomId).emit('participant-muted', {
+            socketId: targetSocketId,
+            isMuted: true,
+            byHost: true,
+        });
+    }
+
+    /**
+     * Client emits: 'host-block-mic'
+     * Payload: { roomId: string, targetSocketId: string }
+     * Target CANNOT unmute — host must call 'host-unblock-mic' to lift it.
+     */
+    public handleBlockMic(
+        socket: Socket,
+        data: { roomId: string; targetSocketId: string }
+    ): void {
+        const { roomId, targetSocketId } = data;
+        if (!this.verifyHostAction(socket, roomId)) return;
+
+        logger.info(`🚫 Host ${socket.id} blocking mic of ${targetSocketId} in ${roomId}`);
+
+        if (!this.blockedMics.has(roomId)) {
+            this.blockedMics.set(roomId, new Set());
+        }
+        this.blockedMics.get(roomId)!.add(targetSocketId);
+
+        const targetData = this.usersData.get(targetSocketId);
+        if (targetData) {
+            this.usersData.set(targetSocketId, { ...targetData, isMuted: true });
+        }
+
+        this.io.to(targetSocketId).emit('mic-blocked', {
+            bySocketId: socket.id,
+            roomId,
+        });
+
+        this.io.to(roomId).emit('participant-muted', {
+            socketId: targetSocketId,
+            isMuted: true,
+            micBlocked: true,
+            byHost: true,
+        });
+    }
+
+    /**
+     * Client emits: 'host-unblock-mic'
+     * Payload: { roomId: string, targetSocketId: string }
+     */
+    public handleUnblockMic(
+        socket: Socket,
+        data: { roomId: string; targetSocketId: string }
+    ): void {
+        const { roomId, targetSocketId } = data;
+        if (!this.verifyHostAction(socket, roomId)) return;
+
+        logger.info(`✅ Host ${socket.id} unblocking mic of ${targetSocketId} in ${roomId}`);
+        this.blockedMics.get(roomId)?.delete(targetSocketId);
+
+        this.io.to(targetSocketId).emit('mic-unblocked', { roomId });
+        this.io.to(roomId).emit('participant-muted', {
+            socketId: targetSocketId,
+            isMuted: false,
+            micBlocked: false,
+            byHost: true,
+        });
+    }
+
+    /**
+     * Client emits: 'host-kick-user'
+     * Payload: { roomId: string, targetSocketId: string }
+     */
+    public handleKickUser(
+        socket: Socket,
+        data: { roomId: string; targetSocketId: string }
+    ): void {
+        const { roomId, targetSocketId } = data;
+        if (!this.verifyHostAction(socket, roomId)) return;
+
+        const targetData = this.usersData.get(targetSocketId);
+        logger.info(`👢 Host ${socket.id} kicking ${targetSocketId} from ${roomId}`);
+
+        // Notify the kicked user first
+        this.io.to(targetSocketId).emit('kicked-from-room', {
+            bySocketId: socket.id,
+            roomId,
+        });
+
+        // Get the target socket and force-leave the room
+        const targetSocket = this.io.sockets.sockets.get(targetSocketId);
+        if (targetSocket) {
+            this.clearScreenShare(targetSocket, roomId);
+            targetSocket.leave(roomId);
+        }
+
+        this.usersRooms.delete(targetSocketId);
+        this.cleanupRoomData(roomId, targetSocketId);
+        this.blockedMics.get(roomId)?.delete(targetSocketId);
+        this.usersData.delete(targetSocketId);
+
+        // Tell the room
+        this.io.to(roomId).emit('user-left', {
+            userId: targetData?.userId,
+            socketId: targetSocketId,
+            name: targetData?.name,
+            kicked: true,
+        });
+
+        if (targetData) {
+            this.sendUserLeftSystemMessage(
+                socket,
+                roomId,
+                targetData.userId,
+                targetData.name,
+                false,
+                true // kicked
+            );
+        }
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // Misc existing public methods
+    // ══════════════════════════════════════════════════════════════════════════
+
+    public getRoomsParticipants(socket: Socket, roomIds: string[]): void {
+        const result = new Map<string, ParticipantData[]>();
+        roomIds?.forEach((id) => result.set(id, this.getRoomParticipants(id, socket.id)));
+        socket.emit('receive-rooms-existing-participants', {
+            participants: Object.fromEntries(result),
+        });
+    }
+
     public getUserData(socketId: string): UserData | undefined {
         return this.usersData.get(socketId);
     }
 
-    /**
-     * Get room ID for a socket
-     */
     public getRoomForSocket(socketId: string): string | undefined {
         return this.usersRooms.get(socketId);
     }
 
-    /**
-     * Get all participants in a room
-     */
     public getRoomParticipants(roomId: string, excludeSocketId?: string): ParticipantData[] {
         const participants: ParticipantData[] = [];
-        const socketIds = this.voiceRooms.get(roomId) || new Set();
+        const socketIds = this.voiceRooms.get(roomId) ?? new Set<string>();
 
-        Array.from(socketIds).forEach(socketId => {
-            if (socketId !== excludeSocketId) {
-                const userData = this.usersData.get(socketId);
-                if (userData) {
-                    participants.push({
-                        ...userData,
-                        socketId,
-                        id: userData.userId,
-                        isMuted: userData.isMuted,
-                        isLocal: false
-                    });
-                }
+        Array.from(socketIds).forEach((socketId) => {
+            if (socketId === excludeSocketId) return;
+            const userData = this.usersData.get(socketId);
+            if (userData) {
+                participants.push({
+                    ...userData,
+                    socketId,
+                    id: userData.userId,
+                    isMuted: userData.isMuted,
+                    isLocal: false,
+                });
             }
         });
 
         return participants;
     }
 
-    /**
-     * Check if user is in a room
-     */
     public isUserInRoom(socketId: string, roomId: string): boolean {
-        const userRoom = this.usersRooms.get(socketId);
-        return userRoom === roomId;
+        return this.usersRooms.get(socketId) === roomId;
+    }
+
+    public sendActionsInVoice(socket: Socket, data: any): void {
+        const { roomId, type, senderInfo } = data;
+        socket.to(roomId).emit('deliver-user-actions-in-voice', {
+            type,
+            senderInfo: {
+                ...senderInfo,
+                userId: senderInfo.userId,
+                emoji: senderInfo.emoji,
+            },
+        });
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // Private helpers
+    // ══════════════════════════════════════════════════════════════════════════
+
+    /** Stop a screen share if this socket is the current sharer */
+    private clearScreenShare(socket: Socket, roomId: string): void {
+        if (this.screenSharers.get(roomId) !== socket.id) return;
+        this.screenSharers.delete(roomId);
+        logger.info(`🖥️  ${socket.id} stopped screen share in ${roomId}`);
+        this.io.to(roomId).emit('screen-share-stopped', {
+            sharerSocketId: socket.id,
+            roomId,
+        });
     }
 
     /**
-     * Private helper methods
+     * Verify the caller is the host of the room.
+     * Host is stored in UserData.hostId or we compare userId against the room's
+     * stored hostId.  Adjust the check below to match your UserData shape.
      */
-    private leavePreviousRoom(socket: Socket): string | undefined {
-        const previousRoomId = this.usersRooms.get(socket.id);
-        if (previousRoomId) {
-            socket.leave(previousRoomId);
-
-            const userData = this.usersData.get(socket.id);
-            if (userData) {
-                socket.to(previousRoomId).emit('user-left', {
-                    userId: userData.userId,
-                    socketId: socket.id,
-                    name: userData.name
-                });
-            }
-
-            if (this.voiceRooms.has(previousRoomId)) {
-                this.voiceRooms.get(previousRoomId)?.delete(socket.id);
-            }
-            return previousRoomId
+    private verifyHostAction(socket: Socket, roomId: string): boolean {
+        if (!this.isUserInRoom(socket.id, roomId)) {
+            socket.emit('host-action-error', { error: 'Not in room' });
+            return false;
         }
-        return undefined
+        const userData = this.usersData.get(socket.id);
+        if (!userData?.isHost) {
+            logger.warn(`⚠️  Non-host ${socket.id} attempted host action in ${roomId}`);
+            socket.emit('host-action-error', { error: 'Not the host' });
+            return false;
+        }
+        return true;
+    }
+
+    private leavePreviousRoom(socket: Socket): string | undefined {
+        const prev = this.usersRooms.get(socket.id);
+        if (!prev) return undefined;
+
+        socket.leave(prev);
+        const userData = this.usersData.get(socket.id);
+        if (userData) {
+            socket.to(prev).emit('user-left', {
+                userId: userData.userId,
+                socketId: socket.id,
+                name: userData.name,
+            });
+        }
+        this.voiceRooms.get(prev)?.delete(socket.id);
+        return prev;
     }
 
     private joinRoom(socket: Socket, roomId: string): void {
         socket.join(roomId);
         this.usersRooms.set(socket.id, roomId);
-
-        if (!this.voiceRooms.has(roomId)) {
-            this.voiceRooms.set(roomId, new Set());
-        }
-        this.voiceRooms.get(roomId)?.add(socket.id);
+        if (!this.voiceRooms.has(roomId)) this.voiceRooms.set(roomId, new Set());
+        this.voiceRooms.get(roomId)!.add(socket.id);
     }
 
     private leaveRoom(socket: Socket, roomId: string): void {
         socket.leave(roomId);
         this.usersRooms.delete(socket.id);
-
-        if (this.voiceRooms.has(roomId)) {
-            this.voiceRooms.get(roomId)?.delete(socket.id);
-            if (this.voiceRooms.get(roomId)?.size === 0) {
+        const set = this.voiceRooms.get(roomId);
+        if (set) {
+            set.delete(socket.id);
+            if (set.size === 0) {
                 this.voiceRooms.delete(roomId);
+                this.blockedMics.delete(roomId);
+                this.screenSharers.delete(roomId);
             }
         }
     }
@@ -213,127 +426,102 @@ export class VoiceRoomManager {
     }
 
     private cleanupRoomData(roomId: string, socketId: string): void {
-        if (this.voiceRooms.has(roomId)) {
-            this.voiceRooms.get(roomId)?.delete(socketId);
-            if (this.voiceRooms.get(roomId)?.size === 0) {
+        const set = this.voiceRooms.get(roomId);
+        if (set) {
+            set.delete(socketId);
+            if (set.size === 0) {
                 this.voiceRooms.delete(roomId);
+                this.blockedMics.delete(roomId);
+                this.screenSharers.delete(roomId);
             }
         }
     }
 
-    private sendExistingParticipants(socket: Socket, roomId: string, participants: ParticipantData[]): void {
-        socket.emit('existing-participants', {
-            participants,
-            roomId
-        });
+    private sendExistingParticipants(
+        socket: Socket,
+        roomId: string,
+        participants: ParticipantData[]
+    ): void {
+        socket.emit('existing-participants', { participants, roomId });
     }
 
-    private broadcastUserJoined(socket: Socket, roomId: string, previousRoomId: string | undefined, userData: any): void {
-        socket.to(roomId).emit('user-joined', {
-            ...userData,
-            socketId: socket.id
-        });
-
+    private broadcastUserJoined(
+        socket: Socket,
+        roomId: string,
+        previousRoomId: string | undefined,
+        userData: any
+    ): void {
+        socket.to(roomId).emit('user-joined', { ...userData, socketId: socket.id });
         this.io.emit('room-updated-with-participant', {
-            joinInfo: {
-                roomId,
-                participant: userData
-            },
-            ...(previousRoomId && {
-                leaveInfo: {
-                    roomId: previousRoomId,
-                    participant: userData
-                }
-            })
+            joinInfo: { roomId, participant: userData },
+            ...(previousRoomId && { leaveInfo: { roomId: previousRoomId, participant: userData } }),
         });
     }
 
-    private broadcastUserLeft(socket: Socket, roomId: string, userId: string, name: string): void {
-        socket.to(roomId).emit('user-left', {
-            userId,
-            socketId: socket.id,
-            name
-        });
-
+    private broadcastUserLeft(
+        socket: Socket,
+        roomId: string,
+        userId: string,
+        name: string
+    ): void {
+        socket.to(roomId).emit('user-left', { userId, socketId: socket.id, name });
         this.io.emit('room-updated-with-participant', {
-            leaveInfo: {
-                roomId,
-                participant: { userId, name }
-            }
+            leaveInfo: { roomId, participant: { userId, name } },
         });
     }
 
-    private sendSystemMessages(socket: Socket, roomId: string, senderInfo: { userId: string, name: string, profilePhoto: string }): void {
+    private sendSystemMessages(
+        socket: Socket,
+        roomId: string,
+        senderInfo: { userId: string; name: string; profilePhoto: string }
+    ): void {
         const time = new Date();
+        const base = {
+            sender: 'them',
+            type: 'system' as const,
+            senderSocketId: socket.id,
+            senderInfo: {
+                name: senderInfo.name,
+                userId: senderInfo.userId,
+                avatar: senderInfo.profilePhoto,
+            },
+            time,
+        };
 
-        // Notify others
+        socket.to(roomId).emit('receive-group-message', {
+            ...base,
+            id: uuidv4(),
+            systemMessageType: 'user-joined',
+            text: `${senderInfo.name} has joined the voice room.`,
+        });
+
+        socket.emit('receive-group-message', {
+            ...base,
+            id: uuidv4(),
+            systemMessageType: 'you-joined',
+            text: 'You are in the voice room.',
+        });
+    }
+
+    private sendUserLeftSystemMessage(
+        socket: Socket,
+        roomId: string,
+        userId: string,
+        name: string,
+        _broadcast = true,
+        kicked = false
+    ): void {
         socket.to(roomId).emit('receive-group-message', {
             id: uuidv4(),
             sender: 'them',
-            type: 'system',
-            systemMessageType: 'user-joined',
-            text: `${senderInfo.name} has joined the voice room.`,
-            senderSocketId: socket.id,
-            senderInfo: {
-                name: senderInfo.name,
-                userId: senderInfo.userId,
-                avatar: senderInfo.profilePhoto,
-            },
-            time,
-        });
-
-        // Notify the user themselves
-        socket.emit('receive-group-message', {
-            id: uuidv4(),
-            sender: 'them',
-            type: 'system',
-            systemMessageType: 'you-joined',
-            text: `You are in the voice room.`,
-            senderSocketId: socket.id,
-            senderInfo: {
-                name: senderInfo.name,
-                userId: senderInfo.userId,
-                avatar: senderInfo.profilePhoto,
-            },
-            time,
-        });
-    }
-
-    public sendActionsInVoice(socket: Socket, data: any): void {
-        const { roomId, type, senderInfo } = data;
-
-        // Notify others
-        socket.to(roomId).emit('deliver-user-actions-in-voice', {
-            type,
-            senderInfo: {
-                ...senderInfo,
-                userId: senderInfo.userId,
-                emoji: senderInfo.emoji,
-            }
-        });
-    }
-
-    private sendUserLeftSystemMessage(socket: Socket, roomId: string, userId: string, name: string, broadcast = true): void {
-        const messageId = uuidv4();
-
-        const messageData = {
-            sender: 'them',
-            text: `${name} has left the voice room.`,
-            senderSocketId: socket.id,
-            id: messageId,
             type: 'system' as const,
-            systemMessageType: 'user-left' as const,
-            senderInfo: {
-                name,
-                userId,
-            },
-            time: new Date()
-        };
-
-        if (broadcast) {
-            socket.to(roomId).emit('receive-group-message', messageData);
-        } else {
-            socket.to(roomId).emit('receive-group-message', messageData);
-        }
+            systemMessageType: kicked ? 'user-kicked' : 'user-left',
+            text: kicked
+                ? `${name} was removed from the voice room.`
+                : `${name} has left the voice room.`,
+            senderSocketId: socket.id,
+            senderInfo: { name, userId },
+            time: new Date(),
+        });
     }
 }

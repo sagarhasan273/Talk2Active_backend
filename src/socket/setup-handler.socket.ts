@@ -158,7 +158,27 @@ export class SocketHandler {
 
             socket.on('send-user-actions-in-voice', (data: any) => {
                 this.voiceRoomManager.sendActionsInVoice(socket, data);
-            })
+            });
+
+            socket.on('webrtc-screen-share-offer', (data) => this.webRTCSignaling.handleScreenShareOffer(socket, data));
+
+            socket.on('webrtc-screen-share-answer', (data) => this.webRTCSignaling.handleScreenShareAnswer(socket, data));
+
+            socket.on('webrtc-screen-share-ice', (data) => this.webRTCSignaling.handleScreenShareIce(socket, data));
+
+            socket.on('user-screen-share', (data) => {
+                this.voiceRoomManager.handleScreenShare(socket, data);
+                this.roomMonitor.notifyRoomActivity(data.roomId);
+            });
+
+            socket.on('host-force-mute', (data) => this.voiceRoomManager.handleForceMute(socket, data));
+
+            socket.on('host-block-mic', (data) => this.voiceRoomManager.handleBlockMic(socket, data));
+
+            socket.on('host-unblock-mic', (data) => this.voiceRoomManager.handleUnblockMic(socket, data));
+
+            socket.on('host-kick-user', (data) => this.voiceRoomManager.handleKickUser(socket, data));
+
 
             // Room activity ping (from client)
             socket.on('room-activity-ping', (data: { roomId: string }) => {
