@@ -15,7 +15,7 @@ const server = createServer(app);
 
 app.use(
   cors({
-    origin: [`http://${getLocalIp()}:8081`, 'http://localhost:8081', 'https://www.youtube.com'],
+    origin: [`http://${getLocalIp()}:8081`, 'http://localhost:8081', 'https://www.youtube.com', 'https://talk2-active.vercel.app'],
     credentials: true,
   })
 );
@@ -29,7 +29,7 @@ app.use('/', rootRouter);
 // socket.io setup
 const io = new Server(server, {
   cors: {
-    origin: [`http://${getLocalIp()}:8081`, 'http://localhost:8081'],
+    origin: [`http://${getLocalIp()}:8081`, 'http://localhost:8081', 'https://talk2-active.vercel.app'],
     methods: ["GET", "POST"]
   }
 });
