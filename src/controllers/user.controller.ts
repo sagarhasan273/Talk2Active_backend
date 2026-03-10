@@ -88,6 +88,7 @@ export class UserController {
 
   public async getUser(req: Request, res: Response): Promise<void> {
     try {
+      
       const authHeader = req.headers['authorization'];
       const token = authHeader?.split(' ')[1];
       if (!token) {
