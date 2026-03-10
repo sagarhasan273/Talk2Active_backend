@@ -7,7 +7,6 @@ export class InventoryRouter extends BaseRouter {
 
   protected routes(): void {
     this.router.get('/ice-servers', (req, res) => {
-      console.log('✅ ICE Servers route hit!');
       this.inventoryController.iceServers(req, res);
     });
     this.router.post('/image/upload', uploadImage.single('image'), (req, res) =>
