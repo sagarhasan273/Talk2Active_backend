@@ -121,14 +121,14 @@ export class VoiceRoomManager {
 
         if (isSharing) {
             // Only one sharer at a time
-            const existing = this.screenSharers.get(roomId);
-            if (existing && existing !== socket.id) {
-                socket.emit('screen-share-error', {
-                    error: 'Someone else is already sharing',
-                    sharerSocketId: existing,
-                });
-                return;
-            }
+            // const existing = this.screenSharers.get(roomId);
+            // if (existing && existing !== socket.id) {
+            //     socket.emit('screen-share-error', {
+            //         error: 'Someone else is already sharing',
+            //         sharerSocketId: existing,
+            //     });
+            //     return;
+            // }
 
             this.screenSharers.set(roomId, socket.id);
             logger.info(`🖥️  ${socket.id} started screen share in ${roomId}`);

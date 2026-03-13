@@ -3,6 +3,7 @@ import { Message } from "./chat.type";
 import { UserType } from "./user.type";
 
 export interface WebRTCData {
+    roomId: string,
     target: string;
     offer?: RTCSessionDescriptionInit;
     answer?: RTCSessionDescriptionInit;

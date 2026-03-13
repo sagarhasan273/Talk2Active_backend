@@ -75,7 +75,9 @@ export class SocketHandler {
 
             // WebRTC Signaling Events
             socket.on('webrtc-offer', (data: WebRTCData) => {
-                this.webRTCSignaling.handleOffer(socket, data);
+                if (this.voiceRoomManager.isUserInRoom(data.target, data.roomId)) {
+                    this.webRTCSignaling.handleOffer(socket, data);
+                }
             });
 
             socket.on('webrtc-answer', (data: WebRTCData) => {
@@ -83,7 +85,9 @@ export class SocketHandler {
             });
 
             socket.on('webrtc-ice-candidate', (data: WebRTCData) => {
-                this.webRTCSignaling.handleIceCandidate(socket, data);
+                if (this.voiceRoomManager.isUserInRoom(data.target, data.roomId)) {
+                    this.webRTCSignaling.handleIceCandidate(socket, data);
+                }
             });
 
             // Message Events
