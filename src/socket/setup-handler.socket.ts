@@ -75,7 +75,9 @@ export class SocketHandler {
 
             // WebRTC Signaling Events
             socket.on('webrtc-offer', (data: WebRTCData) => {
-                this.webRTCSignaling.handleOffer(socket, data);
+                if (this.voiceRoomManager.isUserInRoom(data.target, data.roomId)) {
+                    this.webRTCSignaling.handleOffer(socket, data);
+                }
             });
 
             socket.on('webrtc-answer', (data: WebRTCData) => {
@@ -83,7 +85,9 @@ export class SocketHandler {
             });
 
             socket.on('webrtc-ice-candidate', (data: WebRTCData) => {
-                this.webRTCSignaling.handleIceCandidate(socket, data);
+                if (this.voiceRoomManager.isUserInRoom(data.target, data.roomId)) {
+                    this.webRTCSignaling.handleIceCandidate(socket, data);
+                }
             });
 
             // Message Events
@@ -160,17 +164,6 @@ export class SocketHandler {
                 this.voiceRoomManager.sendActionsInVoice(socket, data);
             });
 
-            socket.on('webrtc-screen-share-offer', (data) => this.webRTCSignaling.handleScreenShareOffer(socket, data));
-
-            socket.on('webrtc-screen-share-answer', (data) => this.webRTCSignaling.handleScreenShareAnswer(socket, data));
-
-            socket.on('webrtc-screen-share-ice', (data) => this.webRTCSignaling.handleScreenShareIce(socket, data));
-
-            socket.on('user-screen-share', (data) => {
-                this.voiceRoomManager.handleScreenShare(socket, data);
-                this.roomMonitor.notifyRoomActivity(data.roomId);
-            });
-
             socket.on('host-force-mute', (data) => this.voiceRoomManager.handleForceMute(socket, data));
 
             socket.on('host-block-mic', (data) => this.voiceRoomManager.handleBlockMic(socket, data));
@@ -178,6 +171,30 @@ export class SocketHandler {
             socket.on('host-unblock-mic', (data) => this.voiceRoomManager.handleUnblockMic(socket, data));
 
             socket.on('host-kick-user', (data) => this.voiceRoomManager.handleKickUser(socket, data));
+
+            socket.on('webrtc-screen-share-offer', (data) =>
+                this.webRTCSignaling.handleScreenShareOffer(socket, data)
+            );
+
+            socket.on('webrtc-screen-share-answer', (data) =>
+                this.webRTCSignaling.handleScreenShareAnswer(socket, data)
+            );
+
+            socket.on('webrtc-screen-share-ice', (data) =>
+                this.webRTCSignaling.handleScreenShareIce(socket, data)
+            );
+
+            // ── NEW: late-joiner screen share request ─────────────────────────────────
+            // Viewer emits this after receiving 'screen-share-active' on join.
+            // We forward it to the sharer who will send a fresh WebRTC offer back.
+            socket.on('request-screen-share', (data: { target: string }) =>
+                this.webRTCSignaling.handleRequestScreenShare(socket, data)
+            );
+
+            socket.on('user-screen-share', (data) => {
+                this.voiceRoomManager.handleScreenShare(socket, data);
+                this.roomMonitor.notifyRoomActivity(data.roomId);
+            });
 
 
             // Room activity ping (from client)

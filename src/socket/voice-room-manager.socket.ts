@@ -40,7 +40,9 @@ export class VoiceRoomManager {
             // Tell the joiner who is currently screen-sharing (if anyone)
             const currentSharer = this.screenSharers.get(roomId);
             if (currentSharer && currentSharer !== socket.id) {
-                socket.emit('screen-share-started', { sharerSocketId: currentSharer, roomId });
+                // 'screen-share-active' triggers handleScreenShareActive on the client
+                // which then emits 'request-screen-share' back to get a fresh WebRTC offer
+                socket.emit('screen-share-active', { sharerSocketId: currentSharer, roomId });
             }
 
             this.broadcastUserJoined(socket, roomId, previousRoomId, {
@@ -119,14 +121,14 @@ export class VoiceRoomManager {
 
         if (isSharing) {
             // Only one sharer at a time
-            const existing = this.screenSharers.get(roomId);
-            if (existing && existing !== socket.id) {
-                socket.emit('screen-share-error', {
-                    error: 'Someone else is already sharing',
-                    sharerSocketId: existing,
-                });
-                return;
-            }
+            // const existing = this.screenSharers.get(roomId);
+            // if (existing && existing !== socket.id) {
+            //     socket.emit('screen-share-error', {
+            //         error: 'Someone else is already sharing',
+            //         sharerSocketId: existing,
+            //     });
+            //     return;
+            // }
 
             this.screenSharers.set(roomId, socket.id);
             logger.info(`🖥️  ${socket.id} started screen share in ${roomId}`);

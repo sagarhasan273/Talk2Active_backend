@@ -23,14 +23,6 @@ export class WebRTCSignaling {
     }
 
     // ── Screen share relay ────────────────────────────────────────────────────
-    //
-    // Client emits 'webrtc-screen-share-offer' when it wants to relay the
-    // screen-share stream as a separate peer connection to a specific peer.
-    // This mirrors the same offer/answer/ice flow but tagged so the receiver
-    // knows it's a screen-share track, not the mic track.
-    //
-    // Payload extends WebRTCData with:
-    //   { target: string, offer?: RTCSessionDescriptionInit, isSharing: boolean }
 
     public handleScreenShareOffer(socket: Socket, data: WebRTCData & { isSharing: boolean }): void {
         if (!this.validateTarget(socket, data.target)) return;
@@ -56,6 +48,22 @@ export class WebRTCSignaling {
         });
     }
 
+    /**
+     * Late joiner → sharer handshake.
+     *
+     * Flow:
+     *   1. New user joins, VoiceRoomManager emits 'screen-share-active' to them
+     *   2. Client calls handleScreenShareActive → emits 'request-screen-share'
+     *   3. Server forwards to sharer as 'screen-share-requested-by'
+     *   4. Sharer calls handleScreenShareRequestedBy → sends a fresh WebRTC offer
+     */
+    public handleRequestScreenShare(socket: Socket, data: { target: string }): void {
+        if (!this.validateTarget(socket, data.target)) return;
+        socket.to(data.target).emit('screen-share-requested-by', {
+            requesterSocketId: socket.id,
+        });
+    }
+
     // ── Generic forward (keep for flexibility) ────────────────────────────────
 
     public forwardSignal(socket: Socket, event: string, data: WebRTCData): void {
@@ -70,12 +78,10 @@ export class WebRTCSignaling {
             socket.emit('webrtc-error', { error: 'Missing target' });
             return false;
         }
-        // Prevent a socket from targeting itself
         if (target === socket.id) {
             socket.emit('webrtc-error', { error: 'Cannot target self' });
             return false;
         }
-        // Make sure the target socket actually exists
         if (!this.io.sockets.sockets.has(target)) {
             socket.emit('webrtc-error', { error: 'Target not found', target });
             return false;
