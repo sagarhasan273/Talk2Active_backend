@@ -48,16 +48,12 @@ export class SocketHandler {
                 socket.join(roomId);
 
                 this.voiceRoomManager.getRoomsParticipants(socket, roomIds)
-
-                // logger.info(`User ${socket.id} joined room ${roomId}`);
             });
 
             socket.on('leave-room', ({ userId }) => {
                 const roomId = `user-room:${userId}`;
 
                 socket.leave(roomId);
-
-                // logger.info(`User ${socket.id} left room ${roomId}`);
             });
 
             // Voice Room Events
