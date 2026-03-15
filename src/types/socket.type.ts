@@ -110,10 +110,12 @@ export interface AudioToggleData {
     roomId: string;
     isMuted: boolean;
     name: string;
+    userId: string;
 }
 
 export interface StatusSelectData {
     roomId: string;
     status: string;
     name: string;
+    userId: string;
 }
