@@ -1,6 +1,8 @@
 import { Server, Socket } from 'socket.io';
 import { v4 as uuidv4 } from 'uuid';
 
+import { Message } from 'src/types/chat.type';
+import { UserType } from 'src/types/user.type';
 import type { ParticipantData, UserData } from '../types/socket.type';
 import logger from '../utils/logger';
 
@@ -154,9 +156,9 @@ export class VoiceRoomManager {
      */
     public handleForceMute(
         socket: Socket,
-        data: { roomId: string; targetSocketId: string }
+        data: { roomId: string; targetSocketId: string, targetUserId: string, senderInfo?: Partial<UserType>, receiverInfo?: Partial<UserType> }
     ): void {
-        const { roomId, targetSocketId } = data;
+        const { roomId, targetSocketId, targetUserId, senderInfo, receiverInfo } = data;
         if (!this.verifyHostAction(socket, roomId)) return;
 
         logger.info(`🔇 Host ${socket.id} force-muting ${targetSocketId} in ${roomId}`);
@@ -171,14 +173,11 @@ export class VoiceRoomManager {
         this.io.to(targetSocketId).emit('force-muted', {
             bySocketId: socket.id,
             roomId,
+            targetUserId,
         });
 
         // Tell room so UI reflects the muted state
-        this.io.to(roomId).emit('participant-muted', {
-            socketId: targetSocketId,
-            isMuted: true,
-            byHost: true,
-        });
+        this.broadcastVoiceRoomMessages(socket, roomId, 'system', 'mic-force-mute', `${receiverInfo?.name} was force-muted by ${senderInfo?.name}`, senderInfo, receiverInfo);
     }
 
     /**
@@ -376,7 +375,8 @@ export class VoiceRoomManager {
             return false;
         }
         const userData = this.usersData.get(socket.id);
-        if (!userData?.isHost) {
+
+        if (userData?.userType !== 'host') {
             logger.warn(`⚠️  Non-host ${socket.id} attempted host action in ${roomId}`);
             socket.emit('host-action-error', { error: 'Not the host' });
             return false;
@@ -523,6 +523,37 @@ export class VoiceRoomManager {
                 : `${name} has left the voice room.`,
             senderSocketId: socket.id,
             senderInfo: { name, userId },
+            time: new Date(),
+        });
+    }
+    private broadcastVoiceRoomMessages(
+        socket: Socket,
+        roomId: string,
+        type: Message['type'],
+        systemMessageType: Message['systemMessageType'],
+        message: string,
+        senderInfo?: Partial<UserType>,
+        receiverInfo?: Partial<UserType>,
+    ): void {
+        const messageId = uuidv4();
+        socket.to(roomId).emit('receive-group-message', {
+            id: messageId,
+            sender: 'them',
+            type,
+            systemMessageType,
+            text: message,
+            senderInfo,
+            receiverInfo,
+            time: new Date(),
+        });
+        socket.emit('receive-group-message', {
+            id: messageId,
+            sender: 'them',
+            type,
+            systemMessageType,
+            text: message,
+            senderInfo,
+            receiverInfo,
             time: new Date(),
         });
     }

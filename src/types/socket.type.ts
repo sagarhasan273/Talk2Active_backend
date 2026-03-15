@@ -19,6 +19,7 @@ export interface ParticipantData {
     isMuted: boolean;
     status: string;
     isLocal?: boolean
+    userType: 'host' | 'guest'
 }
 
 export interface UserData {
@@ -28,7 +29,7 @@ export interface UserData {
     profilePhoto: string;
     isMuted: boolean;
     status: string;
-    isHost: boolean;
+    userType: 'host' | 'guest'
 }
 
 export interface JoinLeaveIndividualMessageData {
