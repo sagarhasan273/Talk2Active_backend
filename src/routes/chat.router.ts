@@ -14,6 +14,9 @@ export class ChatRouter extends BaseRouter {
         this.router.post('/create', (req, res) =>
             this.chatController.createRoom(req, res)
         );
+        this.router.post('/update', (req, res) =>
+            this.chatController.updateRoom(req, res)
+        );
         this.router.post('/:roomId/join', (req, res) =>
             this.chatController.joinRoom(req, res)
         );

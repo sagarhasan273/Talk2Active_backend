@@ -447,6 +447,17 @@ export class VoiceRoomManager {
         socket.emit('existing-participants', { participants, roomId });
     }
 
+    private broadcastTransferHost(
+        roomId: string,
+        userData: any
+    ): void {
+        this.io.emit('room-updated-with-participant', {
+            type: 'transfer-host',
+            roomId,
+            host: userData,
+        });
+    }
+
     private broadcastUserJoined(
         socket: Socket,
         roomId: string,
