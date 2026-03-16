@@ -116,8 +116,9 @@ export class ChatController {
         const roomId = req.params.roomId;
         const userId = req.body.userId;
         const name = req.body.name;
+        const kicked = req.body.kicked;
         try {
-            await this.chatService.leaveRoom(roomId, userId, name);
+            await this.chatService.leaveRoom(roomId, userId, name, kicked);
             res.status(200).json({ status: true, message: 'Left room successfully' });
         }
         catch (error) {

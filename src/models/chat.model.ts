@@ -49,7 +49,13 @@ const RoomSchema: Schema = new Schema<RoomBase & Document>({
         type: String,
         enum: Object.values(RoomTypesEnum),
         default: 'conversation'
-    }
+    },
+    kickedUserIds: [
+        {
+            type: Schema.Types.ObjectId,
+            ref: 'users'
+        }
+    ]
 }, {
     timestamps: true,
     toJSON: {

@@ -246,16 +246,17 @@ export class VoiceRoomManager {
      */
     public handleKickUser(
         socket: Socket,
-        data: { roomId: string; targetSocketId: string }
+        data: { roomId: string; targetSocketId: string, userId: string }
     ): void {
-        const { roomId, targetSocketId } = data;
+        const { roomId, targetSocketId, userId } = data;
         if (!this.verifyHostAction(socket, roomId)) return;
 
         const targetData = this.usersData.get(targetSocketId);
         logger.info(`👢 Host ${socket.id} kicking ${targetSocketId} from ${roomId}`);
 
         // Notify the kicked user first
-        this.io.to(targetSocketId).emit('kicked-from-room', {
+        const userRoomId = `user-room:${userId}`
+        this.io.to(userRoomId).emit('kicked-from-room', {
             bySocketId: socket.id,
             roomId,
         });
@@ -274,7 +275,7 @@ export class VoiceRoomManager {
 
         // Tell the room
         this.io.to(roomId).emit('user-left', {
-            userId: targetData?.userId,
+            userId,
             socketId: targetSocketId,
             name: targetData?.name,
             kicked: true,

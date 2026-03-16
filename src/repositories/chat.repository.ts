@@ -53,7 +53,7 @@ export class ChatRepository {
                 throw new AppError('Failed to update room', 404, 'Chat Repository');
             }
 
-            this.broadcastTransferHost({ roomId: room.id, host: room.host })
+            this.broadcastTransferHost({ roomId: room.id, host: room.host });
         } catch (error) {
             if (error instanceof AppError) {
                 throw error;
@@ -121,13 +121,17 @@ export class ChatRepository {
         }
     }
 
-    public async leaveRoom(roomId: string, userId: string, name: string): Promise<void> {
+    public async leaveRoom(roomId: string, userId: string, name: string, kicked: boolean): Promise<void> {
         try {
             const room = await RoomModel.findById(roomId);
             if (!room) {
                 throw new AppError('Room not found', 404, 'Chat Repository');
             }
             room.currentParticipants = room.currentParticipants.filter(participant => participant.user.toString() !== userId);
+
+            if (kicked && !room.kickedUserIds.includes(userId)) {
+                room.kickedUserIds.push(userId);
+            }
 
             await room.save();
 
