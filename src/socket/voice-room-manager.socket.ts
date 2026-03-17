@@ -82,7 +82,7 @@ export class VoiceRoomManager {
     public handleDisconnect(socket: Socket): void {
         const userInfo = this.usersData.get(socket.id);
         const roomId = this.usersRooms.get(socket.id);
-        
+
         if (roomId) {
             this.clearScreenShare(socket, roomId);
             socket.leave(roomId);
@@ -250,6 +250,10 @@ export class VoiceRoomManager {
     ): void {
         const { roomId, targetSocketId, userId } = data;
         if (!this.verifyHostAction(socket, roomId)) return;
+
+        if (!this.voiceRooms.get(roomId)?.has(targetSocketId)) {
+            return;
+        }
 
         const targetData = this.usersData.get(targetSocketId);
         logger.info(`👢 Host ${socket.id} kicking ${targetSocketId} from ${roomId}`);
