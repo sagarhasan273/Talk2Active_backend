@@ -148,7 +148,7 @@ export class MessageHandler {
         const messageId = uuidv4();
 
         const targetUserId = `user-room:${receiverInfo.userId}`;
-        console.log(targetUserId);
+
         socket.to(targetUserId).emit('receive-private-message', {
             ...data,
             sender: 'them',

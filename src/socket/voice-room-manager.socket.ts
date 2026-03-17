@@ -82,7 +82,7 @@ export class VoiceRoomManager {
     public handleDisconnect(socket: Socket): void {
         const userInfo = this.usersData.get(socket.id);
         const roomId = this.usersRooms.get(socket.id);
-
+        
         if (roomId) {
             this.clearScreenShare(socket, roomId);
             socket.leave(roomId);
@@ -446,17 +446,6 @@ export class VoiceRoomManager {
         participants: ParticipantData[]
     ): void {
         socket.emit('existing-participants', { participants, roomId });
-    }
-
-    private broadcastTransferHost(
-        roomId: string,
-        userData: any
-    ): void {
-        this.io.emit('room-updated-with-participant', {
-            type: 'transfer-host',
-            roomId,
-            host: userData,
-        });
     }
 
     private broadcastUserJoined(
