@@ -88,6 +88,11 @@ export interface PrivateMessageData {
     receiverSocketId: string;
     message: string;
     name: string;
+    receiverInfo: {
+        name: string;
+        userId: string;
+        profilePhoto?: string;
+    };
 }
 
 export interface DeleteIndividualMessageData {

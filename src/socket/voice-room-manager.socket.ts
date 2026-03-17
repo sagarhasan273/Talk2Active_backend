@@ -531,12 +531,25 @@ export class VoiceRoomManager {
             type: 'system' as const,
             systemMessageType: kicked ? 'user-kicked' : 'user-left',
             text: kicked
-                ? `${name} was removed from the voice room.`
+                ? `${name} was kicked from the voice room.`
                 : `${name} has left the voice room.`,
             senderSocketId: socket.id,
             senderInfo: { name, userId },
             time: new Date(),
         });
+
+        if (kicked) {
+            socket.emit('receive-group-message', {
+                id: uuidv4(),
+                sender: 'them',
+                type: 'system' as const,
+                systemMessageType: kicked ? 'user-kicked' : 'user-left',
+                text: `${name} was kicked from the voice room.`,
+                senderSocketId: socket.id,
+                senderInfo: { name, userId },
+                time: new Date(),
+            });
+        }
     }
     private broadcastVoiceRoomMessages(
         socket: Socket,
