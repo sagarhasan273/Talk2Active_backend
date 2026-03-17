@@ -12,6 +12,10 @@ export class RelationshipController {
         let validatedInput;
         try {
             validatedInput = FollowRequestSchema.parse(req.body);
+
+            if (validatedInput.recipient === validatedInput.requester) {
+                throw new AppError('You can not folow yourself!', 400, 'Relationship Controller');
+            }
         } catch (error) {
             logger.error('Invalid follow user data!');
             res.status(400).json({ status: false, message: 'Invalid follow user data!' });
@@ -39,7 +43,9 @@ export class RelationshipController {
         let validatedInput;
         try {
             validatedInput = FollowRequestSchema.parse(req.body);
-
+            if (validatedInput.recipient === validatedInput.requester) {
+                throw new AppError('You can not unfolow yourself!', 400, 'Relationship Controller');
+            }
         } catch (error) {
             logger.error('Invalid unfollow user data!');
             res.status(400).json({ status: false, message: 'Invalid unfollow user data!' });

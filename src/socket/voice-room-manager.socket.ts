@@ -1,6 +1,8 @@
 import { Server, Socket } from 'socket.io';
 import { v4 as uuidv4 } from 'uuid';
 
+import { Message } from 'src/types/chat.type';
+import { UserType } from 'src/types/user.type';
 import type { ParticipantData, UserData } from '../types/socket.type';
 import logger from '../utils/logger';
 
@@ -80,7 +82,7 @@ export class VoiceRoomManager {
     public handleDisconnect(socket: Socket): void {
         const userInfo = this.usersData.get(socket.id);
         const roomId = this.usersRooms.get(socket.id);
-
+        
         if (roomId) {
             this.clearScreenShare(socket, roomId);
             socket.leave(roomId);
@@ -154,9 +156,9 @@ export class VoiceRoomManager {
      */
     public handleForceMute(
         socket: Socket,
-        data: { roomId: string; targetSocketId: string }
+        data: { roomId: string; targetSocketId: string, targetUserId: string, senderInfo?: Partial<UserType>, receiverInfo?: Partial<UserType> }
     ): void {
-        const { roomId, targetSocketId } = data;
+        const { roomId, targetSocketId, targetUserId, senderInfo, receiverInfo } = data;
         if (!this.verifyHostAction(socket, roomId)) return;
 
         logger.info(`🔇 Host ${socket.id} force-muting ${targetSocketId} in ${roomId}`);
@@ -171,14 +173,11 @@ export class VoiceRoomManager {
         this.io.to(targetSocketId).emit('force-muted', {
             bySocketId: socket.id,
             roomId,
+            targetUserId,
         });
 
         // Tell room so UI reflects the muted state
-        this.io.to(roomId).emit('participant-muted', {
-            socketId: targetSocketId,
-            isMuted: true,
-            byHost: true,
-        });
+        this.broadcastVoiceRoomMessages(socket, roomId, 'system', 'mic-force-mute', `${receiverInfo?.name} was force-muted by ${senderInfo?.name}`, senderInfo, receiverInfo);
     }
 
     /**
@@ -247,16 +246,17 @@ export class VoiceRoomManager {
      */
     public handleKickUser(
         socket: Socket,
-        data: { roomId: string; targetSocketId: string }
+        data: { roomId: string; targetSocketId: string, userId: string }
     ): void {
-        const { roomId, targetSocketId } = data;
+        const { roomId, targetSocketId, userId } = data;
         if (!this.verifyHostAction(socket, roomId)) return;
 
         const targetData = this.usersData.get(targetSocketId);
         logger.info(`👢 Host ${socket.id} kicking ${targetSocketId} from ${roomId}`);
 
         // Notify the kicked user first
-        this.io.to(targetSocketId).emit('kicked-from-room', {
+        const userRoomId = `user-room:${userId}`
+        this.io.to(userRoomId).emit('kicked-from-room', {
             bySocketId: socket.id,
             roomId,
         });
@@ -275,7 +275,7 @@ export class VoiceRoomManager {
 
         // Tell the room
         this.io.to(roomId).emit('user-left', {
-            userId: targetData?.userId,
+            userId,
             socketId: targetSocketId,
             name: targetData?.name,
             kicked: true,
@@ -376,7 +376,8 @@ export class VoiceRoomManager {
             return false;
         }
         const userData = this.usersData.get(socket.id);
-        if (!userData?.isHost) {
+
+        if (userData?.userType !== 'host') {
             logger.warn(`⚠️  Non-host ${socket.id} attempted host action in ${roomId}`);
             socket.emit('host-action-error', { error: 'Not the host' });
             return false;
@@ -519,10 +520,54 @@ export class VoiceRoomManager {
             type: 'system' as const,
             systemMessageType: kicked ? 'user-kicked' : 'user-left',
             text: kicked
-                ? `${name} was removed from the voice room.`
+                ? `${name} was kicked from the voice room.`
                 : `${name} has left the voice room.`,
             senderSocketId: socket.id,
             senderInfo: { name, userId },
+            time: new Date(),
+        });
+
+        if (kicked) {
+            socket.emit('receive-group-message', {
+                id: uuidv4(),
+                sender: 'them',
+                type: 'system' as const,
+                systemMessageType: kicked ? 'user-kicked' : 'user-left',
+                text: `${name} was kicked from the voice room.`,
+                senderSocketId: socket.id,
+                senderInfo: { name, userId },
+                time: new Date(),
+            });
+        }
+    }
+    private broadcastVoiceRoomMessages(
+        socket: Socket,
+        roomId: string,
+        type: Message['type'],
+        systemMessageType: Message['systemMessageType'],
+        message: string,
+        senderInfo?: Partial<UserType>,
+        receiverInfo?: Partial<UserType>,
+    ): void {
+        const messageId = uuidv4();
+        socket.to(roomId).emit('receive-group-message', {
+            id: messageId,
+            sender: 'them',
+            type,
+            systemMessageType,
+            text: message,
+            senderInfo,
+            receiverInfo,
+            time: new Date(),
+        });
+        socket.emit('receive-group-message', {
+            id: messageId,
+            sender: 'them',
+            type,
+            systemMessageType,
+            text: message,
+            senderInfo,
+            receiverInfo,
             time: new Date(),
         });
     }

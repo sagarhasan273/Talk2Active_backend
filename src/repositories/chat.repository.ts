@@ -44,12 +44,16 @@ export class ChatRepository {
                     $set: {
                         ...updateFields
                     },
-                }
-            );
+                }, {
+                new: true,
+            }
+            ).populate('host', commonUserQuery);
 
             if (!room) {
                 throw new AppError('Failed to update room', 404, 'Chat Repository');
             }
+
+            this.broadcastTransferHost({ roomId: room.id, host: room.host });
         } catch (error) {
             if (error instanceof AppError) {
                 throw error;
@@ -117,13 +121,17 @@ export class ChatRepository {
         }
     }
 
-    public async leaveRoom(roomId: string, userId: string, name: string): Promise<void> {
+    public async leaveRoom(roomId: string, userId: string, name: string, kicked: boolean): Promise<void> {
         try {
             const room = await RoomModel.findById(roomId);
             if (!room) {
                 throw new AppError('Room not found', 404, 'Chat Repository');
             }
             room.currentParticipants = room.currentParticipants.filter(participant => participant.user.toString() !== userId);
+
+            if (kicked && !room.kickedUserIds.includes(userId)) {
+                room.kickedUserIds.push(userId);
+            }
 
             await room.save();
 
@@ -133,6 +141,26 @@ export class ChatRepository {
                 throw error;
             }
             throw new AppError('Failed to leave Room!', 500, 'Chat Repository');
+        }
+    }
+
+    private broadcastTransferHost(roomData: any): void {
+        try {
+            // Get socket handler instance
+            const socketHandler = getSocketHandler();
+
+            // Option 1: If SocketHandler exposes io
+            if (socketHandler['io']) {
+                socketHandler['io'].emit('room-updated-with-participant', {
+                    type: 'transfer-host',
+                    roomId: roomData?.roomId,
+                    host: roomData?.host,
+                    message: 'Host changes'
+                });
+            }
+        } catch (error) {
+            logger.error('Failed to broadcast new room:', error);
+            // Don't throw - broadcasting failure shouldn't stop room creation
         }
     }
 
@@ -147,25 +175,6 @@ export class ChatRepository {
                     room: roomData,
                     timestamp: new Date(),
                     message: 'A new voice room has been created!'
-                });
-            }
-        } catch (error) {
-            logger.error('Failed to broadcast new room:', error);
-            // Don't throw - broadcasting failure shouldn't stop room creation
-        }
-    }
-
-    private broadcastRoomUpdatedWithParticipant(data: any): void {
-        try {
-            // Get socket handler instance
-            const socketHandler = getSocketHandler();
-
-            // Option 1: If SocketHandler exposes io
-            if (socketHandler['io']) {
-                socketHandler['io'].emit('room-updated-with-participant', {
-                    joinInfo: data.joinInfo,
-                    leaveInfo: data?.leaveInfo,
-                    message: 'Room updated with participants'
                 });
             }
         } catch (error) {

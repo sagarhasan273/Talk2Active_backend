@@ -12,7 +12,7 @@ export class UserStatusManager {
      * Handle user audio toggle (mute/unmute)
      */
     public handleAudioToggle(socket: Socket, data: AudioToggleData): void {
-        const { roomId, isMuted, name } = data;
+        const { roomId, isMuted, name, userId } = data;
 
         // Get current user data
         const userData = this.voiceRoomManager.getUserData(socket.id);
@@ -24,14 +24,16 @@ export class UserStatusManager {
             socket.to(roomId).emit('user-audio-toggled', {
                 socketId: socket.id,
                 isMuted,
-                name
+                name,
+                userId
             });
 
             // Also send to self for consistency
             socket.emit('user-audio-toggled-self', {
                 socketId: socket.id,
                 isMuted,
-                name
+                name,
+                userId
             });
         }
     }
@@ -40,7 +42,7 @@ export class UserStatusManager {
      * Handle user status selection
      */
     public handleStatusSelect(socket: Socket, data: StatusSelectData): void {
-        const { roomId, status, name } = data;
+        const { roomId, status, name, userId } = data;
 
         // Get current user data
         const userData = this.voiceRoomManager.getUserData(socket.id);
@@ -52,14 +54,16 @@ export class UserStatusManager {
             socket.to(roomId).emit('user-status-selected', {
                 socketId: socket.id,
                 status,
-                name
+                name,
+                userId
             });
 
             // Also send to self for consistency
             socket.emit('user-status-selected-self', {
                 socketId: socket.id,
                 status,
-                name
+                name,
+                userId
             });
         }
     }

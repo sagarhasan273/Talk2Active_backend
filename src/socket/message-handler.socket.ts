@@ -144,10 +144,12 @@ export class MessageHandler {
     * Handle private message sending
     */
     public handlePrivateMessage(socket: Socket, data: PrivateMessageData): void {
-        const { receiverSocketId } = data;
+        const { receiverInfo } = data;
         const messageId = uuidv4();
 
-        socket.to(receiverSocketId).emit('receive-private-message', {
+        const targetUserId = `user-room:${receiverInfo.userId}`;
+
+        socket.to(targetUserId).emit('receive-private-message', {
             ...data,
             sender: 'them',
             senderSocketId: socket.id,
@@ -162,10 +164,12 @@ export class MessageHandler {
     }
 
     public handleEditPrivateMessage(socket: Socket, data: PrivateMessageData): void {
-        const { receiverSocketId } = data;
+        const { receiverInfo } = data;
         const messageId = uuidv4();
 
-        socket.to(receiverSocketId).emit('receive-edit-private-message', {
+        const targetUserId = `user-room:${receiverInfo.userId}`;
+
+        socket.to(targetUserId).emit('receive-edit-private-message', {
             ...data,
             sender: 'them',
             senderSocketId: socket.id,

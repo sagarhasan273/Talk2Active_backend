@@ -21,6 +21,7 @@ export const RoomBaseSchema = z.object({
     ).optional().default([]),
     isActive: z.boolean().optional().default(true),
     roomType: z.string(),
+    kickedUserIds: z.array(objectIdSchema)
 });
 
 // Schema to validate incoming create payloads (timestamps not expected)

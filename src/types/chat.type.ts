@@ -27,7 +27,7 @@ export type Message = {
     senderSocketId?: string;
     receiverSocketId?: string;
     type: 'system' | 'message';
-    systemMessageType?: 'user-joined' | 'you-joined' | 'user-left';
+    systemMessageType?: 'user-joined' | 'you-joined' | 'user-left' | 'mic-force-mute';
     senderInfo?: Partial<UserType>;
     receiverInfo?: Partial<UserType>;
     mentions?: UserType[];
