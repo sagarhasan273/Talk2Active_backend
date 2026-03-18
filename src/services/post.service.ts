@@ -126,15 +126,17 @@ export class PostService {
     }
 
 
-    public async getPosts(userId: GetPostsInput['userId']): Promise<PostResponseType[]> {
+    public async getPosts(userId: GetPostsInput['userId'] | undefined): Promise<PostResponseType[]> {
         try {
             userId;
-
-            if (!userId) throw new AppError('User ID not found in token', 400, 'User Service');
-
             const posts = await this.repository.getPosts();
 
+            if (!userId) {
+                return posts
+            };
+
             const enhancedPosts = await this.enhancePostsWithEngagementInfo(posts, userId.toString());
+
             return enhancedPosts;
         } catch (error) {
             if (error instanceof AppError) {
