@@ -1,4 +1,5 @@
 import express from "express";
+import { AuthRoutes } from "./auth.router";
 import { ChatRouter } from "./chat.router";
 import { InventoryRouter } from "./inventory.router";
 import { MessageRouter } from "./message.router";
@@ -10,6 +11,9 @@ import { UserSuggestionRoutes } from "./user-suggestion.router";
 import { UserRoutes } from "./user.router";
 
 const app = express();
+
+const authRouters = new AuthRoutes();
+app.use('/auth', authRouters.router);
 
 const userRouters = new UserRoutes();
 app.use('/user', userRouters.router);

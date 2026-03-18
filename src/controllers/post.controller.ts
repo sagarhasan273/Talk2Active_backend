@@ -89,7 +89,9 @@ export class PostController {
             const parsed = JSON.parse(rawInput);
             validatedInput = GetPostsSchemaInput.parse(parsed);
             if (!validatedInput.userId) {
-                throw new AppError('UserId is required', 401, 'Post Controller');
+                const posts = await this.service.getPosts(undefined);
+                res.status(200).json({ data: posts, status: true });
+                return;
             }
         } catch (error) {
             logger.error('Invalid input for posts!');

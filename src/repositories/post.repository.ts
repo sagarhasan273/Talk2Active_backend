@@ -151,7 +151,7 @@ export class PostRepository {
             const skip = (page - 1) * limit;
 
             const { userId, type } = input;
-            console.log(type);
+
             const pipeline: PipelineStage[] = [
                 {
                     $match: {

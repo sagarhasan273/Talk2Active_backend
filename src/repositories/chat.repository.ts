@@ -110,6 +110,9 @@ export class ChatRepository {
             const isAlreadyParticipant = room.currentParticipants.some(participant => participant.user.toString() === userId);
 
             if (!isAlreadyParticipant) {
+                if (room.currentParticipants.length >= room.maxParticipants) {
+                    throw new AppError('Room is full', 400, 'Chat Repository');
+                }
                 room.currentParticipants.push({ user: userId, joinedAt: new Date() });
                 await room.save();
             }
