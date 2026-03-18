@@ -36,7 +36,9 @@ export class AuthController {
 
             const accessToken = JwtService.generateToken(user);
 
-            res.status(200).json({ token: accessToken, status: true });
+            const { recentRooms, ...rest } = user.toObject();
+
+            res.status(200).json({ token: accessToken, status: true, user: rest, recentRooms });
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
             res.status(500).json({ message: errorMessage });
