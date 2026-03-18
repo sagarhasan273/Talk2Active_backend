@@ -1,47 +1,78 @@
 import { Request, Response } from 'express';
+import { OAuth2Client } from 'google-auth-library';
 import { UserModel } from 'src/models/user.model';
 import { JwtService } from 'src/services/auth/jwt.service';
+const client = new OAuth2Client(
+  process.env.GOOGLE_CLIENT_ID,
+  process.env.GOOGLE_CLIENT_SECRET,
+);
 
 export class AuthController {
-    public async googleLogin(req: Request, res: Response): Promise<void> {
-        try {
-            const { token } = req.body;
+  // ── Desktop: access_token flow ──────────────────────────────────────────
+  public async googleLogin(req: Request, res: Response): Promise<void> {
+    try {
+      const { token } = req.body;
 
-            // ✅ use userinfo endpoint — token is access_token not id_token
-            const googleRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-                headers: { Authorization: `Bearer ${token}` },
-            });
+      const googleRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-            if (!googleRes.ok) {
-                res.status(401).json({ message: 'Invalid Google token' });
-                return;
-            }
+      if (!googleRes.ok) {
+        res.status(401).json({ message: 'Invalid Google token' });
+        return;
+      }
 
-            const { sub, email, name, picture } = await googleRes.json();
-
-            // find or create user
-            let user = await UserModel.findOne({ googleId: sub });
-            if (!user) {
-                user = await UserModel.findOne({ email });
-                if (user) {
-                    // link google to existing account
-                    user.googleId = sub;
-                    user.profilePhoto = picture;
-                    await user.save();
-                } else {
-                    // brand new user
-                    user = await UserModel.create({ googleId: sub, email, name, picture });
-                }
-            }
-
-            const accessToken = JwtService.generateToken(user);
-
-            const { recentRooms, ...rest } = user.toObject();
-
-            res.status(200).json({ token: accessToken, status: true, user: rest, recentRooms });
-        } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
-            res.status(500).json({ message: errorMessage });
-        }
+      const { sub, email, name, picture } = await googleRes.json();
+      const response = await this.findOrCreateUser(sub, email, name, picture);
+      res.status(200).json(response);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+      res.status(500).json({ message: errorMessage });
     }
+  }
+
+  // ── Mobile: auth-code flow ──────────────────────────────────────────────
+  public async googleLoginMobile(req: Request, res: Response): Promise<void> {
+    try {
+      const { code, redirect_uri } = req.body;
+
+      // exchange code for tokens
+      const { tokens } = await client.getToken({ code, redirect_uri });
+
+      const googleRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+        headers: { Authorization: `Bearer ${tokens.access_token}` },
+      });
+
+      if (!googleRes.ok) {
+        res.status(401).json({ message: 'Invalid Google token' });
+        return;
+      }
+
+      const { sub, email, name, picture } = await googleRes.json();
+      const response = await this.findOrCreateUser(sub, email, name, picture);
+      res.status(200).json(response);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+      res.status(500).json({ message: errorMessage });
+    }
+  }
+
+  // ── Shared logic ────────────────────────────────────────────────────────
+  private async findOrCreateUser(sub: string, email: string, name: string, picture: string) {
+    let user = await UserModel.findOne({ googleId: sub });
+    if (!user) {
+      user = await UserModel.findOne({ email });
+      if (user) {
+        user.googleId = sub;
+        user.profilePhoto = picture;
+        await user.save();
+      } else {
+        user = await UserModel.create({ googleId: sub, email, name, picture });
+      }
+    }
+
+    const accessToken = JwtService.generateToken(user);
+    const { recentRooms, ...rest } = user.toObject();
+    return { token: accessToken, status: true, user: rest, recentRooms };
+  }
 }
