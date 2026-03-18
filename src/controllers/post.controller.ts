@@ -91,6 +91,7 @@ export class PostController {
             if (!validatedInput.userId) {
                 const posts = await this.service.getPosts(undefined);
                 res.status(200).json({ data: posts, status: true });
+                return;
             }
         } catch (error) {
             logger.error('Invalid input for posts!');
