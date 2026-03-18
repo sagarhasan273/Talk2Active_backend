@@ -13,6 +13,11 @@ const SocialLinksSchema = new Schema<SocialLinks>({
 
 // Main User Schema
 const UserModalSchema = new Schema<UserType & Document>({
+  googleId: {
+    type: String,
+    required: true,
+    unique: true,
+  },
   userId: {
     type: String,
     required: true,

@@ -17,6 +17,7 @@
     "cloudinary": "^2.7.0",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
+    "google-auth-library": "^10.6.2",
     "module-alias": "^2.3.4",
     "mongodb": "^6.15.0",
     "mongoose": "^8.16.3",

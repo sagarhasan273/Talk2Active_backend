@@ -25,6 +25,7 @@ export const UserSchema = zod.object({
     userId: zod.string().regex(/^USR\d{6}\d{4}$/, {
         message: 'User ID must follow the format USRYYMMDDCOUNTER',
     }),
+    googleId: zod.string(),
     username: zod
         .string()
         .min(3, { message: 'Username must be at least 3 characters' })
