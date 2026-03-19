@@ -2,6 +2,8 @@ import { Request, Response } from 'express';
 import { OAuth2Client } from 'google-auth-library';
 import { UserModel } from 'src/models/user.model';
 import { JwtService } from 'src/services/auth/jwt.service';
+import { AppError } from 'src/utils/errors';
+import { generateUserId } from 'src/utils/generate.userId';
 const client = new OAuth2Client(
   process.env.GOOGLE_CLIENT_ID,
   process.env.GOOGLE_CLIENT_SECRET,
@@ -90,7 +92,23 @@ export class AuthController {
         user.profilePhoto = picture;
         await user.save();
       } else {
-        user = await UserModel.create({ googleId: sub, email, name, picture });
+        const userId = generateUserId();
+        if (!userId) {
+          throw new AppError('Failed to generate user ID', 500, 'User Repository');
+        }
+
+        const now = new Date();
+
+        user = await UserModel.create({
+          userId: userId,
+          googleId: sub,
+          email,
+          name,
+          username: name,
+          profilePhoto: picture,
+          lastActive: now,
+        });
+
       }
     }
 
