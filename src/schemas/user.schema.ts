@@ -54,7 +54,7 @@ export const UserSchema = zod.object({
         .min(1, { message: 'Password is required' })
         .regex(/^\$argon2[id]?d?\$v=\d+\$m=\d+,t=\d+,p=\d+\$[a-zA-Z0-9+/]+\$[a-zA-Z0-9+/]+/, {
             message: 'Password must be a valid Argon2 hash',
-        }),
+        }).optional(),
     dateOfBirth: zod
         .date()
         .max(new Date(), { message: 'Date of birth cannot be in the future' })
