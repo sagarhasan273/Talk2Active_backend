@@ -210,7 +210,7 @@ export class UserRepository {
     if (!password || !newPassword)
       throw new AppError('Password and new password are required', 400, 'User Repository');
 
-    const isPasswordValid = await PasswordService.verifyPassword(password, user.password);
+    const isPasswordValid = await PasswordService.verifyPassword(password, user?.password || '');
 
     if (!isPasswordValid)
       throw new AppError('Current password is incorrect.', 401, 'User Repository');

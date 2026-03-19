@@ -18,7 +18,7 @@ export class UserService {
       }
       const { password } = input;
 
-      const isPasswordValid = await PasswordService.verifyPassword(password, user.password);
+      const isPasswordValid = await PasswordService.verifyPassword(password, user?.password || '');
       if (!isPasswordValid) throw new AppError('Invalid password', 401, 'User Service');
 
       const token = JwtService.generateToken(user as UserType);
