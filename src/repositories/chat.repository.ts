@@ -1,7 +1,7 @@
 import { ObjectId } from "mongodb";
 import { RoomModel } from "src/models/chat.model";
 import { getSocketHandler } from "src/socket/setup-handler.socket";
-import { CreateRoomInput, RoomResponse, UpdateRoomInput } from "src/types/chat.type";
+import { CreateRoomInput, LeaveRoomUserInput, RoomResponse, UpdateRoomInput } from "src/types/chat.type";
 import { AppError } from "src/utils/errors";
 import logger from "src/utils/logger";
 
@@ -124,8 +124,10 @@ export class ChatRepository {
         }
     }
 
-    public async leaveRoom(roomId: string, userId: string, name: string, kicked: boolean): Promise<void> {
+    public async leaveRoom(input: LeaveRoomUserInput): Promise<void> {
         try {
+            const { roomId, userId, kicked } = input;
+
             const room = await RoomModel.findById(roomId);
             if (!room) {
                 throw new AppError('Room not found', 404, 'Chat Repository');
@@ -137,8 +139,6 @@ export class ChatRepository {
             }
 
             await room.save();
-
-            this.broadcastLeaveVoiceRoom({ roomId, userId, name });
         } catch (error) {
             if (error instanceof AppError) {
                 throw error;
@@ -186,26 +186,5 @@ export class ChatRepository {
         }
     }
 
-    private broadcastLeaveVoiceRoom(data: any): void {
-        try {
-            // Get socket handler instance
-            const socketHandler = getSocketHandler();
 
-            const { roomId, userId, name } = data
-
-            // Option 1: If SocketHandler exposes io
-            if (socketHandler['io']) {
-                socketHandler['io'].emit('leave-voice-room', data);
-                socketHandler['io'].emit('room-updated-with-participant', {
-                    leaveInfo: {
-                        roomId,
-                        participant: { userId, name }
-                    }
-                });
-            }
-        } catch (error) {
-            logger.error('Failed to broadcast new room:', error);
-            // Don't throw - broadcasting failure shouldn't stop room creation
-        }
-    }
 }

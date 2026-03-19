@@ -1,9 +1,10 @@
 import { Server, Socket } from 'socket.io';
 import { v4 as uuidv4 } from 'uuid';
 
-import { Message } from 'src/types/chat.type';
+import { ChatService } from 'src/services/chat-service';
+import { LeaveRoomUserInput, Message, RoomParticipant } from 'src/types/chat.type';
 import { UserType } from 'src/types/user.type';
-import type { ParticipantData, UserData } from '../types/socket.type';
+
 import logger from '../utils/logger';
 
 // ─── Extra types ──────────────────────────────────────────────────────────────
@@ -14,45 +15,51 @@ type BlockedMics = Map<string, Set<string>>; // roomId → Set<socketId>
 
 export class VoiceRoomManager {
     private io: Server;
-    private voiceRooms = new Map<string, Set<string>>();   // roomId  → socketIds
-    private usersRooms = new Map<string, string>();         // socketId → roomId
-    private usersData = new Map<string, UserData>();       // socketId → UserData
-    private screenSharers = new Map<string, string>();         // roomId  → sharerSocketId
-    private blockedMics: BlockedMics = new Map();             // roomId  → Set<socketId>
+    private voiceRooms = new Map<string, Set<string>>(); // roomId  → socketIds
+    private usersRooms = new Map<string, string>(); // socketId → roomId
+    private usersData = new Map<string, RoomParticipant>(); // socketId → UserData
+    private screenSharers = new Map<string, string>(); // roomId  → sharerSocketId
+    private blockedMics: BlockedMics = new Map();
+
+    private chatService: ChatService;
 
     constructor(io: Server) {
         this.io = io;
+        this.chatService = new ChatService();
     }
 
     // ══════════════════════════════════════════════════════════════════════════
     // Join / Leave
     // ══════════════════════════════════════════════════════════════════════════
 
-    public handleJoinVoiceRoom(socket: Socket, data: UserData): void {
+    public handleJoinVoiceRoom(socket: Socket, data: RoomParticipant): void {
         const { roomId, userId, name, ...rest } = data;
+
         try {
+
             this.usersData.set(socket.id, { roomId, userId, name, ...rest });
 
-            const previousRoomId = this.leavePreviousRoom(socket);
+            const previousRoomId = this.leavePreviousRoom(socket.id);
+
             this.joinRoom(socket, roomId);
 
             const participants = this.getRoomParticipants(roomId, socket.id);
+
             this.sendExistingParticipants(socket, roomId, participants);
 
-            // Tell the joiner who is currently screen-sharing (if anyone)
             const currentSharer = this.screenSharers.get(roomId);
             if (currentSharer && currentSharer !== socket.id) {
-                // 'screen-share-active' triggers handleScreenShareActive on the client
-                // which then emits 'request-screen-share' back to get a fresh WebRTC offer
                 socket.emit('screen-share-active', { sharerSocketId: currentSharer, roomId });
             }
 
-            this.broadcastUserJoined(socket, roomId, previousRoomId, {
+            this.broadcastUserJoined(roomId, previousRoomId, {
+                ...rest,
+                roomId,
                 userId,
                 name,
                 isLocal: false,
-                ...rest,
             });
+
             this.sendSystemMessages(socket, roomId, {
                 userId,
                 name,
@@ -65,27 +72,27 @@ export class VoiceRoomManager {
     }
 
     public handleLeaveVoiceRoom(
-        socket: Socket,
-        data: { roomId: string; userId: string; name: string }
+        data: LeaveRoomUserInput,
     ): void {
-        const { roomId, userId, name } = data;
-        const userInfo = this.usersData.get(socket.id);
-        logger.info(`🚪 ${userInfo?.name ?? name} (${socket.id}) leaving ${roomId}`);
+        const { roomId, userId, name, socketId } = data;
 
-        this.clearScreenShare(socket, roomId); // stop share on manual leave
-        this.leaveRoom(socket, roomId);
-        this.removeUserData(socket.id);
-        this.broadcastUserLeft(socket, roomId, userId, userInfo?.name ?? name);
-        this.sendUserLeftSystemMessage(socket, roomId, userId, name);
+        const userInfo = this.usersData.get(socketId);
+
+        logger.info(`🚪 ${userInfo?.name ?? name} (${socketId}) leaving ${roomId}`);
+
+        this.clearScreenShare(socketId, roomId);
+        this.leaveRoom(socketId, roomId);
+        this.removeUserData(socketId);
+        this.broadcastUserLeft(roomId, userId, userInfo?.name ?? name);
     }
 
-    public handleDisconnect(socket: Socket): void {
+    public async handleDisconnect(socket: Socket): Promise<void> {
         const userInfo = this.usersData.get(socket.id);
         const roomId = this.usersRooms.get(socket.id);
 
         if (roomId) {
-            this.clearScreenShare(socket, roomId);
             socket.leave(roomId);
+            this.clearScreenShare(socket.id, roomId);
             this.usersRooms.delete(socket.id);
             this.cleanupRoomData(roomId, socket.id);
 
@@ -97,6 +104,13 @@ export class VoiceRoomManager {
 
             if (userInfo) {
                 this.sendUserLeftSystemMessage(socket, roomId, userInfo.userId, userInfo.name, false);
+                await this.chatService.leaveRoom({
+                    roomId,
+                    socketId: socket.id,
+                    userId: userInfo.userId,
+                    name: userInfo.name,
+                    kicked: false,
+                });
             }
         }
         this.usersData.delete(socket.id);
@@ -122,16 +136,6 @@ export class VoiceRoomManager {
         }
 
         if (isSharing) {
-            // Only one sharer at a time
-            // const existing = this.screenSharers.get(roomId);
-            // if (existing && existing !== socket.id) {
-            //     socket.emit('screen-share-error', {
-            //         error: 'Someone else is already sharing',
-            //         sharerSocketId: existing,
-            //     });
-            //     return;
-            // }
-
             this.screenSharers.set(roomId, socket.id);
             logger.info(`🖥️  ${socket.id} started screen share in ${roomId}`);
 
@@ -141,7 +145,7 @@ export class VoiceRoomManager {
                 roomId,
             });
         } else {
-            this.clearScreenShare(socket, roomId);
+            this.clearScreenShare(socket.id, roomId);
         }
     }
 
@@ -149,14 +153,15 @@ export class VoiceRoomManager {
     // Host Actions
     // ══════════════════════════════════════════════════════════════════════════
 
-    /**
-     * Client emits: 'host-force-mute'
-     * Payload: { roomId: string, targetSocketId: string }
-     * Target can unmute themselves after receiving 'force-muted'.
-     */
     public handleForceMute(
         socket: Socket,
-        data: { roomId: string; targetSocketId: string, targetUserId: string, senderInfo?: Partial<UserType>, receiverInfo?: Partial<UserType> }
+        data: {
+            roomId: string;
+            targetSocketId: string;
+            targetUserId: string;
+            senderInfo?: Partial<UserType>;
+            receiverInfo?: Partial<UserType>;
+        }
     ): void {
         const { roomId, targetSocketId, targetUserId, senderInfo, receiverInfo } = data;
         if (!this.verifyHostAction(socket, roomId)) return;
@@ -177,18 +182,21 @@ export class VoiceRoomManager {
         });
 
         // Tell room so UI reflects the muted state
-        this.broadcastVoiceRoomMessages(socket, roomId, 'system', 'mic-force-mute', `${receiverInfo?.name} was force-muted by ${senderInfo?.name}`, senderInfo, receiverInfo);
+        this.broadcastVoiceRoomMessages(
+            socket,
+            roomId,
+            'system',
+            'mic-force-mute',
+            `${receiverInfo?.name} was force-muted by ${senderInfo?.name}`,
+            senderInfo,
+            receiverInfo
+        );
     }
 
     /**
      * Client emits: 'host-block-mic'
-     * Payload: { roomId: string, targetSocketId: string }
-     * Target CANNOT unmute — host must call 'host-unblock-mic' to lift it.
      */
-    public handleBlockMic(
-        socket: Socket,
-        data: { roomId: string; targetSocketId: string }
-    ): void {
+    public handleBlockMic(socket: Socket, data: { roomId: string; targetSocketId: string }): void {
         const { roomId, targetSocketId } = data;
         if (!this.verifyHostAction(socket, roomId)) return;
 
@@ -221,10 +229,7 @@ export class VoiceRoomManager {
      * Client emits: 'host-unblock-mic'
      * Payload: { roomId: string, targetSocketId: string }
      */
-    public handleUnblockMic(
-        socket: Socket,
-        data: { roomId: string; targetSocketId: string }
-    ): void {
+    public handleUnblockMic(socket: Socket, data: { roomId: string; targetSocketId: string }): void {
         const { roomId, targetSocketId } = data;
         if (!this.verifyHostAction(socket, roomId)) return;
 
@@ -246,7 +251,7 @@ export class VoiceRoomManager {
      */
     public handleKickUser(
         socket: Socket,
-        data: { roomId: string; targetSocketId: string, userId: string }
+        data: { roomId: string; targetSocketId: string; userId: string }
     ): void {
         const { roomId, targetSocketId, userId } = data;
         if (!this.verifyHostAction(socket, roomId)) return;
@@ -259,7 +264,7 @@ export class VoiceRoomManager {
         logger.info(`👢 Host ${socket.id} kicking ${targetSocketId} from ${roomId}`);
 
         // Notify the kicked user first
-        const userRoomId = `user-room:${userId}`
+        const userRoomId = `user-room:${userId}`;
         this.io.to(userRoomId).emit('kicked-from-room', {
             bySocketId: socket.id,
             roomId,
@@ -268,7 +273,7 @@ export class VoiceRoomManager {
         // Get the target socket and force-leave the room
         const targetSocket = this.io.sockets.sockets.get(targetSocketId);
         if (targetSocket) {
-            this.clearScreenShare(targetSocket, roomId);
+            this.clearScreenShare(targetSocket.id, roomId);
             targetSocket.leave(roomId);
         }
 
@@ -302,14 +307,14 @@ export class VoiceRoomManager {
     // ══════════════════════════════════════════════════════════════════════════
 
     public getRoomsParticipants(socket: Socket, roomIds: string[]): void {
-        const result = new Map<string, ParticipantData[]>();
+        const result = new Map<string, RoomParticipant[]>();
         roomIds?.forEach((id) => result.set(id, this.getRoomParticipants(id, socket.id)));
         socket.emit('receive-rooms-existing-participants', {
             participants: Object.fromEntries(result),
         });
     }
 
-    public getUserData(socketId: string): UserData | undefined {
+    public getUserData(socketId: string): RoomParticipant | undefined {
         return this.usersData.get(socketId);
     }
 
@@ -317,8 +322,8 @@ export class VoiceRoomManager {
         return this.usersRooms.get(socketId);
     }
 
-    public getRoomParticipants(roomId: string, excludeSocketId?: string): ParticipantData[] {
-        const participants: ParticipantData[] = [];
+    public getRoomParticipants(roomId: string, excludeSocketId?: string): RoomParticipant[] {
+        const participants: RoomParticipant[] = [];
         const socketIds = this.voiceRooms.get(roomId) ?? new Set<string>();
 
         Array.from(socketIds).forEach((socketId) => {
@@ -328,7 +333,7 @@ export class VoiceRoomManager {
                 participants.push({
                     ...userData,
                     socketId,
-                    id: userData.userId,
+                    userId: userData.userId,
                     isMuted: userData.isMuted,
                     isLocal: false,
                 });
@@ -359,12 +364,12 @@ export class VoiceRoomManager {
     // ══════════════════════════════════════════════════════════════════════════
 
     /** Stop a screen share if this socket is the current sharer */
-    private clearScreenShare(socket: Socket, roomId: string): void {
-        if (this.screenSharers.get(roomId) !== socket.id) return;
+    private clearScreenShare(socketId: string, roomId: string): void {
+        if (this.screenSharers.get(roomId) !== socketId) return;
         this.screenSharers.delete(roomId);
-        logger.info(`🖥️  ${socket.id} stopped screen share in ${roomId}`);
+        logger.info(`🖥️  ${socketId} stopped screen share in ${roomId}`);
         this.io.to(roomId).emit('screen-share-stopped', {
-            sharerSocketId: socket.id,
+            sharerSocketId: socketId,
             roomId,
         });
     }
@@ -389,36 +394,50 @@ export class VoiceRoomManager {
         return true;
     }
 
-    private leavePreviousRoom(socket: Socket): string | undefined {
-        const prev = this.usersRooms.get(socket.id);
-        if (!prev) return undefined;
+    private leavePreviousRoom(socketId: string): string | undefined {
+        const prevRoomId = this.usersRooms.get(socketId);
 
-        socket.leave(prev);
-        const userData = this.usersData.get(socket.id);
+        if (!prevRoomId) return undefined;
+
+        const targetSocket = this.io.sockets.sockets.get(socketId);
+        if (targetSocket) {
+            targetSocket.leave(prevRoomId);
+        }
+
+        const userData = this.usersData.get(socketId);
         if (userData) {
-            socket.to(prev).emit('user-left', {
+            this.io.to(prevRoomId).emit('user-left', {
                 userId: userData.userId,
-                socketId: socket.id,
+                socketId: socketId,
                 name: userData.name,
             });
         }
-        this.voiceRooms.get(prev)?.delete(socket.id);
-        return prev;
+
+        this.voiceRooms.get(prevRoomId)?.delete(socketId);
+
+        return prevRoomId;
     }
 
     private joinRoom(socket: Socket, roomId: string): void {
         socket.join(roomId);
+
         this.usersRooms.set(socket.id, roomId);
+
         if (!this.voiceRooms.has(roomId)) this.voiceRooms.set(roomId, new Set());
+
         this.voiceRooms.get(roomId)!.add(socket.id);
     }
 
-    private leaveRoom(socket: Socket, roomId: string): void {
-        socket.leave(roomId);
-        this.usersRooms.delete(socket.id);
+    private leaveRoom(socketId: string, roomId: string): void {
+        const targetSocket = this.io.sockets.sockets.get(socketId);
+        if (targetSocket) {
+            targetSocket.leave(roomId);
+        }
+
+        this.usersRooms.delete(socketId);
         const set = this.voiceRooms.get(roomId);
         if (set) {
-            set.delete(socket.id);
+            set.delete(socketId);
             if (set.size === 0) {
                 this.voiceRooms.delete(roomId);
                 this.blockedMics.delete(roomId);
@@ -447,31 +466,25 @@ export class VoiceRoomManager {
     private sendExistingParticipants(
         socket: Socket,
         roomId: string,
-        participants: ParticipantData[]
+        participants: RoomParticipant[]
     ): void {
         socket.emit('existing-participants', { participants, roomId });
     }
 
     private broadcastUserJoined(
-        socket: Socket,
         roomId: string,
         previousRoomId: string | undefined,
-        userData: any
+        userData: RoomParticipant
     ): void {
-        socket.to(roomId).emit('user-joined', { ...userData, socketId: socket.id });
+        this.io.to(roomId).emit('user-joined', { ...userData, roomId, });
         this.io.emit('room-updated-with-participant', {
             joinInfo: { roomId, participant: userData },
             ...(previousRoomId && { leaveInfo: { roomId: previousRoomId, participant: userData } }),
         });
     }
 
-    private broadcastUserLeft(
-        socket: Socket,
-        roomId: string,
-        userId: string,
-        name: string
-    ): void {
-        socket.to(roomId).emit('user-left', { userId, socketId: socket.id, name });
+    private broadcastUserLeft(roomId: string, userId: string, name: string): void {
+        this.io.to(roomId).emit('user-left', { userId, name });
         this.io.emit('room-updated-with-participant', {
             leaveInfo: { roomId, participant: { userId, name } },
         });
@@ -523,9 +536,7 @@ export class VoiceRoomManager {
             sender: 'them',
             type: 'system' as const,
             systemMessageType: kicked ? 'user-kicked' : 'user-left',
-            text: kicked
-                ? `${name} was kicked from the voice room.`
-                : `${name} has left the voice room.`,
+            text: kicked ? `${name} was kicked from the voice room.` : `${name} has left the voice room.`,
             senderSocketId: socket.id,
             senderInfo: { name, userId },
             time: new Date(),
@@ -551,7 +562,7 @@ export class VoiceRoomManager {
         systemMessageType: Message['systemMessageType'],
         message: string,
         senderInfo?: Partial<UserType>,
-        receiverInfo?: Partial<UserType>,
+        receiverInfo?: Partial<UserType>
     ): void {
         const messageId = uuidv4();
         socket.to(roomId).emit('receive-group-message', {
