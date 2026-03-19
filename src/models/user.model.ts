@@ -58,7 +58,6 @@ const UserModalSchema = new Schema<UserType & Document>({
   },
   password: {
     type: String,
-    required: true,
     match: [/^\$argon2[id]?d?\$v=\d+\$m=\d+,t=\d+,p=\d+\$[a-zA-Z0-9+/]+\$[a-zA-Z0-9+/]+/, 'Password must be a valid Argon2 hash']
   },
   dateOfBirth: { type: Date },
