@@ -25,7 +25,7 @@ export class SocketHandler {
     private webRTCSignaling: WebRTCSignaling;
     private messageHandler: MessageHandler;
     private userStatusManager: UserStatusManager;
-    private roomMonitor: RoomMonitorService; // New property
+    private roomMonitor: RoomMonitorService;
 
     constructor(io: Server) {
         this.io = io;
@@ -42,17 +42,13 @@ export class SocketHandler {
         io.on('connection', (socket) => {
             // User notification of connection
             socket.on('join-room', ({ userId, roomIds }) => {
-                const roomId = `user-room:${userId}`;
-
-                socket.join(roomId);
+                this.messageHandler.handleAddUserSocket(userId, socket.id)
 
                 this.voiceRoomManager.getRoomsParticipants(socket, roomIds)
             });
 
             socket.on('leave-room', ({ userId }) => {
-                const roomId = `user-room:${userId}`;
-
-                socket.leave(roomId);
+                this.messageHandler.handleRemoveUserSocket(userId);
             });
 
             // WebRTC Signaling Events

@@ -24,6 +24,7 @@ export interface LeaveIndividualMessageData {
 export type IndividualMessageData = UserMessage & {
     userId: string;
     text: string;
+    receiverSocketId: string;
 
     senderInfo: Partial<UserType>;
 
