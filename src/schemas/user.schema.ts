@@ -32,7 +32,7 @@ export const UserSchema = zod.object({
         .max(30, { message: 'Username cannot exceed 30 characters' })
         .regex(/^[a-zA-Z0-9_]+$/, {
             message: 'Username can only contain letters, numbers, and underscores',
-        }),
+        }).optional(),
     email: zod
         .string()
         .email({ message: 'Invalid email address' })
