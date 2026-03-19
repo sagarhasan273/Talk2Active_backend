@@ -43,3 +43,27 @@ export type ReactionMessageData = {
     messageId: number;
     reaction: Reaction;
 }
+
+
+export type JoinRoomUserInput = {
+    roomId: string;
+    socketId: string;
+    userId: string;
+    name: string;
+    profilePhoto: string;
+    isMuted: boolean;
+    status: string;
+    userType: 'host' | 'guest'
+};
+
+export type LeaveRoomUserInput = {
+    roomId: string;
+    socketId: string;
+    userId: string;
+    name: string;
+    kicked?: boolean;
+};
+
+export type RoomParticipant = JoinRoomUserInput & {
+    isLocal?: boolean
+}

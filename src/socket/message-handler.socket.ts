@@ -12,11 +12,22 @@ export class MessageHandler {
 
     private listeningTo = new Map<string, string>(); // userId -> Set of socketIds
 
-    constructor(private io: Server) { }
+    private userSockets: Map<string, string> = new Map();
+
+    constructor(private io: Server) {
+    }
 
     /**
      * Handle individual message sending
      */
+
+    public handleAddUserSocket(userId: string, socketId: string) {
+        this.userSockets.set(userId, socketId);
+    }
+
+    public handleRemoveUserSocket(userId: string) {
+        this.userSockets.delete(userId);
+    }
 
     public async handleListenToUser(userId: string, listenerId: string): Promise<void> {
         this.listeningTo.set(userId, listenerId);
@@ -27,7 +38,7 @@ export class MessageHandler {
     }
 
     public async handleIndividualMessage(socket: Socket, data: IndividualMessageData): Promise<void> {
-        const { receiverInfo, senderInfo, text, unreadMessageIds } = data;
+        const { receiverInfo, senderInfo, text, unreadMessageIds, receiverSocketId } = data;
 
         const conversationId = this.messageService.generateConversationId(data.senderInfo.id as string, data.receiverInfo.id as string);
 
@@ -58,7 +69,9 @@ export class MessageHandler {
 
         const message = await this.messageService.saveMessage(messageData);
 
-        const targetRoomId = `user-room:${receiverInfo.id}`;
+        const targetRoomId = this.userSockets.get(receiverInfo?.id?.toString() || '');
+
+        if (!targetRoomId) return;
 
         socket.to(targetRoomId).emit('receive-individual-message', {
             ...data,
@@ -80,7 +93,9 @@ export class MessageHandler {
 
         const updatedMessage = await this.messageService.editMessage(messageId, data.text);
 
-        const targetRoomId = `user-room:${receiverInfo.id}`;
+        const targetRoomId = this.userSockets.get(receiverInfo?.id?.toString() || '');
+
+        if (!targetRoomId) return;
 
         socket.to(targetRoomId).emit('receive-edit-individual-message', {
             ...data,
@@ -99,7 +114,9 @@ export class MessageHandler {
 
         await this.messageService.updateMessage(messageId, { isDeleted: true, deletedAt: new Date() });
 
-        const targetRoomId = `user-room:${receiverId}`;
+        const targetRoomId = this.userSockets.get(receiverId);
+
+        if (!targetRoomId) return;
 
         socket.to(targetRoomId).emit('receive-delete-individual-message', {
             ...data,
@@ -114,7 +131,9 @@ export class MessageHandler {
     public async handleReactionIndividualMessage(socket: Socket, data: ReactionIndividualMessageData): Promise<void> {
         const { receiverId, messageId } = data;
 
-        const targetRoomId = `user-room:${receiverId}`;
+        const targetRoomId = this.userSockets.get(receiverId);
+
+        if (!targetRoomId) return;
 
         await this.messageService.updateReactions(messageId, data.reaction);
 
@@ -128,7 +147,9 @@ export class MessageHandler {
 
         await this.messageService.updateReactions(data.messageId, data.reaction);
 
-        const targetRoomId = `user-room:${receiverId}`;
+        const targetRoomId = this.userSockets.get(receiverId);
+
+        if (!targetRoomId) return;
 
         socket.to(targetRoomId).emit('receive-reaction-pop-individual-message', {
             ...data,
@@ -147,7 +168,9 @@ export class MessageHandler {
         const { receiverInfo } = data;
         const messageId = uuidv4();
 
-        const targetUserId = `user-room:${receiverInfo.userId}`;
+        const targetUserId = this.userSockets.get(receiverInfo.userId);
+
+        if (!targetUserId) return;
 
         socket.to(targetUserId).emit('receive-private-message', {
             ...data,
@@ -167,7 +190,9 @@ export class MessageHandler {
         const { receiverInfo } = data;
         const messageId = uuidv4();
 
-        const targetUserId = `user-room:${receiverInfo.userId}`;
+        const targetUserId = this.userSockets.get(receiverInfo.userId);
+
+        if (!targetUserId) return;
 
         socket.to(targetUserId).emit('receive-edit-private-message', {
             ...data,

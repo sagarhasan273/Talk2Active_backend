@@ -11,27 +11,6 @@ export interface WebRTCData {
     sender?: string;
 }
 
-export interface ParticipantData {
-    socketId: string;
-    id: string;
-    name: string;
-    profilePhoto: string;
-    isMuted: boolean;
-    status: string;
-    isLocal?: boolean
-    userType: 'host' | 'guest'
-}
-
-export interface UserData {
-    roomId: string;
-    userId: string;
-    name: string;
-    profilePhoto: string;
-    isMuted: boolean;
-    status: string;
-    userType: 'host' | 'guest'
-}
-
 export interface JoinLeaveIndividualMessageData {
     listeningUserId?: string;
     leaveListeningUserId?: string;
@@ -45,6 +24,7 @@ export interface LeaveIndividualMessageData {
 export type IndividualMessageData = UserMessage & {
     userId: string;
     text: string;
+    receiverSocketId: string;
 
     senderInfo: Partial<UserType>;
 

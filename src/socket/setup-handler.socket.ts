@@ -11,7 +11,6 @@ import {
     PrivateMessageData,
     ReactionIndividualMessageData,
     StatusSelectData,
-    UserData,
     WebRTCData
 } from '../types/socket.type';
 import { MessageHandler } from './message-handler.socket';
@@ -26,7 +25,7 @@ export class SocketHandler {
     private webRTCSignaling: WebRTCSignaling;
     private messageHandler: MessageHandler;
     private userStatusManager: UserStatusManager;
-    private roomMonitor: RoomMonitorService; // New property
+    private roomMonitor: RoomMonitorService;
 
     constructor(io: Server) {
         this.io = io;
@@ -43,30 +42,13 @@ export class SocketHandler {
         io.on('connection', (socket) => {
             // User notification of connection
             socket.on('join-room', ({ userId, roomIds }) => {
-                const roomId = `user-room:${userId}`;
-
-                socket.join(roomId);
+                this.messageHandler.handleAddUserSocket(userId, socket.id)
 
                 this.voiceRoomManager.getRoomsParticipants(socket, roomIds)
             });
 
             socket.on('leave-room', ({ userId }) => {
-                const roomId = `user-room:${userId}`;
-
-                socket.leave(roomId);
-            });
-
-            // Voice Room Events
-            socket.on('join-voice-room', (data: UserData) => {
-                this.voiceRoomManager.handleJoinVoiceRoom(socket, data);
-                // Notify monitor that room is active
-                this.roomMonitor.notifyRoomActivity(data.roomId);
-            });
-
-            socket.on('leave-voice-room', (data: { roomId: string, userId: string, name: string }) => {
-                this.voiceRoomManager.handleLeaveVoiceRoom(socket, data);
-                // Check if room is empty after leave
-                this.roomMonitor.checkRoomEmpty(data.roomId);
+                this.messageHandler.handleRemoveUserSocket(userId);
             });
 
             // WebRTC Signaling Events
