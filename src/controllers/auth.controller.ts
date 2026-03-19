@@ -36,8 +36,25 @@ export class AuthController {
     try {
       const { code, redirect_uri } = req.body;
 
-      // exchange code for tokens
-      const { tokens } = await client.getToken({ code, redirect_uri });
+      if (!code) {
+        res.status(400).json({ message: 'Authorization code is required' });
+        return;
+      }
+
+      // exchange code for tokens with error handling
+      let tokens;
+      try {
+        const tokenResponse = await client.getToken({ code, redirect_uri });
+        tokens = tokenResponse.tokens;
+      } catch (tokenError) {
+        res.status(401).json({ message: 'Failed to exchange authorization code' });
+        return;
+      }
+
+      if (!tokens.access_token) {
+        res.status(401).json({ message: 'No access token received' });
+        return;
+      }
 
       const googleRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
         headers: { Authorization: `Bearer ${tokens.access_token}` },
@@ -48,8 +65,14 @@ export class AuthController {
         return;
       }
 
-      const { sub, email, name, picture } = await googleRes.json();
-      const response = await this.findOrCreateUser(sub, email, name, picture);
+      const userInfo = await googleRes.json();
+      const response = await this.findOrCreateUser(
+        userInfo.sub,
+        userInfo.email,
+        userInfo.name,
+        userInfo.picture
+      );
+
       res.status(200).json(response);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
