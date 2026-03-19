@@ -86,13 +86,22 @@ export class AuthController {
   private async findOrCreateUser(sub: string, email: string, name: string, picture: string) {
     let user = await UserModel.findOne({ googleId: sub });
     if (!user) {
-      user = await UserModel.findOne({ email });
+      user = await UserModel.findOne({ email }).populate({
+        path: 'recentRooms.room',
+        select: 'name description languages level maxParticipants host isActive roomType',
+        populate: {
+          path: 'host',
+          select: '_id name userId profilePhoto verified accountType',
+        },
+      });
+
       if (user) {
         user.googleId = sub;
         user.profilePhoto = picture;
         await user.save();
       } else {
         const userId = generateUserId();
+
         if (!userId) {
           throw new AppError('Failed to generate user ID', 500, 'User Repository');
         }
@@ -108,11 +117,11 @@ export class AuthController {
           profilePhoto: picture,
           lastActive: now,
         });
-
       }
     }
 
     const accessToken = JwtService.generateToken(user);
+
     const { recentRooms, ...rest } = user.toObject();
     return { token: accessToken, status: true, user: rest, recentRooms };
   }

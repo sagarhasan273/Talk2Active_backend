@@ -180,7 +180,7 @@ export class UserRepository {
   public async getUserWithRooms(userId: string): Promise<UserType> {
     const user = await UserModel.findById(userId).populate({
       path: 'recentRooms.room',
-      select: 'name description languages level maxParticipants host isActive',
+      select: 'name description languages level maxParticipants host isActive roomType',
       populate: {
         path: 'host',
         select: '_id name userId profilePhoto verified accountType',

@@ -486,7 +486,7 @@ export class VoiceRoomManager {
     private broadcastUserLeft(roomId: string, userId: string, name: string): void {
         this.io.to(roomId).emit('user-left', { userId, name });
         this.io.emit('room-updated-with-participant', {
-            leaveInfo: { roomId, participant: { userId, name } },
+            leaveInfo: { roomId, participant: { id: userId, name } },
         });
     }
 

@@ -88,7 +88,7 @@ export class UserController {
 
   public async getUser(req: Request, res: Response): Promise<void> {
     try {
-      
+
       const authHeader = req.headers['authorization'];
       const token = authHeader?.split(' ')[1];
       if (!token) {
@@ -186,6 +186,7 @@ export class UserController {
       res.status(500).json({ message: 'An error occurred while updating the user account!', status: false });
     }
   }
+
   public async updateUserAccountActivate(req: Request, res: Response): Promise<void> {
     let validatedInput;
     try {
