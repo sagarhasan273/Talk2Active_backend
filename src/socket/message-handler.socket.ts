@@ -38,7 +38,7 @@ export class MessageHandler {
     }
 
     public async handleIndividualMessage(socket: Socket, data: IndividualMessageData): Promise<void> {
-        const { receiverInfo, senderInfo, text, unreadMessageIds, receiverSocketId } = data;
+        const { receiverInfo, senderInfo, text, unreadMessageIds } = data;
 
         const conversationId = this.messageService.generateConversationId(data.senderInfo.id as string, data.receiverInfo.id as string);
 
