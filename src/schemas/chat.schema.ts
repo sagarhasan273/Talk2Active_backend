@@ -20,7 +20,6 @@ export const RoomBaseSchema = z.object({
         })
     ).optional().default([]),
     isActive: z.boolean().optional().default(true),
-    roomType: z.string(),
     kickedUserIds: z.array(objectIdSchema)
 });
 
@@ -32,7 +31,6 @@ export const RoomCreateSchema = RoomBaseSchema.pick({
     level: true,
     maxParticipants: true,
     host: true,
-    roomType: true
 });
 
 export const RoomUpdateSchema = RoomBaseSchema.pick({
@@ -42,7 +40,6 @@ export const RoomUpdateSchema = RoomBaseSchema.pick({
     level: true,
     maxParticipants: true,
     host: true,
-    roomType: true,
     isActive: true,
 }).partial().extend({
     roomId: objectIdSchema

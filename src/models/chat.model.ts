@@ -1,6 +1,6 @@
 // models/Relationship.model.ts
 import mongoose, { Document, Schema } from 'mongoose';
-import { LanguageLevelEnum, RoomTypesEnum } from 'src/enums/chat.enum';
+import { LanguageLevelEnum } from 'src/enums/chat.enum';
 import { RoomBase } from 'src/types/chat.type';
 
 
@@ -44,11 +44,6 @@ const RoomSchema: Schema = new Schema<RoomBase & Document>({
     isActive: {
         type: Boolean,
         default: true
-    },
-    roomType: {
-        type: String,
-        enum: Object.values(RoomTypesEnum),
-        default: 'conversation'
     },
     kickedUserIds: [
         {
