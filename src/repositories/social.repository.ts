@@ -122,19 +122,26 @@ export class RelationshipRepository {
 
             return {
                 accountDetails: {
-                    id: base.requester.id,
-                    email: base.requester.email,
-                    username: base.requester.username,
-                    name: base.requester.name,
-                    profilePhoto: base.requester.profilePhoto,
-                    bio: base.requester.bio,
-                    status: base.requester.status,
-                    lastActive: base.requester.lastActive,
-                    verified: base.requester.verified,
+                    userId: base.recipient.id,
+                    genUserId: base.recipient.genUserId,
+                    email: base.recipient.email,
+                    username: base.recipient.username,
+                    name: base.recipient.name,
+                    profilePhoto: base.recipient.profilePhoto,
+                    bio: base.recipient.bio,
+                    status: base.recipient.status,
+                    lastActive: base.recipient.lastActive,
+                    verified: base.recipient.verified,
+                    accountType: base.recipient.accountType,
+                    followerCount: base.recipient.followerCount,
+                    followingCount: base.recipient.followingCount,
+                    friendCount: base.recipient.friendCount,
+                    pendingRequests: base.recipient.pendingRequests
                 },
                 type: base.type,
                 status: base.status,
                 relation: 'follower',
+                latestMessage: ''
             } as AllRelationsType;
         });
 
@@ -201,7 +208,8 @@ export class RelationshipRepository {
 
             return {
                 accountDetails: {
-                    id: base.recipient.id,
+                    userId: base.recipient.id,
+                    genUserId: base.recipient.genUserId,
                     email: base.recipient.email,
                     username: base.recipient.username,
                     name: base.recipient.name,
@@ -210,10 +218,16 @@ export class RelationshipRepository {
                     status: base.recipient.status,
                     lastActive: base.recipient.lastActive,
                     verified: base.recipient.verified,
+                    accountType: base.recipient.accountType,
+                    followerCount: base.recipient.followerCount,
+                    followingCount: base.recipient.followingCount,
+                    friendCount: base.recipient.friendCount,
+                    pendingRequests: base.recipient.pendingRequests
                 },
                 type: base.type,
                 status: base.status,
                 relation: 'following', // This indicates one-way following
+                latestMessage: ''
             } as AllRelationsType;
         });
 
@@ -268,19 +282,26 @@ export class RelationshipRepository {
 
             return {
                 accountDetails: {
-                    id: base.requester.id,
-                    email: base.requester.email,
-                    username: base.requester.username,
-                    name: base.requester.name,
-                    profilePhoto: base.requester.profilePhoto,
-                    bio: base.requester.bio,
-                    status: base.requester.status,
-                    lastActive: base.requester.lastActive,
-                    verified: base.requester.verified,
+                    userId: base.recipient.id,
+                    genUserId: base.recipient.genUserId,
+                    email: base.recipient.email,
+                    username: base.recipient.username,
+                    name: base.recipient.name,
+                    profilePhoto: base.recipient.profilePhoto,
+                    bio: base.recipient.bio,
+                    status: base.recipient.status,
+                    lastActive: base.recipient.lastActive,
+                    verified: base.recipient.verified,
+                    accountType: base.recipient.accountType,
+                    followerCount: base.recipient.followerCount,
+                    followingCount: base.recipient.followingCount,
+                    friendCount: base.recipient.friendCount,
+                    pendingRequests: base.recipient.pendingRequests
                 },
                 type: base.type,
                 status: base.status,
                 relation: 'friend',
+                latestMessage: ''
             } as AllRelationsType;
         });
 
@@ -339,7 +360,8 @@ export class RelationshipRepository {
 
             return {
                 accountDetails: {
-                    id: base.recipient.id,
+                    userId: base.recipient.id,
+                    genUserId: base.recipient.genUserId,
                     email: base.recipient.email,
                     username: base.recipient.username,
                     name: base.recipient.name,
@@ -348,10 +370,16 @@ export class RelationshipRepository {
                     status: base.recipient.status,
                     lastActive: base.recipient.lastActive,
                     verified: base.recipient.verified,
+                    accountType: base.recipient.accountType,
+                    followerCount: base.recipient.followerCount,
+                    followingCount: base.recipient.followingCount,
+                    friendCount: base.recipient.friendCount,
+                    pendingRequests: base.recipient.pendingRequests
                 },
                 type: base.type,
                 status: base.status,
                 relation: mutualIds.has(recipientId) ? 'friend' : 'following',
+                latestMessage: '',
             } as AllRelationsType;
         });
 

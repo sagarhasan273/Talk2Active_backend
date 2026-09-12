@@ -200,7 +200,7 @@ export class MessageService {
 
             if (friendsList.length === 1) {
                 return friendsList.map(friend => {
-                    const friendId = friend.accountDetails.id.toString();
+                    const friendId = friend.accountDetails.userId.toString();
                     return {
                         ...friend,
                         latestMessage: latestMessagesMap[friendId] || null,
@@ -210,10 +210,10 @@ export class MessageService {
 
             // Sort friends based on latest message time
             return friendsList.sort((a, b) => {
-                const timeA = latestMessageMap[a.accountDetails.id.toString()] || 0;
-                const timeB = latestMessageMap[b.accountDetails.id.toString()] || 0;
-                a['latestMessage'] = latestMessagesMap[a.accountDetails.id.toString()] || null;
-                b['latestMessage'] = latestMessagesMap[b.accountDetails.id.toString()] || null;
+                const timeA = latestMessageMap[a.accountDetails.userId.toString()] || 0;
+                const timeB = latestMessageMap[b.accountDetails.userId.toString()] || 0;
+                a['latestMessage'] = latestMessagesMap[a.accountDetails.userId.toString()] || null;
+                b['latestMessage'] = latestMessagesMap[b.accountDetails.userId.toString()] || null;
                 return timeB - timeA;
             });
         } catch (error) {

@@ -2,7 +2,7 @@
 
 import { UserRepository } from 'src/repositories/user.repository';
 import { ReturnResponseType } from 'src/types/base.type';
-import { CreateUserInput, LogInUserInput, UpdateUserInput, UpdateUserRecentRoomsInput, UserAccessToken, UserAccountActivateInput, UserAccountSessionInput, UserAccountUpdateInput, UserType, UserWithoutPassword } from 'src/types/user.type';
+import { CreateUserInput, LogInUserInput, UpdateUserInput, UserAccessToken, UserType } from 'src/types/user.type';
 import { AppError } from 'src/utils/errors';
 import { JwtService } from './auth/jwt.service';
 import { PasswordService } from './auth/password.service';
@@ -18,10 +18,10 @@ export class UserService {
       }
       const { password } = input;
 
-      const isPasswordValid = await PasswordService.verifyPassword(password, user?.password || '');
+      const isPasswordValid = await PasswordService.verifyPassword(password, user.password || '');
       if (!isPasswordValid) throw new AppError('Invalid password', 401, 'User Service');
 
-      const token = JwtService.generateToken(user as UserType);
+      const token = JwtService.generateToken(user);
       if (!token) throw new AppError('Failed to generate token.', 500, 'User Service');
 
       return { token };
@@ -39,7 +39,8 @@ export class UserService {
 
       const user = await this.repository.createUser(input);
 
-      const token = JwtService.generateToken(user as UserType);
+      const token = JwtService.generateToken(user);
+
       if (!token) throw new AppError('Failed to generate token.', 500, 'User Service');
 
       return { token };
@@ -53,7 +54,7 @@ export class UserService {
     }
   }
 
-  public async getUserById(id: string): Promise<UserWithoutPassword> {
+  public async getUserById(id: string): Promise<UserType> {
     try {
       const user = await this.repository.getUserById(id);
 
@@ -68,18 +69,18 @@ export class UserService {
     }
   }
 
-  public async getUser(token: string): Promise<UserWithoutPassword> {
+  public async getUser(token: string): Promise<UserType> {
     try {
       const decodedToken = JwtService.decodeToken(token);
       if (!decodedToken) throw new Error('Invalid token');
 
-      const userId = decodedToken.id;
+      const userId = decodedToken.userId;
+
       if (!userId) throw new AppError('User ID not found in token', 400, 'User Service');
 
       const user = await this.repository.getUser(userId);
 
-      const { password, ...userWithoutPassword } = user;
-      return userWithoutPassword;
+      return user;
     } catch (error) {
       if (error instanceof AppError) {
         throw error;
@@ -91,7 +92,7 @@ export class UserService {
 
   public async updateUser(input: UpdateUserInput): Promise<ReturnResponseType> {
     try {
-      if (!input.id) throw new AppError('User ID is required', 400, 'User Repository');
+      if (!input.userId) throw new AppError('User ID is required', 400, 'User Repository');
 
       return await this.repository.updateUser(input);
     } catch (error) {
@@ -100,60 +101,6 @@ export class UserService {
       }
 
       throw new AppError('Failed to update user!', 500, 'User Service');
-    }
-  }
-
-  public async updateUserRecentRooms(input: UpdateUserRecentRoomsInput): Promise<ReturnResponseType> {
-    try {
-      if (!input.id) throw new AppError('User ID is required', 400, 'User Repository');
-
-      return await this.repository.updateUserRecentRooms(input);
-    } catch (error) {
-      if (error instanceof AppError) {
-        throw error;
-      }
-
-      throw new AppError('Failed to update user!', 500, 'User Service');
-    }
-  }
-
-  public async updateUserAccount(input: UserAccountUpdateInput): Promise<ReturnResponseType> {
-    try {
-      return await this.repository.updateUserAccount(input);
-    } catch (error) {
-      if (error instanceof AppError) {
-        throw error;
-      }
-
-      throw new AppError('Failed to update user account!', 500, 'User Service');
-    }
-  }
-
-  public async updateUserAccountActivate(input: UserAccountActivateInput): Promise<ReturnResponseType> {
-    try {
-      if (!input.id) throw new AppError('User ID is required', 400, 'User Repository');
-
-      return await this.repository.updateUserAccountActivate(input);
-    } catch (error) {
-      if (error instanceof AppError) {
-        throw error;
-      }
-
-      throw new AppError('Failed to update user!', 500, 'User Service');
-    }
-  }
-
-  public async updateUserAccountSession(input: UserAccountSessionInput): Promise<ReturnResponseType> {
-    try {
-      if (!input.id) throw new AppError('User ID is required', 400, 'User Repository');
-
-      return await this.repository.updateUserAccountSession(input);
-    } catch (error) {
-      if (error instanceof AppError) {
-        throw error;
-      }
-
-      throw new AppError('Failed to update user session!', 500, 'User Service');
     }
   }
 }

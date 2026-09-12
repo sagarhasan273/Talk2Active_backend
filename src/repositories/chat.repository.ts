@@ -5,7 +5,7 @@ import { CreateRoomInput, LeaveRoomUserInput, RoomResponse, UpdateRoomInput } fr
 import { AppError } from "src/utils/errors";
 import logger from "src/utils/logger";
 
-const commonUserQuery = 'email username name profilePhoto bio status lastActive verified accountType'
+const commonUserQuery = 'email username name profilePhoto bio lastActive verified accountType'
 
 export class ChatRepository {
     public async createRoom(input: CreateRoomInput): Promise<void> {
@@ -14,8 +14,8 @@ export class ChatRepository {
 
             const room = await RoomModel.create({
                 ...createFields,
-                isActive: true,
             });
+
 
             await room.populate('host', commonUserQuery);
 
@@ -69,7 +69,7 @@ export class ChatRepository {
 
             const rooms = await RoomModel.find(filter)
                 .populate('host', commonUserQuery)
-                .populate('currentParticipants.user', commonUserQuery)
+                .populate('participants.user', commonUserQuery)
                 .sort({ createdAt: -1 });
 
             return rooms.map((r) => r.toJSON() as unknown as RoomResponse);
@@ -87,7 +87,7 @@ export class ChatRepository {
                 ({ _id: new ObjectId(roomId) })
 
                 .populate('host', commonUserQuery)
-                .populate('currentParticipants.user', commonUserQuery)
+                .populate('participants.user', commonUserQuery)
                 .sort({ createdAt: -1 });
             if (!room) {
                 throw new AppError('Room not found', 404, 'Chat Repository');
@@ -107,13 +107,13 @@ export class ChatRepository {
             if (!room) {
                 throw new AppError('Room not found', 404, 'Chat Repository');
             }
-            const isAlreadyParticipant = room.currentParticipants.some(participant => participant.user.toString() === userId);
+            const isAlreadyParticipant = room.participants.some(participant => participant.user.toString() === userId);
 
             if (!isAlreadyParticipant) {
-                if (room.currentParticipants.length >= room.maxParticipants) {
+                if (room.participants.length >= room.max_participants) {
                     throw new AppError('Room is full', 400, 'Chat Repository');
                 }
-                room.currentParticipants.push({ user: userId, joinedAt: new Date() });
+                room.participants.push({ user: userId, joinedAt: new Date() });
                 await room.save();
             }
         } catch (error) {
@@ -132,7 +132,7 @@ export class ChatRepository {
             if (!room) {
                 throw new AppError('Room not found', 404, 'Chat Repository');
             }
-            room.currentParticipants = room.currentParticipants.filter(participant => participant.user.toString() !== userId);
+            room.participants = room.participants.filter(participant => participant.user.toString() !== userId);
 
             if (kicked && !room.kickedUserIds.includes(userId)) {
                 room.kickedUserIds.push(userId);

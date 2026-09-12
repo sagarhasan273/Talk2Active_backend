@@ -9,13 +9,11 @@ export class ChatController {
 
     public async createRoom(req: Request, res: Response) {
         let validatedInput;
-
         try {
             validatedInput = RoomCreateSchema.parse(req.body);
         } catch (error) {
-            console.log(error);
             logger.error('Invalid room create data!');
-            res.status(400).json({ status: false, message: 'Invalid room create data!' });
+            res.status(400).json({ status: false, message: 'Invalid room creates data!' });
             return;
         }
 
@@ -41,8 +39,8 @@ export class ChatController {
             validatedInput = RoomUpdateSchema.parse(req.body);
         } catch (error) {
             console.log(error);
-            logger.error('Invalid room create data!');
-            res.status(400).json({ status: false, message: 'Invalid room create data!' });
+            logger.error('Invalid room update data!');
+            res.status(400).json({ status: false, message: 'Invalid room update data!' });
             return;
         }
 
@@ -97,7 +95,7 @@ export class ChatController {
     public async joinRoom(req: Request, res: Response) {
         const roomId = req.params.roomId;
         const userId = req.body.userId;
-        
+
         try {
             await this.chatService.joinRoom(req.body);
             res.status(200).json({ status: true, message: 'Joined room successfully' });

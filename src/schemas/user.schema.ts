@@ -1,5 +1,4 @@
 // schemas/user.schema.ts
-import { PostTagsEnum } from 'src/enums/post.enum';
 import { z as zod } from 'zod';
 import { objectIdSchema } from './base.schema';
 
@@ -20,9 +19,9 @@ export const BlockedUserSchema = zod.object({
 });
 
 // Main User Schema
-export const UserSchema = zod.object({
-    id: objectIdSchema,
-    userId: zod.string().regex(/^USR\d{6}\d{4}$/, {
+export const UserBaseSchema = zod.object({
+    userId: objectIdSchema,
+    genUserId: zod.string().regex(/^USR\d{6}\d{4}$/, {
         message: 'User ID must follow the format USRYYMMDDCOUNTER',
     }),
     googleId: zod.string(),
@@ -40,9 +39,6 @@ export const UserSchema = zod.object({
     profilePhoto: zod
         .string()
         .url({ message: 'Invalid URL for profile photo' }),
-    coverPhoto: zod
-        .string()
-        .url({ message: 'Invalid URL for cover photo' }),
     bio: zod.string().max(500, { message: 'Bio cannot exceed 500 characters' }),
     name: zod
         .string()
@@ -55,56 +51,42 @@ export const UserSchema = zod.object({
         .regex(/^\$argon2[id]?d?\$v=\d+\$m=\d+,t=\d+,p=\d+\$[a-zA-Z0-9+/]+\$[a-zA-Z0-9+/]+/, {
             message: 'Password must be a valid Argon2 hash',
         }).optional(),
-    dateOfBirth: zod
-        .date()
-        .max(new Date(), { message: 'Date of birth cannot be in the future' })
-        .optional(),
-    gender: zod
-        .enum(['male', 'female', 'other', 'prefer-not-to-say']),
     lastActive: zod
         .union([zod.string().datetime(), zod.date()])
         .transform((val) => new Date(val)),
-    status: zod
-        .enum(['online', 'offline', 'busy', 'brb', 'afk', 'zzz']),
     verified: zod.boolean(),
-    accountActive: zod.boolean(),
-    sessionTimeOut: zod.number().int().nonnegative(),
-
     accountType: zod
         .enum(['admin', 'supporter', 'member']),
-
     followerCount: zod.number().int().nonnegative(),
     followingCount: zod.number().int().nonnegative(),
     friendCount: zod.number().int().nonnegative(),
     pendingRequests: zod.number().int().nonnegative(),
 
-    postCount: zod.number().int().nonnegative(),
-
-    location: zod.string().max(100, { message: 'Location cannot exceed 100 characters' }),
-    website: zod.string().url({ message: 'Invalid website URL' }).or(zod.literal('')).optional(),
-    socialLinks: SocialLinksSchema.optional(),
-    blockedUsers: zod.array(BlockedUserSchema).optional(),
-    profileVisibility: zod.enum(['public', 'private', 'friends-only']).default('public'),
-    allowMessagesFrom: zod.enum(['everyone', 'friends', 'no-one']).default('everyone'),
-    showActivityStatus: zod.boolean().default(true),
-    showReadReceipts: zod.boolean().default(true),
-    showLastSeen: zod.boolean().default(true),
     createdAt: zod.date().optional(),
     updatedAt: zod.date().optional(),
-
-    // categories
-    tags: zod.array(zod.enum(Object.values(PostTagsEnum) as [string, ...string[]]))
-        .max(30, "Cannot have more than 30 tags")
-        .default([]),
-
-    recentRooms: zod.array(zod.object({
-        room: zod.string(),
-        joinedAt: zod.date()
-    })).optional()
 }).strict();
 
+export const UserResponseSchema = UserBaseSchema.pick({
+    userId: true,
+    genUserId: true,
+    name: true,
+    username: true,
+    email: true,
+    profilePhoto: true,
+    bio: true,
+    lastActive: true,
+    verified: true,
+    accountType: true,
+    followerCount: true,
+    followingCount: true,
+    friendCount: true,
+    pendingRequests: true,
+    createdAt: true,
+    updatedAt: true,
+})
+
 // Derived Schemas
-export const CreateUserSchema = UserSchema.pick({
+export const CreateUserSchema = UserBaseSchema.pick({
     username: true,
     email: true,
     name: true,
@@ -112,74 +94,48 @@ export const CreateUserSchema = UserSchema.pick({
     password: zod.string().min(8, { message: 'Password must be at least 8 characters' }),
 });
 
-export const LogInUserSchema = UserSchema.pick({
+export const LogInUserSchema = UserBaseSchema.pick({
     email: true,
 }).extend({
     password: zod.string().min(8, { message: 'Password must be at least 8 characters' }),
 });
 
-export const UpdateUserSchema = UserSchema.pick({
-    id: true,
-    userId: true,
+export const UpdateUserSchema = UserBaseSchema.pick({
+    genUserId: true,
     username: true,
     email: true,
     name: true,
     profilePhoto: true,
-    coverPhoto: true,
     bio: true,
-    // dateOfBirth: true,
-    location: true,
-    status: true,
-    website: true,
-    tags: true,
-    recentRooms: true,
-}).partial().required({
-    id: true,
+}).partial().extend({
+    userId: objectIdSchema,
 });
 
-export const UpdateUserRecentRoomsSchema = UserSchema.pick({
-    id: true,
-}).partial().required({
-    id: true,
-}).extend({
-    roomId: zod.string()
-});
 
-export const UserAccountUpdateSchema = UserSchema.pick({
-    id: true,
-    userId: true,
+export const UserAccountUpdateSchema = UserBaseSchema.pick({
     username: true,
+    genUserId: true
 }).extend({
+    userId: objectIdSchema,
     password: zod.string().min(8, { message: 'Password must be at least 8 characters' }),
     newPassword: zod.string().min(8, { message: 'New password must be at least 8 characters' })
 })
 
-export const UserAccountActivateSchema = UserSchema.pick({
-    id: true,
-    accountActive: true,
-}).required({ id: true })
-
-export const UserAccountSessionSchema = UserSchema.pick({
-    id: true,
-    sessionTimeOut: true,
-}).required({ id: true })
-
-export const ParticipantUserSchema = UserSchema.pick({
-    id: true,
+export const VoiceParticipantSchema = UserBaseSchema.pick({
     userId: true,
+    genUserId: true,
+    name: true,
     username: true,
     email: true,
-    name: true,
     profilePhoto: true,
-    coverPhoto: true,
     bio: true,
-    // dateOfBirth: true,
-    location: true,
-    status: true,
-    website: true,
-    tags: true,
-}).partial().required({
-    id: true,
-}).extend({ roomId: zod.string() });
-
-
+    lastActive: true,
+    verified: true,
+    accountType: true,
+    followerCount: true,
+    followingCount: true,
+    friendCount: true,
+    pendingRequests: true,
+    createdAt: true,
+    updatedAt: true,
+})

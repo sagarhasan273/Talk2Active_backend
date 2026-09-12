@@ -1,13 +1,13 @@
 import jwt from 'jsonwebtoken';
 
-import { UserType } from 'src/types/user.type';
+import { UserBaseType } from 'src/types/user.type';
 
 export class JwtService {
   private static readonly SECRET = process.env.JWT_SECRET || 'secret';
   private static readonly EXPIRES_IN = '7d';
 
-  public static generateToken(user: UserType): string {
-    const payload = { id: user.id, email: user.email };
+  public static generateToken(user: UserBaseType): string {
+    const payload = { userId: user.userId, email: user.email };
     return jwt.sign(payload, this.SECRET, { expiresIn: this.EXPIRES_IN });
   }
 
