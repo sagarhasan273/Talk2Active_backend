@@ -86,14 +86,7 @@ export class AuthController {
   private async findOrCreateUser(sub: string, email: string, name: string, picture: string) {
     let user = await UserModel.findOne({ googleId: sub });
     if (!user) {
-      user = await UserModel.findOne({ email }).populate({
-        path: 'recentRooms.room',
-        select: 'name description languages level maxParticipants host isActive roomType',
-        populate: {
-          path: 'host',
-          select: '_id name userId profilePhoto verified accountType',
-        },
-      });
+      user = await UserModel.findOne({ email });
 
       if (user) {
         user.googleId = sub;
@@ -108,21 +101,24 @@ export class AuthController {
 
         const now = new Date();
 
-        user = await UserModel.create({
-          userId: userId,
+        const userData = {
+          genUserId: userId,
           googleId: sub,
           email,
           name,
           username: name,
           profilePhoto: picture,
           lastActive: now,
-        });
+        }
+
+        user = await UserModel.create(userData);
       }
     }
 
-    const accessToken = JwtService.generateToken(user);
+    const { ...rest } = user.toJSON();
 
-    const { recentRooms, ...rest } = user.toObject();
-    return { token: accessToken, status: true, user: rest, recentRooms };
+    const accessToken = JwtService.generateToken({ ...rest, userId: rest.userId, });
+
+    return { token: accessToken, status: true, user: rest };
   }
 }

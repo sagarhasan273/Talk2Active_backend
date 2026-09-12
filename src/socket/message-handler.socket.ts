@@ -5,7 +5,7 @@ import { MessageService } from 'src/services/message.service';
 import { ReactionMessageData } from 'src/types/chat.type';
 import logger from 'src/utils/logger';
 import { v4 as uuidv4 } from 'uuid';
-import { DeleteGroupMessageData, DeleteIndividualMessageData, EditGroupMessageData, EditIndividualMessageData, GroupMessageData, IndividualMessageData, PrivateMessageData, ReactionIndividualMessageData } from '../types/socket.type';
+import { DeleteGroupMessageData, DeleteIndividualMessageData, EditGroupMessageData, EditIndividualMessageData, GroupMessageData, PrivateMessageData, ReactionIndividualMessageData } from '../types/socket.type';
 
 export class MessageHandler {
     private messageService = new MessageService();
@@ -37,7 +37,7 @@ export class MessageHandler {
         this.listeningTo.delete(userId);
     }
 
-    public async handleIndividualMessage(socket: Socket, data: IndividualMessageData): Promise<void> {
+    public async handleIndividualMessage(socket: Socket, data: any): Promise<void> {
         const { receiverInfo, senderInfo, text, unreadMessageIds } = data;
 
         const conversationId = this.messageService.generateConversationId(data.senderInfo.id as string, data.receiverInfo.id as string);
@@ -93,7 +93,7 @@ export class MessageHandler {
 
         const updatedMessage = await this.messageService.editMessage(messageId, data.text);
 
-        const targetRoomId = this.userSockets.get(receiverInfo?.id?.toString() || '');
+        const targetRoomId = this.userSockets.get(receiverInfo?.userId?.toString() || '');
 
         if (!targetRoomId) return;
 

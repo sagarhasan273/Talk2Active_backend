@@ -5,13 +5,12 @@ import { RoomBase } from 'src/types/chat.type';
 
 
 const RoomSchema: Schema = new Schema<RoomBase & Document>({
-    name: {
+    topic: {
         type: String,
         required: true
     },
-    description: {
+    welcome_message: {
         type: String,
-        required: true
     },
     languages: [{
         type: String,
@@ -22,7 +21,7 @@ const RoomSchema: Schema = new Schema<RoomBase & Document>({
         enum: Object.values(LanguageLevelEnum),
         required: true
     },
-    maxParticipants: {
+    max_participants: {
         type: Number,
         default: 10
     },
@@ -31,7 +30,7 @@ const RoomSchema: Schema = new Schema<RoomBase & Document>({
         ref: 'users',
         required: true
     },
-    currentParticipants: [{
+    participants: [{
         user: {
             type: Schema.Types.ObjectId,
             ref: 'users'
@@ -55,7 +54,7 @@ const RoomSchema: Schema = new Schema<RoomBase & Document>({
     timestamps: true,
     toJSON: {
         transform: function (doc, ret: any) {
-            ret.id = ret._id.toString();
+            ret.roomId = ret._id.toString();
             if ('_id' in ret) delete ret._id;
             if ('__v' in ret) delete ret.__v;
         }

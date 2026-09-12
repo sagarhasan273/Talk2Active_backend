@@ -1,6 +1,6 @@
 import { RoomBaseSchema, RoomCreateSchema, RoomResponseSchema, RoomUpdateSchema } from "src/schemas/chat.schema";
 import { z } from 'zod';
-import { UserType } from "./user.type";
+import { UserBaseType } from "./user.type";
 
 export type RoomBase = z.infer<typeof RoomBaseSchema>;
 export type CreateRoomInput = z.infer<typeof RoomCreateSchema>;
@@ -28,9 +28,9 @@ export type Message = {
     receiverSocketId?: string;
     type: 'system' | 'message';
     systemMessageType?: 'user-joined' | 'you-joined' | 'user-left' | 'mic-force-mute';
-    senderInfo?: Partial<UserType>;
-    receiverInfo?: Partial<UserType>;
-    mentions?: UserType[];
+    senderInfo?: Partial<UserBaseType>;
+    receiverInfo?: Partial<UserBaseType>;
+    mentions?: UserBaseType[];
     isEdited?: boolean;
     isDeleted?: boolean;
     reactions?: Reaction[];

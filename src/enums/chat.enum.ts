@@ -1,8 +1,11 @@
 export const LanguageLevelEnum = Object.freeze({
+    ALL: 'all',
     BEGINNER: 'beginner',
     INTERMEDIATE: 'intermediate',
     ADVANCED: 'advanced',
-    MIXED: 'mixed'
+    IELTS: 'ielts',
+    BUSINESS: 'business',
+    CONVERSATION: 'conversation',
 });
 
 export const ModerationModeEnum = Object.freeze({

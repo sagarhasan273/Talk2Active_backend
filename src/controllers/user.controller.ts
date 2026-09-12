@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { CreateUserSchema, LogInUserSchema, UpdateUserRecentRoomsSchema, UpdateUserSchema, UserAccountActivateSchema, UserAccountSessionSchema, UserAccountUpdateSchema } from 'src/schemas/user.schema';
+import { CreateUserSchema, LogInUserSchema, UpdateUserSchema } from 'src/schemas/user.schema';
 import { UserService } from 'src/services/user.service';
 import { AppError } from 'src/utils/errors';
 import logger from 'src/utils/logger';
@@ -132,98 +132,6 @@ export class UserController {
 
       logger.error('An error occurred while updating the user profile!');
       res.status(500).json({ message: 'An error occurred while updating the user profile!', status: false });
-    }
-  }
-
-  public async updateUserRecentRooms(req: Request, res: Response): Promise<void> {
-    let validatedInput;
-    try {
-      validatedInput = UpdateUserRecentRoomsSchema.parse(req.body);
-    } catch (error) {
-      logger.error('Invalid user data provided for update!');
-      res.status(400).json({ status: false, message: 'Invalid user data provided for update!' });
-      return;
-    }
-
-    try {
-      const result = await this.service.updateUserRecentRooms(validatedInput);
-
-      res.status(201).json(result);
-    } catch (error) {
-      if (error instanceof AppError) {
-        logger.error(`${error.at}: ${error.message}`);
-        res.status(error.statusCode).json({ message: error.message, status: false });
-        return;
-      }
-
-      logger.error('An error occurred while updating the user profile!');
-      res.status(500).json({ message: 'An error occurred while updating the user profile!', status: false });
-    }
-  }
-
-  public async updateUserAccount(req: Request, res: Response): Promise<void> {
-    let validatedInput;
-    try {
-      validatedInput = UserAccountUpdateSchema.parse(req.body);
-    } catch (error) {
-      logger.error('Invalid user account details provided for update!');
-      res.status(400).json({ status: false, message: 'Invalid user account details provided for update!' });
-      return;
-    }
-
-    try {
-      const user = await this.service.updateUserAccount(validatedInput);
-
-      res.status(201).json(user);
-    } catch (error) {
-      if (error instanceof AppError) {
-        logger.error(`${error.at}: ${error.message}`);
-        res.status(error.statusCode).json({ message: error.message, status: false });
-        return;
-      }
-
-      logger.error('An error occurred while updating the user account!');
-      res.status(500).json({ message: 'An error occurred while updating the user account!', status: false });
-    }
-  }
-
-  public async updateUserAccountActivate(req: Request, res: Response): Promise<void> {
-    let validatedInput;
-    try {
-      validatedInput = UserAccountActivateSchema.parse(req.body);
-    } catch (error) {
-      logger.error('Invalid user data provided for update!');
-      res.status(400).json({ status: false, message: 'Invalid user data provided for update!' });
-      return;
-    }
-
-    try {
-      const user = await this.service.updateUserAccountActivate(validatedInput);
-
-      res.status(201).json(user);
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
-      res.status(500).json({ message: errorMessage });
-    }
-  }
-
-  public async updateUserAccountSession(req: Request, res: Response): Promise<void> {
-    let validatedInput;
-    try {
-      validatedInput = UserAccountSessionSchema.parse(req.body);
-    } catch (error) {
-      logger.error('Invalid user data provided for update!');
-      res.status(400).json({ status: false, message: 'Invalid user data provided for update!' });
-      return;
-    }
-
-    try {
-      const user = await this.service.updateUserAccountSession(validatedInput);
-
-      res.status(201).json(user);
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
-      res.status(500).json({ message: errorMessage });
     }
   }
 }
