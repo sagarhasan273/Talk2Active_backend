@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { RoomCreateSchema, RoomUpdateSchema } from 'src/schemas/chat.schema';
+import { JoinRoomSchema, LeaveRoomSchema, RoomCreateSchema, RoomUpdateSchema } from 'src/schemas/chat.schema';
 import { ChatService } from 'src/services/chat-service';
 import { AppError } from 'src/utils/errors';
 import logger from 'src/utils/logger';
@@ -38,7 +38,6 @@ export class ChatController {
         try {
             validatedInput = RoomUpdateSchema.parse(req.body);
         } catch (error) {
-            console.log(error);
             logger.error('Invalid room update data!');
             res.status(400).json({ status: false, message: 'Invalid room update data!' });
             return;
@@ -93,11 +92,19 @@ export class ChatController {
     }
 
     public async joinRoom(req: Request, res: Response) {
-        const roomId = req.params.roomId;
-        const userId = req.body.userId;
+        let validatedInput;
 
         try {
-            await this.chatService.joinRoom(req.body);
+            validatedInput = JoinRoomSchema.parse(req.body);
+        } catch (error) {
+            logger.error('Invalid join room input data!');
+            res.status(400).json({ status: false, message: 'Invalid join room input data!' });
+            return;
+        }
+
+        try {
+            await this.chatService.joinRoom(validatedInput);
+
             res.status(200).json({ status: true, message: 'Joined room successfully' });
         }
         catch (error) {
@@ -112,14 +119,18 @@ export class ChatController {
     }
 
     public async leaveRoom(req: Request, res: Response) {
-        const roomId = req.params.roomId;
-        const userId = req.body.userId;
-        const name = req.body.name;
-        const kicked = req.body?.kicked || false;
-        const socketId = req.body.socketId;
+        let validatedInput;
 
         try {
-            await this.chatService.leaveRoom({ roomId, userId, name, kicked, socketId });
+            validatedInput = LeaveRoomSchema.parse(req.body);
+        } catch (error) {
+            logger.error('Invalid join room input data!');
+            res.status(400).json({ status: false, message: 'Invalid join room input data!' });
+            return;
+        }
+
+        try {
+            await this.chatService.leaveRoom(validatedInput);
 
             res.status(200).json({ status: true, message: 'Left room successfully' });
         }

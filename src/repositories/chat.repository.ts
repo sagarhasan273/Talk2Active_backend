@@ -1,7 +1,7 @@
 import { ObjectId } from "mongodb";
 import { RoomModel } from "src/models/chat.model";
 import { getSocketHandler } from "src/socket/setup-handler.socket";
-import { CreateRoomInput, LeaveRoomUserInput, RoomBase, UpdateRoomInput } from "src/types/chat.type";
+import { CreateRoomInput, JoinRoomInput, LeaveRoomInput, RoomBase, UpdateRoomInput } from "src/types/chat.type";
 import { AppError } from "src/utils/errors";
 import { generateRoomKey } from "src/utils/generate.room-key";
 import logger from "src/utils/logger";
@@ -107,19 +107,24 @@ export class ChatRepository {
         }
     }
 
-    public async joinRoom(roomId: string, userId: string): Promise<void> {
+    public async joinRoom(input: JoinRoomInput): Promise<void> {
+        const { roomId, userId } = input;
         try {
             const room = await RoomModel.findById(roomId);
+
             if (!room) {
                 throw new AppError('Room not found', 404, 'Chat Repository');
             }
+
             const isAlreadyParticipant = room.participants.some(participant => participant.user.toString() === userId);
 
             if (!isAlreadyParticipant) {
                 if (room.participants.length >= room.max_participants) {
                     throw new AppError('Room is full', 400, 'Chat Repository');
                 }
+
                 room.participants.push({ user: userId, joinedAt: new Date() });
+
                 await room.save();
             }
         } catch (error) {
@@ -130,7 +135,7 @@ export class ChatRepository {
         }
     }
 
-    public async leaveRoom(input: LeaveRoomUserInput): Promise<void> {
+    public async leaveRoom(input: LeaveRoomInput): Promise<void> {
         try {
             const { roomId, userId, kicked } = input;
 

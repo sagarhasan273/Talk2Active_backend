@@ -1,7 +1,7 @@
 
 import { ChatRepository } from "src/repositories/chat.repository";
 import { getSocketHandler } from "src/socket/setup-handler.socket";
-import { CreateRoomInput, JoinRoomUserInput, LeaveRoomUserInput, RoomBase, RoomResponse, UpdateRoomInput } from "src/types/chat.type";
+import { CreateRoomInput, JoinRoomInput, JoinRoomUserInput, LeaveRoomInput, LeaveRoomUserInput, RoomBase, RoomResponse, UpdateRoomInput } from "src/types/chat.type";
 import { UserResponseType } from "src/types/user.type";
 import { AppError } from "src/utils/errors";
 import logger from "src/utils/logger";
@@ -58,13 +58,9 @@ export class ChatService {
         }
     }
 
-    async joinRoom(input: JoinRoomUserInput): Promise<void> {
+    async joinRoom(input: JoinRoomInput): Promise<void> {
         try {
-            const { roomId, userId } = input;
-
-            await this.chatRepository.joinRoom(roomId, userId);
-
-            this.broadcastJoinVoiceRoom(input);
+            await this.chatRepository.joinRoom(input);
         } catch (error) {
             if (error instanceof AppError) {
                 throw error;
@@ -73,11 +69,9 @@ export class ChatService {
         }
     }
 
-    async leaveRoom(input: LeaveRoomUserInput): Promise<void> {
+    async leaveRoom(input: LeaveRoomInput): Promise<void> {
         try {
             await this.chatRepository.leaveRoom(input);
-
-            this.broadcastLeaveVoiceRoom(input)
         } catch (error) {
             if (error instanceof AppError) {
                 throw error;
@@ -91,7 +85,7 @@ export class ChatService {
             // Get socket handler instance
             const socketHandler = getSocketHandler();
 
-            const { roomId, userId, name, socketId } = input
+            const { roomId, socketId } = input
             // Option 1: If SocketHandler exposes io
             if (socketHandler['io']) {
                 const targetSocket = socketHandler['io'].sockets.sockets.get(socketId);

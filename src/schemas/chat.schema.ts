@@ -70,4 +70,15 @@ export const RoomResponseSchema = RoomBaseSchema.extend({
         .default([]),
 });
 
+export const JoinRoomSchema = z.object({
+    roomId: objectIdSchema,
+    userId: objectIdSchema,
+});
+
+export const LeaveRoomSchema = z.object({
+    roomId: objectIdSchema,
+    userId: objectIdSchema,
+    kicked: z.boolean().optional().default(false)
+});
+
 

@@ -2,8 +2,6 @@
 import { z as zod } from 'zod';
 import { objectIdSchema } from './base.schema';
 
-
-
 // Social Links Sub-Schema
 export const SocialLinksSchema = zod.object({
     facebook: zod.string().url({ message: 'Invalid Facebook URL' }).or(zod.literal('')).optional(),

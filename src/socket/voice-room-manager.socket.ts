@@ -104,13 +104,6 @@ export class VoiceRoomManager {
 
             if (userInfo) {
                 this.sendUserLeftSystemMessage(socket, roomId, userInfo.userId, userInfo.name, false);
-                await this.chatService.leaveRoom({
-                    roomId,
-                    socketId: socket.id,
-                    userId: userInfo.userId,
-                    name: userInfo.name,
-                    kicked: false,
-                });
             }
         }
         this.usersData.delete(socket.id);
