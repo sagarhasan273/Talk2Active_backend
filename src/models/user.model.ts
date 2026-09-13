@@ -21,7 +21,11 @@ const UserModalSchema = new Schema<UserBaseType & Document>({
     type: String,
     required: true,
     unique: true,
-    match: [/^USR\d{6}\d{4}$/, 'User ID must follow the format USRYYMMDDCOUNTER']
+    immutable: true,
+    match: [
+      /^USR[A-F0-9]{10}$/,
+      'User ID must follow the format USRXXXXXXXXXX',
+    ],
   },
   username: {
     type: String,

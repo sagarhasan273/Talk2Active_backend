@@ -129,6 +129,7 @@ export class ChatService {
 
     public toRoomResponse = (room: RoomBase): RoomResponse => ({
         roomId: room.roomId,
+        room_key: room.room_key,
         topic: room.topic,
         welcome_message: room.welcome_message,
         max_participants: room.max_participants,

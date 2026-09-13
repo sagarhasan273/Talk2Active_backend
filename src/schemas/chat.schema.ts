@@ -5,6 +5,9 @@ import { UserResponseSchema } from './user.schema';
 
 export const RoomBaseSchema = z.object({
     roomId: objectIdSchema,
+    room_key: z.string().regex(/^RM[A-F0-9]{10}$/, {
+        message: 'Room key must follow the format RMXXXXXXXXXX',
+    }),
     topic: z.string().min(1, "name is required"),
     welcome_message: z.string().optional().default('Welcome to the room!'),
     languages: z.array(z.string().min(1, "languages is required")),

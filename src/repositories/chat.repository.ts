@@ -3,6 +3,7 @@ import { RoomModel } from "src/models/chat.model";
 import { getSocketHandler } from "src/socket/setup-handler.socket";
 import { CreateRoomInput, LeaveRoomUserInput, RoomBase, UpdateRoomInput } from "src/types/chat.type";
 import { AppError } from "src/utils/errors";
+import { generateRoomKey } from "src/utils/generate.room-key";
 import logger from "src/utils/logger";
 
 const participantQuery = 'genUserId email username name profilePhoto verified accountType'
@@ -12,8 +13,14 @@ export class ChatRepository {
         try {
             const { ...createFields } = input;
 
+            const room_key = generateRoomKey();
+            if (!room_key) {
+                throw new AppError('Failed to generate user ID', 500, 'User Repository');
+            }
+
             const room = await RoomModel.create({
                 ...createFields,
+                room_key,
             });
 
             await room.populate('host', hostQuery);
@@ -27,6 +34,7 @@ export class ChatRepository {
             if (error instanceof AppError) {
                 throw error;
             }
+            console.log(error)
             throw new AppError('Failed to create Room!', 500, 'Chat Repository');
         }
     }

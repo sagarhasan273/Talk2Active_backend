@@ -21,8 +21,8 @@ export const BlockedUserSchema = zod.object({
 // Main User Schema
 export const UserBaseSchema = zod.object({
     userId: objectIdSchema,
-    genUserId: zod.string().regex(/^USR\d{6}\d{4}$/, {
-        message: 'User ID must follow the format USRYYMMDDCOUNTER',
+    genUserId: zod.string().regex(/^USR[A-F0-9]{10}$/, {
+        message: 'User ID must follow the format USRXXXXXXXXXX',
     }),
     googleId: zod.string(),
     username: zod
