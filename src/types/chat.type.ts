@@ -53,7 +53,7 @@ export type JoinRoomUserInput = {
     profilePhoto: string;
     isMuted: boolean;
     status: string;
-    userType: 'host' | 'guest'
+    UserResponseType: 'host' | 'guest'
 };
 
 export type LeaveRoomUserInput = {

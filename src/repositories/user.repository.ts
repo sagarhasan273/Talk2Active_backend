@@ -4,7 +4,7 @@ import {
   LogInUserInput,
   UpdateUserInput,
   UserBaseType,
-  UserType,
+  UserResponseType,
 } from 'src/types/user.type';
 
 import { UserModel } from 'src/models/user.model';
@@ -108,7 +108,7 @@ export class UserRepository {
     }
   }
 
-  public async getUser(userId: string): Promise<UserType> {
+  public async getUser(userId: string): Promise<UserResponseType> {
     const user = await UserModel.findById(userId);
 
     if (!user) throw new AppError('User not found!', 404, 'User Repository');

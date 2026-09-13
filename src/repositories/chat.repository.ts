@@ -1,12 +1,12 @@
 import { ObjectId } from "mongodb";
 import { RoomModel } from "src/models/chat.model";
 import { getSocketHandler } from "src/socket/setup-handler.socket";
-import { CreateRoomInput, LeaveRoomUserInput, RoomResponse, UpdateRoomInput } from "src/types/chat.type";
+import { CreateRoomInput, LeaveRoomUserInput, RoomBase, UpdateRoomInput } from "src/types/chat.type";
 import { AppError } from "src/utils/errors";
 import logger from "src/utils/logger";
 
-const commonUserQuery = 'email username name profilePhoto bio lastActive verified accountType'
-
+const participantQuery = 'genUserId email username name profilePhoto verified accountType'
+const hostQuery = 'genUserId email username name profilePhoto verified accountType'
 export class ChatRepository {
     public async createRoom(input: CreateRoomInput): Promise<void> {
         try {
@@ -16,8 +16,7 @@ export class ChatRepository {
                 ...createFields,
             });
 
-
-            await room.populate('host', commonUserQuery);
+            await room.populate('host', hostQuery);
 
             if (!room) {
                 throw new AppError('Failed to create room', 404, 'Chat Repository');
@@ -47,7 +46,7 @@ export class ChatRepository {
                 }, {
                 new: true,
             }
-            ).populate('host', commonUserQuery);
+            ).populate('host', hostQuery);
 
             if (!room) {
                 throw new AppError('Failed to update room', 404, 'Chat Repository');
@@ -63,16 +62,16 @@ export class ChatRepository {
     }
 
     // Get all active rooms
-    public async getRooms(): Promise<RoomResponse[]> {
+    public async getRooms(): Promise<RoomBase[]> {
         try {
             const filter = { isActive: true };
 
             const rooms = await RoomModel.find(filter)
-                .populate('host', commonUserQuery)
-                .populate('participants.user', commonUserQuery)
+                .populate('host', hostQuery)
+                .populate('participants.user', participantQuery)
                 .sort({ createdAt: -1 });
 
-            return rooms.map((r) => r.toJSON() as unknown as RoomResponse);
+            return rooms.map(room => room.toJSON());
         } catch (error) {
             if (error instanceof AppError) {
                 throw error;
@@ -81,18 +80,17 @@ export class ChatRepository {
         }
     };
 
-    public async getRoomById(roomId: string): Promise<RoomResponse> {
+    public async getRoomById(roomId: string): Promise<RoomBase> {
         try {
             const room = await RoomModel.findOne
                 ({ _id: new ObjectId(roomId) })
-
-                .populate('host', commonUserQuery)
-                .populate('participants.user', commonUserQuery)
+                .populate('host', hostQuery)
+                .populate('participants.user', participantQuery)
                 .sort({ createdAt: -1 });
             if (!room) {
                 throw new AppError('Room not found', 404, 'Chat Repository');
             }
-            return room.toJSON() as unknown as RoomResponse;
+            return room.toJSON();
         } catch (error) {
             if (error instanceof AppError) {
                 throw error;

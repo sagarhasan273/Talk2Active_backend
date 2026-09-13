@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { ChatService } from 'src/services/chat-service';
 import { LeaveRoomUserInput, Message, RoomParticipant } from 'src/types/chat.type';
-import { UserType } from 'src/types/user.type';
+import { UserResponseType } from 'src/types/user.type';
 
 import logger from '../utils/logger';
 
@@ -159,8 +159,8 @@ export class VoiceRoomManager {
             roomId: string;
             targetSocketId: string;
             targetUserId: string;
-            senderInfo?: Partial<UserType>;
-            receiverInfo?: Partial<UserType>;
+            senderInfo?: Partial<UserResponseType>;
+            receiverInfo?: Partial<UserResponseType>;
         }
     ): void {
         const { roomId, targetSocketId, targetUserId, senderInfo, receiverInfo } = data;
@@ -386,7 +386,7 @@ export class VoiceRoomManager {
         }
         const userData = this.usersData.get(socket.id);
 
-        if (userData?.userType !== 'host') {
+        if (userData?.UserResponseType !== 'host') {
             logger.warn(`⚠️  Non-host ${socket.id} attempted host action in ${roomId}`);
             socket.emit('host-action-error', { error: 'Not the host' });
             return false;
@@ -561,8 +561,8 @@ export class VoiceRoomManager {
         type: Message['type'],
         systemMessageType: Message['systemMessageType'],
         message: string,
-        senderInfo?: Partial<UserType>,
-        receiverInfo?: Partial<UserType>
+        senderInfo?: Partial<UserResponseType>,
+        receiverInfo?: Partial<UserResponseType>
     ): void {
         const messageId = uuidv4();
         socket.to(roomId).emit('receive-group-message', {

@@ -1,7 +1,8 @@
 
 import { ChatRepository } from "src/repositories/chat.repository";
 import { getSocketHandler } from "src/socket/setup-handler.socket";
-import { CreateRoomInput, JoinRoomUserInput, LeaveRoomUserInput, RoomResponse, UpdateRoomInput } from "src/types/chat.type";
+import { CreateRoomInput, JoinRoomUserInput, LeaveRoomUserInput, RoomBase, RoomResponse, UpdateRoomInput } from "src/types/chat.type";
+import { UserResponseType } from "src/types/user.type";
 import { AppError } from "src/utils/errors";
 import logger from "src/utils/logger";
 
@@ -34,7 +35,8 @@ export class ChatService {
     async getRooms(): Promise<RoomResponse[]> {
         try {
             const rooms = await this.chatRepository.getRooms();
-            return rooms;
+
+            return rooms.map(room => this.toRoomResponse(room));
         } catch (error) {
             if (error instanceof AppError) {
                 throw error;
@@ -46,7 +48,7 @@ export class ChatService {
     async getRoomById(roomId: string): Promise<RoomResponse> {
         try {
             const room = await this.chatRepository.getRoomById(roomId);
-            return room;
+            return this.toRoomResponse(room);
         } catch (error) {
             if (error instanceof AppError) {
 
@@ -124,4 +126,19 @@ export class ChatService {
             // Don't throw - broadcasting failure shouldn't stop room creation
         }
     }
+
+    public toRoomResponse = (room: RoomBase): RoomResponse => ({
+        roomId: room.roomId,
+        topic: room.topic,
+        welcome_message: room.welcome_message,
+        max_participants: room.max_participants,
+        level: room.level,
+        languages: room.languages,
+        host: room.host as UserResponseType,
+        participants: room.participants as RoomResponse['participants'],
+        isActive: room.isActive,
+        kickedUserIds: room.kickedUserIds,
+        createdAt: room.createdAt,
+        updatedAt: room.updatedAt,
+    });
 }
