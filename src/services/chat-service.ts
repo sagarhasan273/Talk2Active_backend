@@ -1,17 +1,22 @@
-
-import { ChatRepository } from "src/repositories/chat.repository";
-import { getSocketHandler } from "src/socket/setup-handler.socket";
-import { CreateRoomInput, JoinRoomInput, JoinRoomUserInput, LeaveRoomInput, LeaveRoomUserInput, RoomBase, RoomResponse, UpdateRoomInput } from "src/types/chat.type";
-import { UserResponseType } from "src/types/user.type";
-import { AppError } from "src/utils/errors";
-import logger from "src/utils/logger";
+import { ChatRepository } from 'src/repositories/chat.repository';
+import {
+    CreateRoomInput,
+    JoinRoomInput,
+    LeaveRoomInput,
+    RoomBase,
+    RoomResponse,
+    UpdateRoomInput,
+} from 'src/types/chat.type';
+import { UserResponseType } from 'src/types/user.type';
+import { AppError } from 'src/utils/errors';
 
 export class ChatService {
     private chatRepository = new ChatRepository();
 
-    async createRoom(input: CreateRoomInput): Promise<void> {
+    async createRoom(input: CreateRoomInput): Promise<RoomResponse> {
         try {
-            await this.chatRepository.createRoom(input);
+            const room = await this.chatRepository.createRoom(input);
+            return this.toRoomResponse(room);
         } catch (error) {
             if (error instanceof AppError) {
                 throw error;
@@ -20,23 +25,22 @@ export class ChatService {
         }
     }
 
-    async updateRoom(input: UpdateRoomInput): Promise<void> {
+    async updateRoom(input: UpdateRoomInput): Promise<RoomResponse> {
         try {
-            await this.chatRepository.updateRoom(input);
+            const room = await this.chatRepository.updateRoom(input);
+            return this.toRoomResponse(room);
         } catch (error) {
             if (error instanceof AppError) {
                 throw error;
             }
-
-            throw new AppError('Failed to update room!', 500, 'Chat Service')
+            throw new AppError('Failed to update room!', 500, 'Chat Service');
         }
     }
 
     async getRooms(): Promise<RoomResponse[]> {
         try {
             const rooms = await this.chatRepository.getRooms();
-
-            return rooms.map(room => this.toRoomResponse(room));
+            return rooms.map((room) => this.toRoomResponse(room));
         } catch (error) {
             if (error instanceof AppError) {
                 throw error;
@@ -51,16 +55,16 @@ export class ChatService {
             return this.toRoomResponse(room);
         } catch (error) {
             if (error instanceof AppError) {
-
                 throw error;
             }
             throw new AppError('Failed to get room by ID!', 500, 'Chat Service');
         }
     }
 
-    async joinRoom(input: JoinRoomInput): Promise<void> {
+    async joinRoom(input: JoinRoomInput): Promise<RoomResponse> {
         try {
-            await this.chatRepository.joinRoom(input);
+            const room = await this.chatRepository.joinRoom(input);
+            return this.toRoomResponse(room);
         } catch (error) {
             if (error instanceof AppError) {
                 throw error;
@@ -77,47 +81,6 @@ export class ChatService {
                 throw error;
             }
             throw new AppError('Failed to leave room!', 500, 'Chat Service');
-        }
-    }
-
-    private broadcastJoinVoiceRoom(input: JoinRoomUserInput): void {
-        try {
-            // Get socket handler instance
-            const socketHandler = getSocketHandler();
-
-            const { roomId, socketId } = input
-            // Option 1: If SocketHandler exposes io
-            if (socketHandler['io']) {
-                const targetSocket = socketHandler['io'].sockets.sockets.get(socketId);
-
-                if (targetSocket) {
-                    socketHandler['voiceRoomManager'].handleJoinVoiceRoom(targetSocket, input)
-                    socketHandler['roomMonitor'].notifyRoomActivity(roomId);
-                }
-
-            }
-        } catch (error) {
-            logger.error('Failed to broadcast new room:', error);
-            // Don't throw - broadcasting failure shouldn't stop room creation
-        }
-    }
-
-    private broadcastLeaveVoiceRoom(input: LeaveRoomUserInput): void {
-        try {
-            // Get socket handler instance
-            const socketHandler = getSocketHandler();
-
-            const { roomId, userId, name } = input
-
-            // Option 1: If SocketHandler exposes io
-            if (socketHandler['io']) {
-                // socketHandler['io'].emit('user-left', input);
-                socketHandler['voiceRoomManager'].handleLeaveVoiceRoom(input)
-                socketHandler['roomMonitor'].checkRoomEmpty(roomId);
-            }
-        } catch (error) {
-            logger.error('Failed to broadcast new room:', error);
-            // Don't throw - broadcasting failure shouldn't stop room creation
         }
     }
 
