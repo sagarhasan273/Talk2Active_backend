@@ -1,5 +1,5 @@
 import mongoose, { Document, Model, Schema } from 'mongoose';
-import { UserType } from 'src/types/user.type';
+import { UserResponseType } from 'src/types/user.type';
 
 export interface UserMessage extends Document {
     // Core message fields
@@ -15,13 +15,13 @@ export interface UserMessage extends Document {
         userId: string;
         name: string;
         avatar?: string;
-    } | mongoose.mongo.ObjectId | UserType;
+    } | mongoose.mongo.ObjectId | UserResponseType;
 
     receiverInfo: {
         userId: string;
         name: string;
         avatar?: string;
-    } | mongoose.Types.ObjectId | UserType;
+    } | mongoose.Types.ObjectId | UserResponseType;
 
     // Thread/conversation context
     conversationId: string;

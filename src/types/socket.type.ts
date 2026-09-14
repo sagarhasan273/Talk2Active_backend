@@ -1,6 +1,6 @@
 import { UserMessage } from "src/models/message.model";
 import { Message } from "./chat.type";
-import { UserType } from "./user.type";
+import { UserResponseType } from "./user.type";
 
 export interface WebRTCData {
     roomId: string,
@@ -26,9 +26,9 @@ export type IndividualMessageData = UserMessage & {
     text: string;
     receiverSocketId: string;
 
-    senderInfo: Partial<UserType>;
+    senderInfo: Partial<UserResponseType>;
 
-    receiverInfo: Partial<UserType>;
+    receiverInfo: Partial<UserResponseType>;
 
     unreadMessageIds?: string[];
 }
@@ -37,7 +37,7 @@ export interface EditIndividualMessageData {
     messageId: string;
     userId: string;
     text: string;
-    receiverInfo: Partial<UserType>;
+    receiverInfo: Partial<UserResponseType>;
 }
 
 export interface GroupMessageData {

@@ -2,8 +2,6 @@
 import { z as zod } from 'zod';
 import { objectIdSchema } from './base.schema';
 
-
-
 // Social Links Sub-Schema
 export const SocialLinksSchema = zod.object({
     facebook: zod.string().url({ message: 'Invalid Facebook URL' }).or(zod.literal('')).optional(),
@@ -21,8 +19,8 @@ export const BlockedUserSchema = zod.object({
 // Main User Schema
 export const UserBaseSchema = zod.object({
     userId: objectIdSchema,
-    genUserId: zod.string().regex(/^USR\d{6}\d{4}$/, {
-        message: 'User ID must follow the format USRYYMMDDCOUNTER',
+    genUserId: zod.string().regex(/^USR[A-F0-9]{10}$/, {
+        message: 'User ID must follow the format USRXXXXXXXXXX',
     }),
     googleId: zod.string(),
     username: zod
@@ -126,16 +124,11 @@ export const VoiceParticipantSchema = UserBaseSchema.pick({
     genUserId: true,
     name: true,
     username: true,
-    email: true,
     profilePhoto: true,
     bio: true,
-    lastActive: true,
     verified: true,
     accountType: true,
     followerCount: true,
     followingCount: true,
     friendCount: true,
-    pendingRequests: true,
-    createdAt: true,
-    updatedAt: true,
 })

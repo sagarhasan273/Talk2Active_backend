@@ -1,29 +1,40 @@
-import { ObjectId } from "mongodb";
-import { RoomModel } from "src/models/chat.model";
-import { getSocketHandler } from "src/socket/setup-handler.socket";
-import { CreateRoomInput, LeaveRoomUserInput, RoomResponse, UpdateRoomInput } from "src/types/chat.type";
-import { AppError } from "src/utils/errors";
-import logger from "src/utils/logger";
+import { ObjectId } from 'mongodb';
+import { RoomModel } from 'src/models/chat.model';
+import {
+    CreateRoomInput,
+    JoinRoomInput,
+    LeaveRoomInput,
+    RoomBase,
+    UpdateRoomInput,
+} from 'src/types/chat.type';
+import { AppError } from 'src/utils/errors';
+import { generateRoomKey } from 'src/utils/generate.room-key';
 
-const commonUserQuery = 'email username name profilePhoto bio lastActive verified accountType'
+const participantQuery = 'genUserId email username name profilePhoto verified accountType';
+const hostQuery = 'genUserId email username name profilePhoto verified accountType';
 
 export class ChatRepository {
-    public async createRoom(input: CreateRoomInput): Promise<void> {
+    public async createRoom(input: CreateRoomInput): Promise<RoomBase> {
         try {
             const { ...createFields } = input;
 
+            const room_key = generateRoomKey();
+            if (!room_key) {
+                throw new AppError('Failed to generate room key', 500, 'Chat Repository');
+            }
+
             const room = await RoomModel.create({
                 ...createFields,
+                room_key,
             });
-
-
-            await room.populate('host', commonUserQuery);
 
             if (!room) {
                 throw new AppError('Failed to create room', 404, 'Chat Repository');
             }
 
-            this.broadcastNewRoom(room);
+            await room.populate('host', hostQuery);
+
+            return room.toJSON();
         } catch (error) {
             if (error instanceof AppError) {
                 throw error;
@@ -32,7 +43,7 @@ export class ChatRepository {
         }
     }
 
-    public async updateRoom(input: UpdateRoomInput): Promise<void> {
+    public async updateRoom(input: UpdateRoomInput): Promise<RoomBase> {
         try {
             const { roomId, ...updateFields } = input;
 
@@ -42,57 +53,57 @@ export class ChatRepository {
                 },
                 {
                     $set: {
-                        ...updateFields
+                        ...updateFields,
                     },
-                }, {
-                new: true,
-            }
-            ).populate('host', commonUserQuery);
+                },
+                {
+                    new: true,
+                }
+            ).populate('host', hostQuery);
 
             if (!room) {
                 throw new AppError('Failed to update room', 404, 'Chat Repository');
             }
 
-            this.broadcastTransferHost({ roomId: room.id, host: room.host });
+            return room.toJSON();
         } catch (error) {
             if (error instanceof AppError) {
                 throw error;
             }
-            throw new AppError('Failed to create Room!', 500, 'Chat Repository');
+            throw new AppError('Failed to update Room!', 500, 'Chat Repository');
         }
     }
 
-    // Get all active rooms
-    public async getRooms(): Promise<RoomResponse[]> {
+    public async getRooms(): Promise<RoomBase[]> {
         try {
             const filter = { isActive: true };
 
             const rooms = await RoomModel.find(filter)
-                .populate('host', commonUserQuery)
-                .populate('participants.user', commonUserQuery)
+                .populate('host', hostQuery)
+                .populate('participants.user', participantQuery)
                 .sort({ createdAt: -1 });
 
-            return rooms.map((r) => r.toJSON() as unknown as RoomResponse);
+            return rooms.map((room) => room.toJSON());
         } catch (error) {
             if (error instanceof AppError) {
                 throw error;
             }
-            throw new AppError('Failed to create Room!', 500, 'Chat Repository');
+            throw new AppError('Failed to fetch rooms!', 500, 'Chat Repository');
         }
-    };
+    }
 
-    public async getRoomById(roomId: string): Promise<RoomResponse> {
+    public async getRoomById(roomId: string): Promise<RoomBase> {
         try {
-            const room = await RoomModel.findOne
-                ({ _id: new ObjectId(roomId) })
-
-                .populate('host', commonUserQuery)
-                .populate('participants.user', commonUserQuery)
+            const room = await RoomModel.findOne({ _id: new ObjectId(roomId) })
+                .populate('host', hostQuery)
+                .populate('participants.user', participantQuery)
                 .sort({ createdAt: -1 });
+
             if (!room) {
                 throw new AppError('Room not found', 404, 'Chat Repository');
             }
-            return room.toJSON() as unknown as RoomResponse;
+
+            return room.toJSON();
         } catch (error) {
             if (error instanceof AppError) {
                 throw error;
@@ -101,21 +112,32 @@ export class ChatRepository {
         }
     }
 
-    public async joinRoom(roomId: string, userId: string): Promise<void> {
+    public async joinRoom(input: JoinRoomInput): Promise<RoomBase> {
+        const { roomId, userId } = input;
         try {
             const room = await RoomModel.findById(roomId);
+
             if (!room) {
                 throw new AppError('Room not found', 404, 'Chat Repository');
             }
-            const isAlreadyParticipant = room.participants.some(participant => participant.user.toString() === userId);
+
+            const isAlreadyParticipant = room.participants.some(
+                (participant) => participant.user.toString() === userId
+            );
 
             if (!isAlreadyParticipant) {
                 if (room.participants.length >= room.max_participants) {
                     throw new AppError('Room is full', 400, 'Chat Repository');
                 }
-                room.participants.push({ user: userId, joinedAt: new Date() });
+
+                room.participants.push({ user: userId as any, joinedAt: new Date() });
                 await room.save();
             }
+
+            await room.populate('host', hostQuery);
+            await room.populate('participants.user', participantQuery);
+
+            return room.toJSON();
         } catch (error) {
             if (error instanceof AppError) {
                 throw error;
@@ -124,7 +146,7 @@ export class ChatRepository {
         }
     }
 
-    public async leaveRoom(input: LeaveRoomUserInput): Promise<void> {
+    public async leaveRoom(input: LeaveRoomInput): Promise<void> {
         try {
             const { roomId, userId, kicked } = input;
 
@@ -132,10 +154,13 @@ export class ChatRepository {
             if (!room) {
                 throw new AppError('Room not found', 404, 'Chat Repository');
             }
-            room.participants = room.participants.filter(participant => participant.user.toString() !== userId);
 
-            if (kicked && !room.kickedUserIds.includes(userId)) {
-                room.kickedUserIds.push(userId);
+            room.participants = room.participants.filter(
+                (participant) => participant.user.toString() !== userId
+            );
+
+            if (kicked && !room.kickedUserIds.includes(userId as any)) {
+                room.kickedUserIds.push(userId as any);
             }
 
             await room.save();
@@ -146,45 +171,4 @@ export class ChatRepository {
             throw new AppError('Failed to leave Room!', 500, 'Chat Repository');
         }
     }
-
-    private broadcastTransferHost(roomData: any): void {
-        try {
-            // Get socket handler instance
-            const socketHandler = getSocketHandler();
-
-            // Option 1: If SocketHandler exposes io
-            if (socketHandler['io']) {
-                socketHandler['io'].emit('room-updated-with-participant', {
-                    type: 'transfer-host',
-                    roomId: roomData?.roomId,
-                    host: roomData?.host,
-                    message: 'Host changes'
-                });
-            }
-        } catch (error) {
-            logger.error('Failed to broadcast new room:', error);
-            // Don't throw - broadcasting failure shouldn't stop room creation
-        }
-    }
-
-    private broadcastNewRoom(roomData: any): void {
-        try {
-            // Get socket handler instance
-            const socketHandler = getSocketHandler();
-
-            // Option 1: If SocketHandler exposes io
-            if (socketHandler['io']) {
-                socketHandler['io'].emit('new-room-created', {
-                    room: roomData,
-                    timestamp: new Date(),
-                    message: 'A new voice room has been created!'
-                });
-            }
-        } catch (error) {
-            logger.error('Failed to broadcast new room:', error);
-            // Don't throw - broadcasting failure shouldn't stop room creation
-        }
-    }
-
-
 }

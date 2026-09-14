@@ -2,7 +2,7 @@
 import { ObjectId } from 'mongodb';
 import { RelationshipModel } from 'src/models/social.model';
 import { UserModel } from 'src/models/user.model';
-import { UserType } from 'src/types/user.type';
+import { UserResponseType } from 'src/types/user.type';
 import { AppError } from 'src/utils/errors';
 import { RelationshipStatusEnum, RelationshipTypeEnum } from '../enums/social.enum';
 
@@ -349,7 +349,7 @@ export class UserSuggestionRepository {
         userId: string,
         page: number = 1,
         limit: number = 10
-    ): Promise<{ newUsers: UserType[], total: number, totalPages: number }> {
+    ): Promise<{ newUsers: UserResponseType[], total: number, totalPages: number }> {
         const skip = (page - 1) * limit;
         // This would require a User model to get recently created accounts
         // Assuming you have a User model with createdAt field

@@ -1,18 +1,22 @@
 import { LanguageLevelEnum } from 'src/enums/chat.enum';
 import { z } from 'zod';
 import { objectIdSchema } from './base.schema';
-import { UserBaseSchema } from './user.schema';
+import { UserResponseSchema } from './user.schema';
 
 export const RoomBaseSchema = z.object({
+    roomId: objectIdSchema,
+    room_key: z.string().regex(/^RM[A-F0-9]{10}$/, {
+        message: 'Room key must follow the format RMXXXXXXXXXX',
+    }),
     topic: z.string().min(1, "name is required"),
     welcome_message: z.string().optional().default('Welcome to the room!'),
     languages: z.array(z.string().min(1, "languages is required")),
     level: z.nativeEnum(LanguageLevelEnum),
     max_participants: z.number().int().nonnegative().optional().default(10),
-    host: objectIdSchema,
+    host: z.union([objectIdSchema, UserResponseSchema]),
     participants: z.array(
         z.object({
-            user: objectIdSchema,
+            user: z.union([objectIdSchema, UserResponseSchema]),
             joinedAt: z.preprocess(
                 (arg) => (typeof arg === 'string' || arg instanceof Date ? new Date(arg as any) : arg),
                 z.date()
@@ -20,7 +24,10 @@ export const RoomBaseSchema = z.object({
         })
     ).optional().default([]),
     isActive: z.boolean().optional().default(true),
-    kickedUserIds: z.array(objectIdSchema)
+    kickedUserIds: z.array(objectIdSchema),
+
+    createdAt: z.date().optional(),
+    updatedAt: z.date().optional(),
 });
 
 // Schema to validate incoming create payloads (timestamps not expected)
@@ -47,12 +54,12 @@ export const RoomUpdateSchema = RoomBaseSchema.pick({
 
 // Schema to validate objects returned from DB (includes mongoose timestamps)
 export const RoomResponseSchema = RoomBaseSchema.extend({
-    _id: objectIdSchema,
-    host: UserBaseSchema,
+    roomId: objectIdSchema,
+    host: UserResponseSchema,
     participants: z
         .array(
             z.object({
-                user: UserBaseSchema,
+                user: UserResponseSchema,
                 joinedAt: z.preprocess(
                     (arg) => (typeof arg === 'string' || arg instanceof Date ? new Date(arg as any) : arg),
                     z.date()
@@ -61,8 +68,17 @@ export const RoomResponseSchema = RoomBaseSchema.extend({
         )
         .optional()
         .default([]),
-    createdAt: z.preprocess((arg) => new Date(arg as any), z.date()),
-    updatedAt: z.preprocess((arg) => new Date(arg as any), z.date())
+});
+
+export const JoinRoomSchema = z.object({
+    roomId: objectIdSchema,
+    userId: objectIdSchema,
+});
+
+export const LeaveRoomSchema = z.object({
+    roomId: objectIdSchema,
+    userId: objectIdSchema,
+    kicked: z.boolean().optional().default(false)
 });
 
 

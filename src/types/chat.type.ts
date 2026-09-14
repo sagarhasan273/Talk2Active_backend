@@ -1,4 +1,4 @@
-import { RoomBaseSchema, RoomCreateSchema, RoomResponseSchema, RoomUpdateSchema } from "src/schemas/chat.schema";
+import { JoinRoomSchema, LeaveRoomSchema, RoomBaseSchema, RoomCreateSchema, RoomResponseSchema, RoomUpdateSchema } from "src/schemas/chat.schema";
 import { z } from 'zod';
 import { UserBaseType } from "./user.type";
 
@@ -6,6 +6,8 @@ export type RoomBase = z.infer<typeof RoomBaseSchema>;
 export type CreateRoomInput = z.infer<typeof RoomCreateSchema>;
 export type UpdateRoomInput = z.infer<typeof RoomUpdateSchema>;
 export type RoomResponse = z.infer<typeof RoomResponseSchema>;
+export type JoinRoomInput = z.infer<typeof JoinRoomSchema>;
+export type LeaveRoomInput = z.infer<typeof LeaveRoomSchema>;
 
 // Message
 export type Reaction = {
@@ -53,7 +55,7 @@ export type JoinRoomUserInput = {
     profilePhoto: string;
     isMuted: boolean;
     status: string;
-    userType: 'host' | 'guest'
+    UserResponseType: 'host' | 'guest'
 };
 
 export type LeaveRoomUserInput = {

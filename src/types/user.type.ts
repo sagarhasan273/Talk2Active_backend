@@ -3,7 +3,7 @@ import { z as zod } from 'zod';
 
 // Type Definitions
 export type UserBaseType = zod.infer<typeof UserBaseSchema>;
-export type UserType = zod.infer<typeof UserResponseSchema>;
+export type UserResponseType = zod.infer<typeof UserResponseSchema>;
 export type CreateUserInput = zod.infer<typeof CreateUserSchema>;
 export type UpdateUserInput = zod.infer<typeof UpdateUserSchema>;
 export type LogInUserInput = zod.infer<typeof LogInUserSchema>;

@@ -5,6 +5,16 @@ import { RoomBase } from 'src/types/chat.type';
 
 
 const RoomSchema: Schema = new Schema<RoomBase & Document>({
+    room_key: {
+        type: String,
+        required: true,
+        unique: true,
+        immutable: true,
+        match: [
+            /^RM[A-F0-9]{10}$/,
+            'User ID must follow the format RMXXXXXXXXXX',
+        ],
+    },
     topic: {
         type: String,
         required: true

@@ -12,5 +12,8 @@ export class InventoryRouter extends BaseRouter {
     this.router.post('/image/upload', uploadImage.single('image'), (req, res) =>
       this.inventoryController.uploadImage(req, res)
     );
+    this.router.post('/ai/ask', (req, res) =>
+      this.inventoryController.askAi(req, res)
+    );
   }
 }

@@ -2,7 +2,7 @@
 
 import { UserRepository } from 'src/repositories/user.repository';
 import { ReturnResponseType } from 'src/types/base.type';
-import { CreateUserInput, LogInUserInput, UpdateUserInput, UserAccessToken, UserType } from 'src/types/user.type';
+import { CreateUserInput, LogInUserInput, UpdateUserInput, UserAccessToken, UserResponseType } from 'src/types/user.type';
 import { AppError } from 'src/utils/errors';
 import { JwtService } from './auth/jwt.service';
 import { PasswordService } from './auth/password.service';
@@ -54,7 +54,7 @@ export class UserService {
     }
   }
 
-  public async getUserById(id: string): Promise<UserType> {
+  public async getUserById(id: string): Promise<UserResponseType> {
     try {
       const user = await this.repository.getUserById(id);
 
@@ -69,7 +69,7 @@ export class UserService {
     }
   }
 
-  public async getUser(token: string): Promise<UserType> {
+  public async getUser(token: string): Promise<UserResponseType> {
     try {
       const decodedToken = JwtService.decodeToken(token);
       if (!decodedToken) throw new Error('Invalid token');

@@ -1,19 +1,7 @@
-let dailyCounter = 4;
-let lastDate: string | null = null;
+import { randomBytes } from 'node:crypto';
 
 export function generateUserId(prefix = 'USR'): string {
-  const now = new Date();
-  const currentDate = now.toISOString().split('T')[0].replace(/-/g, '').slice(2); // YYMMDD format
+  const random = randomBytes(5).toString('hex').toUpperCase();
 
-  // Reset counter if it's a new day
-  if (lastDate !== currentDate) {
-    dailyCounter = 7;
-    lastDate = currentDate;
-  }
-
-  dailyCounter++;
-
-  const counterPart = dailyCounter.toString().padStart(4, '0'); // 4-digit counter
-
-  return `${prefix}${currentDate}${counterPart}`;
+  return `${prefix}${random}`;
 }
