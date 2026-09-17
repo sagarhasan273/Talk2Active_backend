@@ -4,7 +4,7 @@ import { JwtService } from 'src/services/auth/jwt.service';
 import { MessageService } from 'src/services/message.service';
 
 interface AuthRequest extends Request {
-    user?: { id: string; name: string };
+    user?: { userId: string; name: string };
 }
 
 export class MessageController {
@@ -60,7 +60,7 @@ export class MessageController {
 
     public static async updateMessage(req: AuthRequest, res: Response): Promise<void> {
         try {
-            const currentUserId = req.user?.id;
+            const currentUserId = req.user?.userId;
             const { messageId } = req.params;
             if (!currentUserId) {
                 res.status(401).json({ error: 'Unauthorized' });
@@ -83,7 +83,7 @@ export class MessageController {
 
     public static async toggleReaction(req: AuthRequest, res: Response): Promise<void> {
         try {
-            const currentUserId = req.user?.id;
+            const currentUserId = req.user?.userId;
             const { messageId } = req.params;
             if (!currentUserId) {
                 res.status(401).json({ error: 'Unauthorized' });

@@ -1,5 +1,10 @@
 import { MessageRepository } from 'src/repositories/message.repository';
 import { CreateMessageDto } from 'src/schemas/message.schema';
+import {
+    emitMessageEdited,
+    emitNewMessage,
+    emitReactionToggled,
+} from 'src/socket';
 
 import {
     IChatMessageDoc,
@@ -64,7 +69,16 @@ export class MessageService {
             reactions: [],
         });
 
-        return this.formatMessage(doc, authorId);
+        const formattedMessage = this.formatMessage(doc, authorId);
+
+        // SOCKET.IO GLOBAL DISPATCH: Send data directly to the recipient's personal room
+        try {
+            emitNewMessage(dto.recipientId, formattedMessage as any);
+        } catch (socketError) {
+            console.error('Failed to dispatch global Socket message:', socketError);
+        }
+
+        return formattedMessage;
     }
 
     public static async editMessage(messageId: string, userId: string, text: string): Promise<IFrontendChatMessage> {
@@ -73,7 +87,16 @@ export class MessageService {
         if (doc.authorId !== userId) throw new Error('FORBIDDEN');
 
         const updated = await MessageRepository.updateText(messageId, userId, text);
-        return this.formatMessage(updated, userId);
+        const formattedMessage = this.formatMessage(updated, userId);
+
+        // Broadcast edit to recipient via Socket.io
+        try {
+            emitMessageEdited(doc.recipientId, formattedMessage as any);
+        } catch (socketError) {
+            console.error('Failed to dispatch global Socket edit message:', socketError);
+        }
+
+        return formattedMessage;
     }
 
     public static async toggleReaction(
@@ -107,6 +130,18 @@ export class MessageService {
         }
 
         const updated = await MessageRepository.updateReactions(messageId, reactions);
-        return this.formatMessage(updated, userId);
+        const formattedMessage = this.formatMessage(updated, userId);
+
+        // Broadcast reaction toggle to recipient via Socket.io
+        try {
+            emitReactionToggled(doc.recipientId, {
+                messageId,
+                reactions: formattedMessage.reactions || []
+            });
+        } catch (socketError) {
+            console.error('Failed to dispatch global Socket reaction:', socketError);
+        }
+
+        return formattedMessage;
     }
 }
