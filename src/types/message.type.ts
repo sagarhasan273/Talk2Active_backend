@@ -23,6 +23,8 @@ export interface IChatMessageDoc {
     systemType?: SystemType;
     replyToId?: string;
     editedAt?: number;
+    isRead?: boolean; // <-- Added
+    readAt?: Date;    // <-- Added
     reactions: IReaction[];
     createdAt: Date;
     updatedAt: Date;
@@ -37,6 +39,8 @@ export interface IFrontendChatMessage {
     authorId?: string;
     authorName?: string;
     editedAt?: number;
+    isRead?: boolean; // <-- Added
+    readAt?: Date;    // <-- Added
     reactions?: IFrontendReaction[];
     replyToId?: string;
     createdAt: string;

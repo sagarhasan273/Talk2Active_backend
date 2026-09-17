@@ -103,4 +103,31 @@ export class MessageController {
             res.status(status).json({ error: err.message });
         }
     }
+
+    public static async readMessages(req: AuthRequest, res: Response): Promise<void> {
+        try {
+            const currentUserId = req.user?.userId;
+
+            if (!currentUserId) {
+                res.status(401).json({ error: 'Unauthorized' });
+                return;
+            }
+
+            const { userId1, userId2 } = req.params;
+
+            if (!currentUserId) {
+                res.status(401).json({ error: 'Unauthorized' });
+                return;
+            }
+
+            // If the current user is userId1, then the target is userId2 (and vice versa)
+            const targetUserId = currentUserId === userId1 ? userId2 : userId1;
+
+            await MessageService.markAsRead(currentUserId, targetUserId);
+
+            res.status(200).json({ success: true, message: 'Messages marked as read', data: null });
+        } catch (error: any) {
+            res.status(500).json({ error: error.message || 'Internal Server Error' });
+        }
+    }
 }

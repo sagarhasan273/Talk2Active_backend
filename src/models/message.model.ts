@@ -28,6 +28,8 @@ const MessageSchema = new Schema<IMessageDocument>(
         },
         replyToId: { type: String, default: null },
         editedAt: { type: Number, default: null },
+        isRead: { type: Boolean, default: false }, // <-- Added
+        readAt: { type: Date, default: null },     // <-- Added
         reactions: { type: [ReactionSchema], default: [] },
         createdAt: {
             type: Date,

@@ -2,6 +2,7 @@ import { MessageRepository } from 'src/repositories/message.repository';
 import { CreateMessageDto } from 'src/schemas/message.schema';
 import {
     emitMessageEdited,
+    emitMessagesRead,
     emitNewMessage,
     emitReactionToggled,
 } from 'src/socket';
@@ -143,5 +144,19 @@ export class MessageService {
         }
 
         return formattedMessage;
+    }
+
+    // --> ADDED: Service logic to mark messages as read
+    public static async markAsRead(currentUserId: string, targetUserId: string): Promise<void> {
+        // currentUserId is the recipient reading the message
+        // targetUserId is the author who sent the messages
+        await MessageRepository.markMessagesAsRead(currentUserId, targetUserId);
+
+        // Broadcast via socket to the sender that their messages have been read
+        try {
+            emitMessagesRead(targetUserId, currentUserId);
+        } catch (err) {
+            console.error('Failed to dispatch message read event:', err);
+        }
     }
 }

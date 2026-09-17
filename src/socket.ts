@@ -128,3 +128,12 @@ export const emitReactionToggled = (
     if (!io) return;
     io.to(recipientId).emit('message_reaction', payload);
 };
+
+// ... inside your src/core/socket.ts file ...
+
+export const emitMessagesRead = (senderId: string, recipientId: string): void => {
+    const io = getIO();
+    if (!io) return;
+    // Let the sender know that the recipient has read their messages
+    io.to(senderId).emit('messages_read', { readBy: recipientId });
+};

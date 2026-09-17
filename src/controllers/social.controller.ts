@@ -227,7 +227,7 @@ export class RelationshipController {
                 throw new AppError('User ID is required', 400, 'User Controller');
             }
             const result = await this.relationshipService.getFollowers(userId, page, limit);
-            res.status(200).json({ status: true, message: 'Followers fetched successfully', data: result });
+            res.status(200).json({ status: true, message: 'Followers fetched successfully', ...result });
         } catch (error) {
             if (error instanceof AppError) {
                 logger.error(`${error.at}: ${error.message}`);

@@ -36,4 +36,11 @@ export class MessageRepository {
             { new: true }
         ).exec();
     }
+
+    public static async markMessagesAsRead(recipientId: string, authorId: string): Promise<void> {
+        await MessageModel.updateMany(
+            { recipientId, authorId, isRead: false },
+            { $set: { isRead: true, readAt: new Date() } }
+        ).exec();
+    }
 }

@@ -10,5 +10,6 @@ export class MessageRouter extends BaseRouter {
         this.router.post('/save', authMiddleware, MessageController.saveMessage);
         this.router.patch('/:messageId', authMiddleware, MessageController.updateMessage);
         this.router.post('/:messageId/reactions', authMiddleware, MessageController.toggleReaction);
+        this.router.post('/:userId1/:userId2/read', MessageController.readMessages);
     }
 }
