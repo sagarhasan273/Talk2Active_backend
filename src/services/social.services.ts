@@ -3,12 +3,9 @@ import { RelationshipRepository } from "src/repositories/social.repository";
 import { ReturnResponseType } from "src/types/base.type";
 import { BatchRelationshipStatus, RelationshipInput, RelationshipType } from "src/types/social.type";
 import { AppError } from "src/utils/errors";
-import { MessageService } from "./message.service";
 
 
 export class RelationshipService {
-    private messageService = new MessageService();
-
     private relationshipRepository = new RelationshipRepository();
 
     async followUser(input: RelationshipInput): Promise<void> {
@@ -154,9 +151,6 @@ export class RelationshipService {
     async getFriends(userId: string, page: number = 1, limit: number = 10): Promise<ReturnResponseType> {
         try {
             const { relationships, total, totalPages } = await this.relationshipRepository.getFriends(userId, page, limit);
-
-            const sortedRelationships = await this.messageService.sortFriendsByLatestMessage(relationships, userId);
-
             const metaData = {
                 page,
                 limit,
@@ -167,7 +161,7 @@ export class RelationshipService {
             }
 
 
-            return { data: sortedRelationships, metaData }
+            return { data: relationships, metaData }
         } catch (error) {
             if (error instanceof AppError) {
                 throw error;

@@ -1,229 +1,112 @@
-// utils/messageUtils.ts
-import { MessageModel, UserMessage } from 'src/models/message.model';
 import { MessageRepository } from 'src/repositories/message.repository';
-import { Message } from 'src/types/chat.type';
-import { AllRelationsType } from 'src/types/social.type';
+import { CreateMessageDto } from 'src/schemas/message.schema';
+
+import {
+    IChatMessageDoc,
+    IFrontendChatMessage,
+    IFrontendReaction,
+    IReaction,
+} from 'src/types/message.type';
 
 export class MessageService {
-    private messageRepository = new MessageRepository();
-
-    // Generate conversation ID between two users
-    public generateConversationId(userId1: string, userId2: string): string {
-        const sortedIds = [userId1, userId2].sort();
-        return `conversation_${sortedIds[0]}_${sortedIds[1]}`;
+    public static getRoomId(userA: string, userB: string): string {
+        return `chat_${[userA, userB].sort().join('_')}`;
     }
 
-    // Save a new message
-    public async saveMessage(messageData: Partial<UserMessage>): Promise<UserMessage> {
-        return await this.messageRepository.saveMessage(messageData);
-    }
+    public static formatMessage(
+        doc: IChatMessageDoc | any,
+        currentUserId: string
+    ): IFrontendChatMessage {
+        const reactions: IFrontendReaction[] = (doc.reactions || []).map((r: IReaction) => ({
+            emoji: r.emoji,
+            count: r.userIds.length,
+            reactedBySelf: r.userIds.includes(currentUserId),
+        }));
 
-    // Edit an existing message
-    public async editMessage(
-        messageId: Message['id'],
-        newText: string
-    ): Promise<UserMessage | null> {
-        return await this.messageRepository.editMessage(messageId, newText);
-    }
-
-    // update message
-    public async updateMessage(
-        messageId: Message['id'],
-        input: Partial<UserMessage>
-    ): Promise<UserMessage | null> {
-        return await this.messageRepository.updateMessage(messageId, input);
-    }
-
-    public async updateMessages(
-        messageIds: Message['id'][],
-        input: Partial<UserMessage>
-    ): Promise<void> {
-        return await this.messageRepository.updateMessages(messageIds, input);
-    }
-
-    public async updateReactions(
-        messageId: Message['id'],
-        reactionData: { userId: string; emoji: string }
-    ): Promise<UserMessage | null> {
-        return await this.messageRepository.updateReactions(messageId, reactionData);
-    }
-
-    // Get messages between two users
-    public async getMessages(
-        userId1: string,
-        userId2: string,
-        limit: number = 20,
-        before?: Date
-    ): Promise<Message[]> {
-        const conversationId = this.generateConversationId(userId1, userId2);
-
-        const query: any = {
-            conversationId,
-            isDeleted: false,
+        return {
+            id: doc._id.toString(),
+            text: doc.text,
+            isSelf: doc.isSystem ? false : doc.authorId === currentUserId,
+            isSystem: doc.isSystem || false,
+            systemType: doc.systemType,
+            authorId: doc.authorId,
+            authorName: doc.authorName,
+            editedAt: doc.editedAt,
+            replyToId: doc.replyToId || undefined,
+            reactions,
+            createdAt: doc.createdAt ? new Date(doc.createdAt).toISOString() : new Date().toISOString(),
         };
+    }
 
-        if (before) {
-            query.createdAt = { $lt: before };
-        }
+    public static async getHistory(currentUserId: string, targetUserId: string): Promise<IFrontendChatMessage[]> {
+        const roomId = this.getRoomId(currentUserId, targetUserId);
+        const docs = await MessageRepository.findByRoom(roomId);
+        return docs.map((doc) => this.formatMessage(doc, currentUserId));
+    }
 
-        const messages = await this.messageRepository.getMessages(conversationId, limit, before);
+    public static async saveMessage(
+        authorId: string,
+        authorName: string,
+        dto: CreateMessageDto
+    ): Promise<IFrontendChatMessage> {
+        const roomId = this.getRoomId(authorId, dto.recipientId);
 
-        let startOfUnread = -1;
-
-        const transformed: Message[] = messages.reverse().map(msg => {
-            if (msg.isUnread) {
-                startOfUnread += 1;
-            }
-            return {
-                id: (msg as any)._id.toString() as string,
-                text: msg.text,
-                time: msg.time as Date,
-                startOfUnread: startOfUnread === 0,
-                isUnread: msg.isUnread,
-                isDeleted: msg.isDeleted,
-                isEdited: msg.isEdited,
-                type: msg.type,
-                conversationId: msg.conversationId,
-                sender: (msg.senderInfo as any)._id.toString() === userId1 ? 'me' : 'them',
-                senderInfo: msg.senderInfo && {
-                    id: (msg.senderInfo as any)._id as string,
-                    name: (msg.senderInfo as any).name as string,
-                    profilePhoto: (msg.senderInfo as any).profilePhoto as string,
-                },
-                receiverInfo: msg.receiverInfo && {
-                    id: (msg.receiverInfo as any)._id as string,
-                    name: (msg.receiverInfo as any).name as string,
-                    profilePhoto: (msg.receiverInfo as any).profilePhoto as string,
-                },
-                isReply: msg.isReply,
-                parentMessage: msg.isReply ? {
-                    id: msg.parentMessage?._id?.toString() as string | undefined,
-                    text: (msg.parentMessage as any)?.text as string | undefined,
-                    createdAt: (msg.parentMessage as any)?.createdAt as Date | undefined,
-                } : undefined,
-                reactions: msg.reactions?.map(reaction => ({
-                    reactId: (reaction as any)._id.toString(),
-                    userId: reaction.userId.toString(),
-                    emoji: reaction.emoji,
-                })) || [],
-            }
+        const doc = await MessageRepository.create({
+            ...(dto.id ? { _id: dto.id as any } : {}),
+            roomId,
+            authorId: dto.isSystem ? undefined : authorId,
+            authorName: dto.isSystem ? undefined : authorName,
+            recipientId: dto.recipientId,
+            text: dto.text,
+            isSystem: dto.isSystem || false,
+            systemType: dto.systemType,
+            replyToId: dto.replyToId,
+            reactions: [],
         });
 
-        return transformed;
+        return this.formatMessage(doc, authorId);
     }
 
-    // Mark messages as read
-    public async markAsRead(
-        conversationId: string,
-        userId: string
-    ): Promise<number> {
-        const result = await MessageModel.updateMany(
-            {
-                conversationId,
-                'senderInfo.userId': { $ne: userId }, // Messages not from this user
-                isUnread: true,
-            },
-            {
-                $set: { isUnread: false },
-            }
-        );
+    public static async editMessage(messageId: string, userId: string, text: string): Promise<IFrontendChatMessage> {
+        const doc = await MessageRepository.findById(messageId);
+        if (!doc) throw new Error('NOT_FOUND');
+        if (doc.authorId !== userId) throw new Error('FORBIDDEN');
 
-        return result.modifiedCount;
+        const updated = await MessageRepository.updateText(messageId, userId, text);
+        return this.formatMessage(updated, userId);
     }
 
-    // Soft delete a message
-    public async deleteMessage(
-        messageId: string,
-        userId: string
-    ): Promise<UserMessage | null> {
-        return await MessageModel.findOneAndUpdate(
-            {
-                _id: messageId,
-                'senderInfo.userId': userId, // Only allow sender to delete
-            },
-            {
-                $set: {
-                    isDeleted: true,
-                    deletedAt: new Date(),
-                    text: 'Message deleted', // Optionally clear the text
-                },
-            },
-            { new: true }
-        );
-    }
-
-    // Add reaction to a message
-    public async addReaction(
+    public static async toggleReaction(
         messageId: string,
         userId: string,
         emoji: string
-    ): Promise<UserMessage | null> {
-        return await MessageModel.findByIdAndUpdate(
-            messageId,
-            {
-                $push: {
-                    reactions: {
-                        userId,
-                        emoji,
-                        createdAt: new Date(),
-                    },
-                },
-            },
-            { new: true }
-        );
-    }
+    ): Promise<IFrontendChatMessage> {
+        const doc = await MessageRepository.findById(messageId);
+        if (!doc) throw new Error('NOT_FOUND');
 
-    public async sortFriendsByLatestMessage(friendsList: AllRelationsType[], userId: string): Promise<any[]> {
-        try {
-            // Query messages to find latest for each conversation
-            const conversations = await this.messageRepository.getConversationsByUserId(userId);
+        let reactions: IReaction[] = doc.reactions || [];
+        const targetIdx = reactions.findIndex((r) => r.emoji === emoji);
 
-            // Create a map of friendId -> latest message time
-            const latestMessageMap: { [key: string]: number } = {};
-            const latestMessagesMap: { [key: string]: AllRelationsType['latestMessage'] } = {};
+        if (targetIdx > -1) {
+            const match = reactions[targetIdx];
+            const hasReacted = match.userIds.includes(userId);
 
-            conversations.forEach(msg => {
-                const friendId = msg.senderInfo.toString() === userId ? msg.receiverInfo.toString() : msg.senderInfo.toString();
-                const msgTime = new Date(msg.createdAt).getTime();
-
-                if (!latestMessageMap[friendId] || msgTime > latestMessageMap[friendId]) {
-                    latestMessageMap[friendId] = msgTime;
-                    latestMessagesMap[friendId] = {
-                        _id: msg._id,
-                        text: msg.text,
-                        createdAt: msg.createdAt,
-                        time: msg.time,
-                        isUnread: msg.senderInfo.toString() === userId ? false : msg.isUnread,
-                    };
-                }
-            });
-
-            if (friendsList.length === 1) {
-                return friendsList.map(friend => {
-                    const friendId = friend.accountDetails.userId.toString();
-                    return {
-                        ...friend,
-                        latestMessage: latestMessagesMap[friendId] || null,
-                    };
-                });
+            if (hasReacted) {
+                match.userIds = match.userIds.filter((id) => id !== userId);
+            } else {
+                match.userIds.push(userId);
             }
 
-            // Sort friends based on latest message time
-            return friendsList.sort((a, b) => {
-                const timeA = latestMessageMap[a.accountDetails.userId.toString()] || 0;
-                const timeB = latestMessageMap[b.accountDetails.userId.toString()] || 0;
-                a['latestMessage'] = latestMessagesMap[a.accountDetails.userId.toString()] || null;
-                b['latestMessage'] = latestMessagesMap[b.accountDetails.userId.toString()] || null;
-                return timeB - timeA;
-            });
-        } catch (error) {
-            return friendsList;
+            if (match.userIds.length === 0) {
+                reactions.splice(targetIdx, 1);
+            } else {
+                reactions[targetIdx] = match;
+            }
+        } else {
+            reactions.push({ emoji, userIds: [userId] });
         }
-    }
 
-    public async readMessages(userId1: string, userId2: string): Promise<void> {
-        const conversationId = this.generateConversationId(userId1, userId2);
-
-        await this.messageRepository.readMessages(conversationId);
+        const updated = await MessageRepository.updateReactions(messageId, reactions);
+        return this.formatMessage(updated, userId);
     }
 }
