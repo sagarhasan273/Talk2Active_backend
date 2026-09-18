@@ -4,14 +4,25 @@ import { UserModel } from 'src/models/user.model';
 import { JwtService } from 'src/services/auth/jwt.service';
 import { AppError } from 'src/utils/errors';
 import { generateUserId } from 'src/utils/generate.userId';
+
 const client = new OAuth2Client(
   process.env.GOOGLE_CLIENT_ID,
-  process.env.GOOGLE_CLIENT_SECRET,
+  process.env.GOOGLE_CLIENT_SECRET
 );
+
+// ── Image Resolution Helper ─────────────────────────────────────────────
+function getHighResGoogleAvatar(url?: string | null, size: number = 512): string {
+  if (!url) return '';
+  // Replaces default low-res =s96-c, =s96, etc., with higher resolution
+  if (url.includes('googleusercontent.com')) {
+    return url.replace(/=s\d+(-c)?$/, `=s${size}-c`);
+  }
+  return url;
+}
 
 export class AuthController {
   // ── Desktop: access_token flow ──────────────────────────────────────────
-  public async googleLogin(req: Request, res: Response): Promise<void> {
+  public googleLogin = async (req: Request, res: Response): Promise<void> => {
     try {
       const { token } = req.body;
 
@@ -31,10 +42,10 @@ export class AuthController {
       const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
       res.status(500).json({ message: errorMessage });
     }
-  }
+  };
 
   // ── Mobile: auth-code flow ──────────────────────────────────────────────
-  public async googleLoginMobile(req: Request, res: Response): Promise<void> {
+  public googleLoginMobile = async (req: Request, res: Response): Promise<void> => {
     try {
       const { code, redirect_uri } = req.body;
 
@@ -80,17 +91,20 @@ export class AuthController {
       const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
       res.status(500).json({ message: errorMessage });
     }
-  }
+  };
 
   // ── Shared logic ────────────────────────────────────────────────────────
   private async findOrCreateUser(sub: string, email: string, name: string, picture: string) {
+    // Transform default 96px image to 512px crisp resolution
+    const highResPicture = getHighResGoogleAvatar(picture, 512);
+
     let user = await UserModel.findOne({ googleId: sub });
     if (!user) {
       user = await UserModel.findOne({ email });
 
       if (user) {
         user.googleId = sub;
-        user.profilePhoto = picture;
+        user.profilePhoto = highResPicture;
         await user.save();
       } else {
         const userId = generateUserId();
@@ -107,17 +121,21 @@ export class AuthController {
           email,
           name,
           username: name,
-          profilePhoto: picture,
+          profilePhoto: highResPicture,
           lastActive: now,
-        }
+        };
 
         user = await UserModel.create(userData);
       }
+    } else if (user.profilePhoto !== highResPicture) {
+      // Optional: keep existing users' avatars updated to high-res on login
+      user.profilePhoto = highResPicture;
+      await user.save();
     }
 
     const { ...rest } = user.toJSON();
 
-    const accessToken = JwtService.generateToken({ ...rest, userId: rest.userId, });
+    const accessToken = JwtService.generateToken({ ...rest, userId: rest.userId });
 
     return { token: accessToken, status: true, user: rest };
   }
