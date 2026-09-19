@@ -9,7 +9,7 @@ import {
 	RoomResponse,
 	RoomUpdateInput,
 } from 'src/types/chat.type';
-import { AppError } from 'src/utils/errors';
+import { AppError, DatabaseError } from 'src/utils/errors';
 
 export class ChatService {
 	private chatRepository = new ChatRepository();
@@ -115,23 +115,22 @@ export class ChatService {
 	 * Fetches all rooms and enriches all participants/hosts in a SINGLE relationship query.
 	 */
 	async getRooms(currentUserId?: string): Promise<RoomResponse[]> {
-		let errorMessage = 'Sorry, something went wrong while processing your request.';
 		try {
 			const rooms = await this.chatRepository.getRooms();
-
 			if (!rooms.length) return [];
 
 			if (currentUserId) {
-				const { followingSet, blockedSet } = await this.socialRepository.getRelationshipIds(
-					currentUserId as string
-				);
+				const { followingSet, blockedSet } = await this.socialRepository.getRelationshipIds(currentUserId);
 				return rooms.map((room) => this.toRoomResponse(room, followingSet, blockedSet));
 			}
 
 			return rooms.map((room) => this.toRoomResponse(room));
 		} catch (error) {
-			if (error instanceof AppError) throw error;
-			throw new AppError(errorMessage, 500, 'Chat Service');
+			const message = error instanceof DatabaseError
+				? 'Failed to retrieve voice rooms from database'
+				: 'Unable to process voice rooms request';
+
+			throw new AppError(message, 500, 'ChatService.getRooms');
 		}
 	}
 

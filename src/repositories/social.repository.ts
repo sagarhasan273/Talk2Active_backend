@@ -9,7 +9,7 @@ import {
     UpdateRelationshipInput,
     UserStats
 } from 'src/types/social.type';
-import { AppError } from 'src/utils/errors';
+import { AppError, DatabaseError } from 'src/utils/errors';
 
 export const CommonRelationshipPopulateQuery =
     'email username name firstName lastName profilePhoto avatarUrl bio status lastActive verified accountType follower_count following_count friend_count pendingRequests genUserId';
@@ -174,23 +174,33 @@ export class RelationshipRepository {
         followingSet: Set<string>;
         blockedSet: Set<string>;
     }> {
-        const relationships = await RelationshipModel.find({
-            requester: new ObjectId(userId),
-            type: { $in: [RelationshipTypeEnum.FOLLOW, RelationshipTypeEnum.BLOCK] },
-        });
+        try {
+            const relationships = await RelationshipModel.find(
+                {
+                    requester: new ObjectId(userId),
+                    type: { $in: [RelationshipTypeEnum.FOLLOW, RelationshipTypeEnum.BLOCK] },
+                },
+                { recipient: 1, type: 1 }
+            ).lean();
 
-        const followingSet = new Set<string>();
-        const blockedSet = new Set<string>();
+            const followingSet = new Set<string>();
+            const blockedSet = new Set<string>();
 
-        relationships.map(relationship => {
-            if (relationship.type === RelationshipTypeEnum.FOLLOW) {
-                followingSet.add(relationship.recipient.toString())
-            } else {
-                blockedSet.add(relationship.recipient.toString())
+            for (const rel of relationships) {
+                const recipientId = rel.recipient?.toString();
+                if (!recipientId) continue;
+
+                if (rel.type === RelationshipTypeEnum.FOLLOW) {
+                    followingSet.add(recipientId);
+                } else if (rel.type === RelationshipTypeEnum.BLOCK) {
+                    blockedSet.add(recipientId);
+                }
             }
-        })
 
-        return { followingSet, blockedSet };
+            return { followingSet, blockedSet };
+        } catch (error) {
+            throw new DatabaseError(error, 'RelationshipRepository.getRelationshipIds');
+        }
     }
 
 

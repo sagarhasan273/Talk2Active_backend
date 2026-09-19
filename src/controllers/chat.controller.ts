@@ -65,7 +65,7 @@ export class ChatController {
     }
 
     public async getRooms(req: Request, res: Response): Promise<void> {
-        const currentUserId = req.user?.userId
+        const currentUserId = req.user?.userId;
 
         try {
             const rooms = await this.chatService.getRooms(currentUserId);
@@ -77,12 +77,20 @@ export class ChatController {
             });
         } catch (error) {
             if (error instanceof AppError) {
-                logger.error(`${error.at}: ${error.message}`);
-                res.status(error.statusCode).json({ message: error.message, status: false });
+                res.status(error.statusCode).json({
+                    status: false,
+                    message: error.message,
+                    at: error.at,
+                });
                 return;
             }
-            logger.error('An error occurred while fetching rooms');
-            res.status(500).json({ message: 'An error occurred while fetching rooms', status: false });
+
+            logger.error('[Unhandled Exception] ChatController.getRooms', { error });
+
+            res.status(500).json({
+                status: false,
+                message: 'An unexpected error occurred while fetching rooms',
+            });
         }
     }
 

@@ -7,7 +7,7 @@ import {
     RoomLeaveInput,
     RoomUpdateInput,
 } from 'src/types/chat.type';
-import { AppError } from 'src/utils/errors';
+import { AppError, DatabaseError } from 'src/utils/errors';
 import { generateRoomKey } from 'src/utils/generate.room-key';
 
 const participantQuery = 'genUserId username name profilePhoto verified accountType following_count follower_count friend_count';
@@ -63,18 +63,16 @@ export class ChatRepository {
     }
 
     public async getRooms(): Promise<RoomBase[]> {
+        const filter = { isActive: true };
         try {
-            const filter = { isActive: true };
-
             const rooms = await RoomModel.find(filter)
                 .populate('host', hostQuery)
                 .populate('participants.user', participantQuery)
                 .sort({ createdAt: -1 });
 
-            return rooms.map(room => room.toJSON());
+            return rooms.map((room) => room.toJSON());
         } catch (error) {
-            if (error instanceof AppError) throw error;
-            throw new AppError('Failed to fetch rooms!', 500, 'Chat Repository');
+            throw new DatabaseError(error, 'ChatRepository.getRooms');
         }
     }
 
