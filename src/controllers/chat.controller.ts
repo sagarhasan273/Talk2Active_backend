@@ -1,73 +1,94 @@
 import { Request, Response } from 'express';
-import { AccessToken } from 'livekit-server-sdk';
-import { RoomCreateSchema, RoomJoinSchema, RoomLeaveSchema, RoomUpdateSchema } from 'src/schemas/chat.schema';
+import { AccessToken, RoomServiceClient } from 'livekit-server-sdk';
+import {
+    RoomCreateSchema,
+    RoomJoinSchema,
+    RoomLeaveSchema,
+    RoomUpdateSchema,
+} from 'src/schemas/chat.schema';
 import { ChatService } from 'src/services/chat-service';
 import { AppError } from 'src/utils/errors';
 import logger from 'src/utils/logger';
 
 export class ChatController {
     private chatService = new ChatService();
+    private livekitClient: RoomServiceClient | null = null;
 
-    public async createRoom(req: Request, res: Response): Promise<void> {
-        let validatedInput;
-        try {
-            validatedInput = RoomCreateSchema.parse(req.body);
-        } catch (error) {
-            logger.error('Invalid room create data');
-            res.status(400).json({ status: false, message: 'Invalid room creation data' });
-            return;
+    // ── LiveKit Helper ───────────────────────────────────────────────────────
+    private getLiveKitCredentials() {
+        const apiKey = process.env.LIVEKIT_API_KEY;
+        const apiSecret = process.env.LIVEKIT_API_SECRET;
+        const host = process.env.LIVEKIT_URL;
+
+        if (!apiKey || !apiSecret) {
+            throw new AppError(
+                'Voice server configuration is missing on backend',
+                500,
+                'ChatController.LiveKit'
+            );
         }
 
+        return { apiKey, apiSecret, host };
+    }
+
+    private getRoomServiceClient(): RoomServiceClient {
+        if (!this.livekitClient) {
+            const { apiKey, apiSecret, host } = this.getLiveKitCredentials();
+            if (!host) {
+                throw new AppError(
+                    'LIVEKIT_URL configuration is missing on backend',
+                    500,
+                    'ChatController.getRoomServiceClient'
+                );
+            }
+            this.livekitClient = new RoomServiceClient(host, apiKey, apiSecret);
+        }
+        return this.livekitClient;
+    }
+
+    // ── Controllers ─────────────────────────────────────────────────────────
+
+    public createRoom = async (req: Request, res: Response): Promise<void> => {
         try {
-            const newRoom = await this.chatService.createRoom(validatedInput);
-            res.status(200).json({
+            const currentUserId = req.user?.userId;
+            const validatedInput = RoomCreateSchema.parse({
+                ...req.body,
+                host: currentUserId || req.body.host,
+            });
+
+            const newRoom = await this.chatService.createRoom(validatedInput, currentUserId);
+            res.status(201).json({
                 status: true,
                 message: 'Room created successfully',
                 data: newRoom,
             });
         } catch (error) {
-            if (error instanceof AppError) {
-                logger.error(`${error.at}: ${error.message}`);
-                res.status(error.statusCode).json({ message: error.message, status: false });
-                return;
-            }
-            logger.error('An error occurred while creating room');
-            res.status(500).json({ message: 'An error occurred while creating room', status: false });
+            this.handleControllerError(error, res, 'ChatController.createRoom');
         }
-    }
+    };
 
-    public async updateRoom(req: Request, res: Response): Promise<void> {
-        let validatedInput;
+    public updateRoom = async (req: Request, res: Response): Promise<void> => {
         try {
-            validatedInput = RoomUpdateSchema.parse(req.body);
-        } catch (error) {
-            logger.error('Invalid room update data');
-            res.status(400).json({ status: false, message: 'Invalid room update data' });
-            return;
-        }
+            const currentUserId = req.user?.userId;
+            const validatedInput = RoomUpdateSchema.parse({
+                ...req.body,
+                roomId: req.params.roomId || req.body.roomId,
+            });
 
-        try {
-            const updatedRoom = await this.chatService.updateRoom(validatedInput);
+            const updatedRoom = await this.chatService.updateRoom(validatedInput, currentUserId);
             res.status(200).json({
                 status: true,
                 message: 'Room updated successfully',
                 data: updatedRoom,
             });
         } catch (error) {
-            if (error instanceof AppError) {
-                logger.error(`${error.at}: ${error.message}`);
-                res.status(error.statusCode).json({ message: error.message, status: false });
-                return;
-            }
-            logger.error('An error occurred while updating room');
-            res.status(500).json({ message: 'An error occurred while updating room', status: false });
+            this.handleControllerError(error, res, 'ChatController.updateRoom');
         }
-    }
+    };
 
-    public async getRooms(req: Request, res: Response): Promise<void> {
-        const currentUserId = req.user?.userId;
-
+    public getRooms = async (req: Request, res: Response): Promise<void> => {
         try {
+            const currentUserId = req.user?.userId;
             const rooms = await this.chatService.getRooms(currentUserId);
 
             res.status(200).json({
@@ -76,48 +97,29 @@ export class ChatController {
                 data: rooms,
             });
         } catch (error) {
-            if (error instanceof AppError) {
-                res.status(error.statusCode).json({
-                    status: false,
-                    message: error.message,
-                    at: error.at,
-                });
-                return;
-            }
-
-            logger.error('[Unhandled Exception] ChatController.getRooms', { error });
-
-            res.status(500).json({
-                status: false,
-                message: 'An unexpected error occurred while fetching rooms',
-            });
+            this.handleControllerError(error, res, 'ChatController.getRooms');
         }
-    }
+    };
 
-    public async getRoomById(req: Request, res: Response): Promise<void> {
-        const { roomId } = req.params;
+    public getRoomById = async (req: Request, res: Response): Promise<void> => {
         try {
-            const room = await this.chatService.getRoomById(roomId);
+            const currentUserId = req.user?.userId;
+            const { roomId } = req.params;
+
+            const room = await this.chatService.getRoomById(roomId, currentUserId);
             res.status(200).json({
                 status: true,
                 message: 'Room fetched successfully',
                 data: room,
             });
         } catch (error) {
-            if (error instanceof AppError) {
-                logger.error(`${error.at}: ${error.message}`);
-                res.status(error.statusCode).json({ message: error.message, status: false });
-                return;
-            }
-            logger.error('An error occurred while fetching room');
-            res.status(500).json({ message: 'An error occurred while fetching room', status: false });
+            this.handleControllerError(error, res, 'ChatController.getRoomById');
         }
-    }
+    };
 
-    public async joinRoom(req: Request, res: Response): Promise<void> {
+    public joinRoom = async (req: Request, res: Response): Promise<void> => {
         try {
             const { roomId } = req.params;
-            // Prioritize authenticated user from middleware; fallback to body if public
             const userId = req.user?.userId || req.body.userId;
             const { userName, isHost } = req.body;
 
@@ -125,22 +127,12 @@ export class ChatController {
             const validatedInput = RoomJoinSchema.parse({
                 roomId,
                 userId,
-                isHost: Boolean(isHost),
             });
 
-            // 2. Validate LiveKit credentials early
-            const apiKey = process.env.LIVEKIT_API_KEY;
-            const apiSecret = process.env.LIVEKIT_API_SECRET;
+            // 2. Validate LiveKit credentials before doing DB mutations
+            const { apiKey, apiSecret } = this.getLiveKitCredentials();
 
-            if (!apiKey || !apiSecret) {
-                throw new AppError(
-                    'Voice server configuration is missing on backend',
-                    500,
-                    'ChatController.joinRoom'
-                );
-            }
-
-            // 3. Update room database state via ChatService
+            // 3. Update database state
             const roomData = await this.chatService.joinRoom(validatedInput);
 
             // 4. Issue LiveKit WebRTC Access Token
@@ -172,9 +164,9 @@ export class ChatController {
         } catch (error) {
             this.handleControllerError(error, res, 'ChatController.joinRoom');
         }
-    }
+    };
 
-    public async leaveRoom(req: Request, res: Response): Promise<void> {
+    public leaveRoom = async (req: Request, res: Response): Promise<void> => {
         try {
             const userId = req.user?.userId || req.body.userId;
             const roomId = req.params.roomId || req.body.roomId;
@@ -182,9 +174,27 @@ export class ChatController {
             const validatedInput = RoomLeaveSchema.parse({
                 roomId,
                 userId,
-                kicked: req.body.kicked,
+                kicked: Boolean(req.body.kicked),
             });
 
+            // 1. If user is kicked, evict directly from LiveKit WebRTC session
+            if (validatedInput.kicked) {
+                try {
+                    const roomService = this.getRoomServiceClient();
+                    await roomService.removeParticipant(
+                        validatedInput.roomId.toString(),
+                        validatedInput.userId.toString()
+                    );
+                } catch (webrtcError) {
+                    logger.error('[LiveKit] Failed to evict kicked participant from server session', {
+                        roomId: validatedInput.roomId,
+                        userId: validatedInput.userId,
+                        error: webrtcError,
+                    });
+                }
+            }
+
+            // 2. Update database state via ChatService
             await this.chatService.leaveRoom(validatedInput);
 
             res.status(200).json({
@@ -194,10 +204,10 @@ export class ChatController {
         } catch (error) {
             this.handleControllerError(error, res, 'ChatController.leaveRoom');
         }
-    }
+    };
 
-    // ── Centralized Error Dispatcher ────────────────────────────────────────
-    private handleControllerError(error: unknown, res: Response, source: string) {
+    // ── Centralized Error Dispatcher ─────────────────────────────────────────
+    private handleControllerError(error: unknown, res: Response, source: string): void {
         if (error instanceof AppError) {
             res.status(error.statusCode).json({
                 status: false,
@@ -207,7 +217,7 @@ export class ChatController {
             return;
         }
 
-        // Zod Validation Errors
+        // Zod validation errors
         if (error && typeof error === 'object' && 'issues' in error) {
             res.status(400).json({
                 status: false,
@@ -217,7 +227,7 @@ export class ChatController {
             return;
         }
 
-        // Fallback for unhandled runtime / system errors
+        // Fallback for unexpected runtime exceptions
         logger.error(`[Unhandled Error in ${source}]:`, error);
         res.status(500).json({
             status: false,

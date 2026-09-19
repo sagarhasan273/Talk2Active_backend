@@ -1,4 +1,3 @@
-import { RelationshipTypeEnum } from 'src/enums/social.enum';
 import { ChatRepository } from 'src/repositories/chat.repository';
 import { RelationshipRepository } from 'src/repositories/social.repository';
 import {
@@ -15,9 +14,6 @@ export class ChatService {
 	private chatRepository = new ChatRepository();
 	private socialRepository = new RelationshipRepository();
 
-	/**
-	 * Extracts an ID string whether the input is a populated object or an ObjectId.
-	 */
 	private extractId(userOrId: any): string | null {
 		if (!userOrId) return null;
 		if (typeof userOrId === 'object') {
@@ -27,10 +23,6 @@ export class ChatService {
 		return userOrId.toString();
 	}
 
-	/**
-	 * Resolves following and blocked status for a batch of target IDs
-	 * using a SINGLE MongoDB query.
-	 */
 	private async getRelationshipSets(
 		currentUserId?: string,
 		targetIds: string[] = []
@@ -42,31 +34,26 @@ export class ChatService {
 			return { followingSet, blockedSet };
 		}
 
-		// Deduplicate and remove self
 		const uniqueTargets = Array.from(new Set(targetIds)).filter((id) => id !== currentUserId);
 
 		if (uniqueTargets.length === 0) {
 			return { followingSet, blockedSet };
 		}
 
-		// Single MongoDB roundtrip
 		const relationships = await this.socialRepository.getRelationships(
 			currentUserId,
 			uniqueTargets as [string, ...string[]]
 		);
 
-		((relationships as any[] | undefined) || []).forEach((rel: any) => {
+		(relationships as any[] | undefined || []).forEach((rel: any) => {
 			const recipientId = rel.recipient?.toString();
-			if (rel.type === RelationshipTypeEnum.FOLLOW) followingSet.add(recipientId);
-			if (rel.type === RelationshipTypeEnum.BLOCK) blockedSet.add(recipientId);
+			if (rel.type === 'FOLLOW') followingSet.add(recipientId);
+			if (rel.type === 'BLOCK') blockedSet.add(recipientId);
 		});
 
 		return { followingSet, blockedSet };
 	}
 
-	/**
-	 * Collects all unique target IDs across multiple rooms.
-	 */
 	private collectTargetIdsFromRooms(rooms: RoomBase[], currentUserId?: string): string[] {
 		const targetIds = new Set<string>();
 
@@ -87,7 +74,7 @@ export class ChatService {
 		return Array.from(targetIds);
 	}
 
-	async createRoom(input: RoomCreateInput, currentUserId?: string): Promise<RoomResponse> {
+	public async createRoom(input: RoomCreateInput, currentUserId?: string): Promise<RoomResponse> {
 		try {
 			const room = await this.chatRepository.createRoom(input);
 			const targetIds = this.collectTargetIdsFromRooms([room], currentUserId);
@@ -95,11 +82,11 @@ export class ChatService {
 			return this.toRoomResponse(room, followingSet, blockedSet);
 		} catch (error) {
 			if (error instanceof AppError) throw error;
-			throw new AppError('Failed to create room!', 500, 'Chat Service');
+			throw new AppError('Failed to create room!', 500, 'ChatService.createRoom');
 		}
 	}
 
-	async updateRoom(input: RoomUpdateInput, currentUserId?: string): Promise<RoomResponse> {
+	public async updateRoom(input: RoomUpdateInput, currentUserId?: string): Promise<RoomResponse> {
 		try {
 			const room = await this.chatRepository.updateRoom(input);
 			const targetIds = this.collectTargetIdsFromRooms([room], currentUserId);
@@ -107,14 +94,11 @@ export class ChatService {
 			return this.toRoomResponse(room, followingSet, blockedSet);
 		} catch (error) {
 			if (error instanceof AppError) throw error;
-			throw new AppError('Failed to update room!', 500, 'Chat Service');
+			throw new AppError('Failed to update room!', 500, 'ChatService.updateRoom');
 		}
 	}
 
-	/**
-	 * Fetches all rooms and enriches all participants/hosts in a SINGLE relationship query.
-	 */
-	async getRooms(currentUserId?: string): Promise<RoomResponse[]> {
+	public async getRooms(currentUserId?: string): Promise<RoomResponse[]> {
 		try {
 			const rooms = await this.chatRepository.getRooms();
 			if (!rooms.length) return [];
@@ -126,15 +110,12 @@ export class ChatService {
 
 			return rooms.map((room) => this.toRoomResponse(room));
 		} catch (error) {
-			const message = error instanceof DatabaseError
-				? 'Failed to retrieve voice rooms from database'
-				: 'Unable to process voice rooms request';
-
-			throw new AppError(message, 500, 'ChatService.getRooms');
+			if (error instanceof AppError) throw error;
+			throw new AppError('Failed to fetch rooms!', 500, 'ChatService.getRooms');
 		}
 	}
 
-	async getRoomById(roomId: string, currentUserId?: string): Promise<RoomResponse> {
+	public async getRoomById(roomId: string, currentUserId?: string): Promise<RoomResponse> {
 		try {
 			const room = await this.chatRepository.getRoomById(roomId);
 			const targetIds = this.collectTargetIdsFromRooms([room], currentUserId);
@@ -142,45 +123,44 @@ export class ChatService {
 			return this.toRoomResponse(room, followingSet, blockedSet);
 		} catch (error) {
 			if (error instanceof AppError) throw error;
-			throw new AppError('Failed to get room by ID!', 500, 'Chat Service');
+			throw new AppError('Failed to get room by ID!', 500, 'ChatService.getRoomById');
 		}
 	}
 
-	async joinRoom(input: RoomJoinInput): Promise<RoomResponse> {
+	public async joinRoom(input: RoomJoinInput): Promise<RoomResponse> {
 		try {
 			const room = await this.chatRepository.joinRoom(input);
 			const currentUserId = input.userId.toString();
-
 			const { followingSet, blockedSet } = await this.socialRepository.getRelationshipIds(currentUserId);
-
 			return this.toRoomResponse(room, followingSet, blockedSet);
 		} catch (error) {
-			if (error instanceof AppError) {
-				throw error;
-			}
-
-			const message = error instanceof DatabaseError
-				? 'Failed to join room due to database error'
-				: 'An unexpected error occurred while joining room';
-
-			throw new AppError(message, 500, 'ChatService.joinRoom');
+			if (error instanceof AppError) throw error;
+			throw new AppError('Failed to join room!', 500, 'ChatService.joinRoom');
 		}
 	}
 
-	async leaveRoom(input: RoomLeaveInput): Promise<void> {
+	public async leaveRoom(input: RoomLeaveInput): Promise<void> {
 		try {
 			await this.chatRepository.leaveRoom(input);
 		} catch (error) {
 			if (error instanceof AppError) throw error;
-			throw new AppError('Failed to leave room!', 500, 'Chat Service');
+
+			const message =
+				error instanceof DatabaseError
+					? 'Database failure while updating room state'
+					: 'Failed to leave room!';
+
+			throw new AppError(message, 500, 'ChatService.leaveRoom');
 		}
 	}
 
 	public toRoomResponse = (
-		room: RoomBase,
+		room: RoomBase & { _id?: any },
 		followingSet?: Set<string>,
 		blockedSet?: Set<string>
 	): RoomResponse => {
+		const resolvedRoomId = (room.roomId || (room as any).id)?.toString();
+
 		const hostData = (
 			typeof room.host === 'object' && room.host !== null ? room.host : { userId: room.host }
 		) as RoomResponse['host'];
@@ -189,7 +169,7 @@ export class ChatService {
 		hostData.isBlocked = hostId ? (blockedSet?.has(hostId) ?? false) : false;
 
 		return {
-			roomId: room.roomId,
+			roomId: resolvedRoomId,
 			room_key: room.room_key,
 			topic: room.topic,
 			welcome_message: room.welcome_message,

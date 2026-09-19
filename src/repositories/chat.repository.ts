@@ -10,7 +10,7 @@ import {
 import { AppError, DatabaseError } from 'src/utils/errors';
 import { generateRoomKey } from 'src/utils/generate.room-key';
 
-// Unified camelCase query projections matching User schema
+// Projections matching the User schema properties
 const participantQuery =
   'genUserId username name profilePhoto verified accountType followingCount followerCount friendCount';
 const hostQuery =
@@ -28,6 +28,7 @@ export class ChatRepository {
 
       const hostObjectId = new ObjectId(host.toString());
 
+      // Create room with host automatically enrolled as the initial participant
       const room = await RoomModel.create({
         ...createFields,
         host: hostObjectId,
@@ -116,7 +117,7 @@ export class ChatRepository {
       const userObjectId = new ObjectId(userId);
       const roomObjectId = new ObjectId(roomId);
 
-      // 1. Check if room exists and user is eligible (not banned/kicked)
+      // 1. Verify eligibility (room existence, bans/kicks)
       const existingRoom = await RoomModel.findById(roomObjectId, {
         host: 1,
         participants: 1,
@@ -139,12 +140,14 @@ export class ChatRepository {
         (p) => p.user.toString() === userId.toString()
       );
 
+      // 2. Atomic join if not enrolled
       if (!isAlreadyParticipant) {
         if (existingRoom.participants.length >= existingRoom.max_participants) {
           throw new AppError('Room is full', 400, 'ChatRepository.joinRoom');
         }
 
-        const rawHostId = existingRoom.host?.toString?.() || (existingRoom.host as any)?.userId;
+        const rawHostId =
+          existingRoom.host?.toString?.() || (existingRoom.host as any)?.userId;
         const isHost = rawHostId === userId.toString();
 
         const updatedRoom = await RoomModel.findOneAndUpdate(
@@ -178,7 +181,7 @@ export class ChatRepository {
         return updatedRoom.toJSON();
       }
 
-      // 2. User is already in the room, populate and return current state
+      // 3. User already exists in room, return hydrated document
       const populatedRoom = await RoomModel.findById(roomObjectId)
         .populate('host', hostQuery)
         .populate('participants.user', participantQuery);
@@ -202,31 +205,31 @@ export class ChatRepository {
         throw new AppError('Room not found', 404, 'ChatRepository.leaveRoom');
       }
 
-      // Filter out participant
+      // 1. Remove participant from active roster
       room.participants = (room.participants || []).filter(
         (p) => p.user.toString() !== userId.toString()
       );
 
-      // Append to banned/kicked list if kicked
+      // 2. Track kick/ban status
       if (kicked) {
         const isAlreadyKicked = (room.kickedUserIds || []).some(
           (kId) => kId.toString() === userId.toString()
         );
         if (!isAlreadyKicked) {
-          room.kickedUserIds.push(userObjectId);
+          room.kickedUserIds.push(userObjectId as any);
         }
       }
 
+      // 3. Handle room closure or host succession
       if (room.participants.length === 0) {
         room.isActive = false;
       } else {
-        const isLeavingUserHost =
-          room.host?.toString() === userId.toString() ||
-          (typeof room.host === 'object' &&
-            room.host !== null &&
-            ((room.host as any).userId || (room.host as any).id)?.toString() === userId.toString());
+        const rawHostId =
+          typeof room.host === 'object' && room.host !== null && 'userId' in (room.host as any)
+            ? (room.host as any).userId
+            : room.host?.toString();
 
-        if (isLeavingUserHost) {
+        if (rawHostId === userId.toString()) {
           room.participants[0].isHost = true;
           room.host = room.participants[0].user;
         }
