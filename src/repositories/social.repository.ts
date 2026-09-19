@@ -4,11 +4,10 @@ import { RelationshipModel } from 'src/models/social.model';
 import { UserModel } from 'src/models/user.model';
 import {
     AllRelationsType,
-    BatchRelationshipStatus,
-    RelationshipInput,
-    RelationshipType,
-    UpdateRelationship,
-    UserStats,
+    CreateRelationshipInput,
+    RelationshipResponse,
+    UpdateRelationshipInput,
+    UserStats
 } from 'src/types/social.type';
 import { AppError } from 'src/utils/errors';
 
@@ -63,7 +62,7 @@ export class RelationshipRepository {
         };
     }
 
-    public async createRelationship(relationshipData: RelationshipInput): Promise<void> {
+    public async createRelationship(relationshipData: CreateRelationshipInput): Promise<void> {
         try {
             const existingRelationship = await RelationshipModel.findOne({
                 requester: relationshipData.requester,
@@ -101,7 +100,7 @@ export class RelationshipRepository {
         }
     }
 
-    async updateRelationship(relationshipId: string, updateData: UpdateRelationship): Promise<void> {
+    async updateRelationship(relationshipId: string, updateData: UpdateRelationshipInput): Promise<void> {
         const relationship = await RelationshipModel.findById(relationshipId);
 
         if (!relationship) {
@@ -124,7 +123,7 @@ export class RelationshipRepository {
     async removeRelationship(
         requesterId: string,
         recipientId: string,
-        type: RelationshipType['type']
+        type: RelationshipResponse['type']
     ): Promise<boolean> {
         const result = await RelationshipModel.deleteOne({
             requester: requesterId,
@@ -139,13 +138,72 @@ export class RelationshipRepository {
         return result.deletedCount > 0;
     }
 
-    async getRealationship(requesterId: string, recipientId: string): Promise<RelationshipType | null> {
+    async getRealationship(requesterId: string, recipientId: string): Promise<RelationshipResponse | null> {
         return await RelationshipModel.findOne({
             $or: [
                 { requester: requesterId, recipient: recipientId },
                 { requester: recipientId, recipient: requesterId },
             ],
         }).lean();
+    }
+
+    async getRelationships(requesterId: string, recipientIds: string[]): Promise<RelationshipResponse[]> {
+        const relationships = await RelationshipModel.find({
+            requester: requesterId,
+            recipient: { $in: recipientIds },
+        }).lean();
+        return relationships
+    }
+
+    /**
+   * Returns a flat array of user IDs that the current user is following.
+   */
+    public async getFollowingIds(userId: string): Promise<string[]> {
+        const rawIds = await RelationshipModel.distinct('recipient', {
+            requester: new ObjectId(userId),
+            type: RelationshipTypeEnum.FOLLOW,
+        });
+
+        return rawIds.map((id) => id.toString());
+    }
+
+    /**
+     * Alternative: If you need to filter against specific candidate IDs
+     * (e.g., check which participants in a room you are following)
+     */
+    public async getRelationshipIdsSubset(userId: string): Promise<{
+        followingSet: Set<string>;
+        blockedSet: Set<string>;
+    }> {
+        const relationships = await RelationshipModel.find({
+            requester: new ObjectId(userId),
+            type: [RelationshipTypeEnum.FOLLOW, RelationshipTypeEnum.BLOCK],
+        });
+
+        const followingSet = new Set<string>();
+        const blockedSet = new Set<string>();
+
+        relationships.map(relationship => {
+            if (relationship.type === RelationshipTypeEnum.FOLLOW) {
+                followingSet.add(relationship.recipient.toString())
+            } else {
+                blockedSet.add(relationship.recipient.toString())
+            }
+        })
+
+        return { followingSet, blockedSet };
+    }
+
+    /**
+  * Returns a flat array of user IDs that the current user is following.
+  */
+    public async getBlockedIds(userId: string): Promise<string[]> {
+        const rawIds = await RelationshipModel.distinct('recipient', {
+            requester: new ObjectId(userId),
+            type: RelationshipTypeEnum.BLOCK,
+        });
+
+        return rawIds.map((id) => id.toString());
     }
 
     // Get followers of a user (people who follow this user)
@@ -396,7 +454,7 @@ export class RelationshipRepository {
         userId: string,
         page: number = 1,
         limit: number = 10
-    ): Promise<{ relationships: RelationshipType[]; total: number; page: number; totalPages: number }> {
+    ): Promise<{ relationships: RelationshipResponse[]; total: number; page: number; totalPages: number }> {
         const skip = (page - 1) * limit;
 
         const query = {
@@ -490,65 +548,6 @@ export class RelationshipRepository {
             type: RelationshipTypeEnum.FOLLOW,
             status: RelationshipStatusEnum.ACCEPTED,
         });
-    }
-
-    async getBatchRelationshipStatus(userId: string, targetUserIds: string[]): Promise<BatchRelationshipStatus> {
-        const objectIds = targetUserIds.map((id) => new ObjectId(id));
-
-        const relationships = await RelationshipModel.find({
-            $or: [
-                { requester: userId, recipient: { $in: objectIds } },
-                { requester: { $in: objectIds }, recipient: userId },
-            ],
-        }).lean();
-
-        const statuses: BatchRelationshipStatus['statuses'] = targetUserIds.map((targetUserId) => {
-            const targetId = new ObjectId(targetUserId);
-
-            const outgoing = relationships.find(
-                (rel) => rel.requester.toString() === userId && rel.recipient.toString() === targetUserId
-            );
-
-            const incoming = relationships.find(
-                (rel) => rel.requester.toString() === targetUserId && rel.recipient.toString() === userId
-            );
-
-            const following =
-                outgoing?.type === RelationshipTypeEnum.FOLLOW &&
-                outgoing.status === RelationshipStatusEnum.ACCEPTED;
-            const followers =
-                incoming?.type === RelationshipTypeEnum.FOLLOW &&
-                incoming.status === RelationshipStatusEnum.ACCEPTED;
-            const friends = following && followers;
-            const blocked = outgoing?.type === RelationshipTypeEnum.BLOCK;
-            const pending =
-                outgoing?.type === RelationshipTypeEnum.FRIEND &&
-                outgoing.status === RelationshipStatusEnum.PENDING;
-
-            return {
-                targetUserId: targetId,
-                relationship: blocked
-                    ? 'blocked'
-                    : pending
-                        ? 'pending'
-                        : friends
-                            ? 'friends'
-                            : following
-                                ? 'following'
-                                : 'none',
-                following: Boolean(following),
-                followers: Boolean(followers),
-                friends: Boolean(friends),
-                blocked: Boolean(blocked),
-                pending: Boolean(pending),
-            };
-        });
-
-        return {
-            userId,
-            targetUserIds: objectIds,
-            statuses,
-        };
     }
 
     async areFriends(userId1: string, userId2: string): Promise<boolean> {

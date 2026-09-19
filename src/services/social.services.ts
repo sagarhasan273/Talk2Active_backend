@@ -1,14 +1,13 @@
 import { RelationshipStatusEnum, RelationshipTypeEnum } from "src/enums/social.enum";
 import { RelationshipRepository } from "src/repositories/social.repository";
 import { ReturnResponseType } from "src/types/base.type";
-import { BatchRelationshipStatus, RelationshipInput, RelationshipType } from "src/types/social.type";
+import { FollowRequestInput, RelationshipBase } from "src/types/social.type";
 import { AppError } from "src/utils/errors";
-
 
 export class RelationshipService {
     private relationshipRepository = new RelationshipRepository();
 
-    async followUser(input: RelationshipInput): Promise<void> {
+    async followUser(input: FollowRequestInput): Promise<void> {
         try {
             await this.relationshipRepository.createRelationship(input);
         } catch (error) {
@@ -19,7 +18,7 @@ export class RelationshipService {
         }
     }
 
-    async unfollowUser(input: RelationshipInput): Promise<void> {
+    async unfollowUser(input: FollowRequestInput): Promise<void> {
         try {
             const { requester, recipient, type } = input;
             await this.relationshipRepository.removeRelationship(requester.toString(), recipient.toString(), type);
@@ -31,7 +30,7 @@ export class RelationshipService {
         }
     }
 
-    async sendFriendRequest(input: RelationshipInput): Promise<void> {
+    async sendFriendRequest(input: FollowRequestInput): Promise<void> {
         try {
             await this.relationshipRepository.createRelationship(input);
         } catch (error) {
@@ -42,7 +41,7 @@ export class RelationshipService {
         }
     }
 
-    async acceptFriendRequest(input: RelationshipInput): Promise<void> {
+    async acceptFriendRequest(input: FollowRequestInput): Promise<void> {
         try {
             await this.relationshipRepository.updateRelationship(input.requester.toString(), { relationshipId: input.recipient.toString(), status: RelationshipStatusEnum.ACCEPTED });
         } catch (error) {
@@ -53,7 +52,7 @@ export class RelationshipService {
         }
     }
 
-    async declineFriendRequest(input: RelationshipInput): Promise<void> {
+    async declineFriendRequest(input: FollowRequestInput): Promise<void> {
         try {
             await this.relationshipRepository.updateRelationship(input.requester.toString(), { relationshipId: input.recipient.toString(), status: RelationshipStatusEnum.ACCEPTED });
         } catch (error) {
@@ -64,7 +63,7 @@ export class RelationshipService {
         }
     }
 
-    async removeFriend(input: RelationshipInput): Promise<void> {
+    async removeFriend(input: FollowRequestInput): Promise<void> {
         try {
             const { requester, recipient } = input;
 
@@ -80,7 +79,7 @@ export class RelationshipService {
         }
     }
 
-    async blockUser(input: RelationshipInput): Promise<void> {
+    async blockUser(input: FollowRequestInput): Promise<void> {
         try {
             await this.relationshipRepository.createRelationship(input);
         } catch (error) {
@@ -91,7 +90,7 @@ export class RelationshipService {
         }
     }
 
-    async unblockUser(input: RelationshipInput): Promise<void> {
+    async unblockUser(input: FollowRequestInput): Promise<void> {
         try {
             const { requester, recipient, type } = input;
             await this.relationshipRepository.removeRelationship(requester.toString(), recipient.toString(), type);
@@ -193,7 +192,7 @@ export class RelationshipService {
         }
     }
 
-    async getPendingRequests(userId: string, page: number = 1, limit: number = 10): Promise<{ relationships: RelationshipType[], total: number, page: number, totalPages: number }> {
+    async getPendingRequests(userId: string, page: number = 1, limit: number = 10): Promise<{ relationships: RelationshipBase[], total: number, page: number, totalPages: number }> {
         try {
             return await this.relationshipRepository.getPendingRequests(userId, page, limit);
         } catch (error) {
@@ -215,14 +214,5 @@ export class RelationshipService {
         }
     }
 
-    async getBatchRelationshipStatus(userId: string, targetUserIds: string[]): Promise<BatchRelationshipStatus> {
-        try {
-            return await this.relationshipRepository.getBatchRelationshipStatus(userId, targetUserIds);
-        } catch (error) {
-            if (error instanceof AppError) {
-                throw error;
-            }
-            throw new AppError('Failed to get batch relationship status!', 500, 'Relationship Service');
-        }
-    }
+
 }

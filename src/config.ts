@@ -13,8 +13,6 @@ interface DatabaseConfig {
     connectTimeoutMS: number;
     socketTimeoutMS: number;
     maxPoolSize: number;
-    useNewUrlParser: boolean,
-    useUnifiedTopology: boolean
   };
 }
 
@@ -26,8 +24,6 @@ export const dbConfig: DatabaseConfig = {
     connectTimeoutMS: parseInt(process.env.DB_CONNECT_TIMEOUT_MS || '30000', 10),
     socketTimeoutMS: parseInt(process.env.DB_SOCKET_TIMEOUT_MS || '30000', 10),
     maxPoolSize: parseInt(process.env.DB_MAX_POOL_SIZE || '100', 10),
-    useNewUrlParser: true,
-    useUnifiedTopology: true
   },
 };
 

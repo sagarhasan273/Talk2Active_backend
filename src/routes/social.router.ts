@@ -37,9 +37,5 @@ export class RelationshipRouter extends BaseRouter {
         this.router.post('/block', authMiddleware, (req, res) => this.relationshipController.blockUser(req, res));
         // Unblock a user
         this.router.post('/unblock', authMiddleware, (req, res) => this.relationshipController.unblockUser(req, res));
-
-        // Batch relationship status
-        this.router.post('/batch-status', authMiddleware, (req, res) => this.relationshipController.getBatchRelationshipStatus(req, res));
-
     }
 }

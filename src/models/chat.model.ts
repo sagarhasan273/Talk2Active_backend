@@ -48,7 +48,11 @@ const RoomSchema: Schema = new Schema<RoomBase & Document>({
         joinedAt: {
             type: Date,
             default: Date.now
-        }
+        },
+        isHost: {
+            type: Boolean,
+            default: false,
+        },
     }],
     isActive: {
         type: Boolean,
@@ -71,7 +75,7 @@ const RoomSchema: Schema = new Schema<RoomBase & Document>({
     },
     toObject: {
         transform: function (doc, ret: any) {
-            ret.id = ret._id.toString();
+            ret.roomId = ret._id.toString();
             if ('_id' in ret) delete ret._id;
             if ('__v' in ret) delete ret.__v;
         }

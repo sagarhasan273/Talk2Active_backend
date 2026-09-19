@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { AccessToken } from 'livekit-server-sdk';
-import { LeaveRoomSchema, RoomCreateSchema, RoomUpdateSchema } from 'src/schemas/chat.schema';
+import { RoomCreateSchema, RoomLeaveSchema, RoomUpdateSchema } from 'src/schemas/chat.schema';
+import { JwtService } from 'src/services/auth/jwt.service';
 import { ChatService } from 'src/services/chat-service';
 import { AppError } from 'src/utils/errors';
 import logger from 'src/utils/logger';
@@ -65,8 +66,16 @@ export class ChatController {
     }
 
     public async getRooms(req: Request, res: Response): Promise<void> {
+        const token = req.header('Authorization')?.replace('Bearer ', '');
+
+        if (!token) {
+            throw new Error('Authentication required');
+        }
+
+        const decoded = JwtService.verifyToken(token);
+        const currentUserId = decoded.userId
         try {
-            const rooms = await this.chatService.getRooms();
+            const rooms = await this.chatService.getRooms(currentUserId);
             res.status(200).json({
                 status: true,
                 message: 'Rooms fetched successfully',
@@ -106,7 +115,7 @@ export class ChatController {
     public async joinRoom(req: Request, res: Response): Promise<void> {
         try {
             const { roomId } = req.params;
-            const { userId, userName } = req.body;
+            const { userId, userName, isHost } = req.body;
 
             if (!roomId || !userId) {
                 res.status(400).json({
@@ -119,7 +128,7 @@ export class ChatController {
             // 1. Update database state via ChatService
             let roomData;
             try {
-                roomData = await this.chatService.joinRoom({ roomId, userId });
+                roomData = await this.chatService.joinRoom({ roomId, userId, isHost });
             } catch (serviceError) {
                 // If joinRoom in ChatService throws an AppError, log and pass status
                 if (serviceError instanceof AppError) {
@@ -177,7 +186,7 @@ export class ChatController {
     public async leaveRoom(req: Request, res: Response): Promise<void> {
         let validatedInput;
         try {
-            validatedInput = LeaveRoomSchema.parse(req.body);
+            validatedInput = RoomLeaveSchema.parse(req.body);
         } catch (error) {
             logger.error('Invalid leave room input data');
             res.status(400).json({ status: false, message: 'Invalid leave room input data' });

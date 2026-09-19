@@ -1,10 +1,10 @@
 // models/Relationship.model.ts
 import mongoose, { Document, Schema } from 'mongoose';
 import { RelationshipStatusEnum, RelationshipTypeEnum } from 'src/enums/social.enum';
-import { RelationshipType } from 'src/types/social.type';
+import { RelationshipBase } from 'src/types/social.type';
 
 
-const RelationshipSchema: Schema = new Schema<RelationshipType & Document>({
+const RelationshipSchema: Schema = new Schema<RelationshipBase & Document>({
     requester: {
         type: Schema.Types.ObjectId,
         ref: 'users',
@@ -56,4 +56,4 @@ RelationshipSchema.pre('save', function (next) {
     next();
 });
 
-export const RelationshipModel = mongoose.model<RelationshipType>('relationship', RelationshipSchema);
+export const RelationshipModel = mongoose.model<RelationshipBase>('relationship', RelationshipSchema);

@@ -2,7 +2,15 @@
 import { z as zod } from 'zod';
 import { objectIdSchema } from './base.schema';
 
-// Social Links Sub-Schema
+// ----------------------------------------------------------------------
+// Reusable Sub-Schemas
+// ----------------------------------------------------------------------
+
+export const DatePreprocessor = zod.preprocess(
+    (arg) => (typeof arg === 'string' || arg instanceof Date ? new Date(arg as any) : arg),
+    zod.date()
+);
+
 export const SocialLinksSchema = zod.object({
     facebook: zod.string().url({ message: 'Invalid Facebook URL' }).or(zod.literal('')).optional(),
     twitter: zod.string().url({ message: 'Invalid Twitter URL' }).or(zod.literal('')).optional(),
@@ -12,32 +20,38 @@ export const SocialLinksSchema = zod.object({
 
 export const BlockedUserSchema = zod.object({
     userId: objectIdSchema,
-    createdAt: zod.date().default(() => new Date()),
+    createdAt: DatePreprocessor.default(() => new Date()),
     reason: zod.string().optional(),
 });
 
+// ----------------------------------------------------------------------
 // Main User Schema
+// ----------------------------------------------------------------------
+
 export const UserBaseSchema = zod.object({
     userId: objectIdSchema,
     genUserId: zod.string().regex(/^USR[A-F0-9]{10}$/, {
         message: 'User ID must follow the format USRXXXXXXXXXX',
     }),
-    googleId: zod.string(),
+    googleId: zod.string().optional(),
     username: zod
         .string()
         .min(3, { message: 'Username must be at least 3 characters' })
         .max(30, { message: 'Username cannot exceed 30 characters' })
         .regex(/^[a-zA-Z0-9_]+$/, {
             message: 'Username can only contain letters, numbers, and underscores',
-        }).optional(),
+        })
+        .optional(),
     email: zod
         .string()
         .email({ message: 'Invalid email address' })
         .min(1, { message: 'Email is required' }),
     profilePhoto: zod
         .string()
-        .url({ message: 'Invalid URL for profile photo' }),
-    bio: zod.string().max(500, { message: 'Bio cannot exceed 500 characters' }),
+        .url({ message: 'Invalid URL for profile photo' })
+        .nullable()
+        .optional(),
+    bio: zod.string().max(500, { message: 'Bio cannot exceed 500 characters' }).optional().default(''),
     name: zod
         .string()
         .min(2, { message: 'Full name must be at least 2 characters' })
@@ -48,21 +62,23 @@ export const UserBaseSchema = zod.object({
         .min(1, { message: 'Password is required' })
         .regex(/^\$argon2[id]?d?\$v=\d+\$m=\d+,t=\d+,p=\d+\$[a-zA-Z0-9+/]+\$[a-zA-Z0-9+/]+/, {
             message: 'Password must be a valid Argon2 hash',
-        }).optional(),
-    lastActive: zod
-        .union([zod.string().datetime(), zod.date()])
-        .transform((val) => new Date(val)),
-    verified: zod.boolean(),
-    accountType: zod
-        .enum(['admin', 'supporter', 'member']),
-    followerCount: zod.number().int().nonnegative(),
-    followingCount: zod.number().int().nonnegative(),
-    friendCount: zod.number().int().nonnegative(),
-    pendingRequests: zod.number().int().nonnegative(),
+        })
+        .optional(),
+    lastActive: DatePreprocessor.optional().default(() => new Date()),
+    verified: zod.boolean().default(false),
+    accountType: zod.enum(['admin', 'supporter', 'vip', 'moderator', 'member']).default('member'),
+    followerCount: zod.number().int().nonnegative().default(0),
+    followingCount: zod.number().int().nonnegative().default(0),
+    friendCount: zod.number().int().nonnegative().default(0),
+    pendingRequests: zod.number().int().nonnegative().default(0),
 
-    createdAt: zod.date().optional(),
-    updatedAt: zod.date().optional(),
+    createdAt: DatePreprocessor.optional(),
+    updatedAt: DatePreprocessor.optional(),
 }).strict();
+
+// ----------------------------------------------------------------------
+// Response & Action Schemas
+// ----------------------------------------------------------------------
 
 export const UserResponseSchema = UserBaseSchema.pick({
     userId: true,
@@ -81,9 +97,8 @@ export const UserResponseSchema = UserBaseSchema.pick({
     pendingRequests: true,
     createdAt: true,
     updatedAt: true,
-})
+});
 
-// Derived Schemas
 export const CreateUserSchema = UserBaseSchema.pick({
     username: true,
     email: true,
@@ -105,21 +120,23 @@ export const UpdateUserSchema = UserBaseSchema.pick({
     name: true,
     profilePhoto: true,
     bio: true,
-}).partial().extend({
-    userId: objectIdSchema,
-});
-
+})
+    .partial()
+    .extend({
+        userId: objectIdSchema,
+    });
 
 export const UserAccountUpdateSchema = UserBaseSchema.pick({
     username: true,
-    genUserId: true
+    genUserId: true,
 }).extend({
     userId: objectIdSchema,
     password: zod.string().min(8, { message: 'Password must be at least 8 characters' }),
-    newPassword: zod.string().min(8, { message: 'New password must be at least 8 characters' })
-})
+    newPassword: zod.string().min(8, { message: 'New password must be at least 8 characters' }),
+});
 
-export const VoiceParticipantSchema = UserBaseSchema.pick({
+// Stage/Room Participant Profile
+export const ParticipantResponseSchema = UserBaseSchema.pick({
     userId: true,
     genUserId: true,
     name: true,
@@ -131,4 +148,7 @@ export const VoiceParticipantSchema = UserBaseSchema.pick({
     followerCount: true,
     followingCount: true,
     friendCount: true,
-})
+}).extend({
+    isFollowing: zod.boolean().default(false),
+    isBlocked: zod.boolean().default(false),
+});

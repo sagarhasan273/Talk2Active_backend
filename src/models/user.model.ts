@@ -105,7 +105,7 @@ const UserModalSchema = new Schema<UserBaseType & Document>({
   toObject: {
     transform: function (doc, ret: any) {
       if (ret._id) {
-        ret.id = ret._id.toString();
+        ret.userId = ret._id.toString();
         delete ret._id;
       }
       if ('__v' in ret) delete ret.__v;

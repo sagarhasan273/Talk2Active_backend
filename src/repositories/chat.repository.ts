@@ -1,20 +1,20 @@
 import { ObjectId } from 'mongodb';
 import { RoomModel } from 'src/models/chat.model';
 import {
-    CreateRoomInput,
-    JoinRoomInput,
-    LeaveRoomInput,
     RoomBase,
-    UpdateRoomInput,
+    RoomCreateInput,
+    RoomJoinInput,
+    RoomLeaveInput,
+    RoomUpdateInput,
 } from 'src/types/chat.type';
 import { AppError } from 'src/utils/errors';
 import { generateRoomKey } from 'src/utils/generate.room-key';
 
-const participantQuery = 'genUserId email username name profilePhoto verified accountType';
+const participantQuery = 'genUserId email username name profilePhoto verified accountType followingCount followerCount friendCount';
 const hostQuery = 'genUserId email username name profilePhoto verified accountType';
 
 export class ChatRepository {
-    public async createRoom(input: CreateRoomInput): Promise<RoomBase> {
+    public async createRoom(input: RoomCreateInput): Promise<RoomBase> {
         try {
             const { ...createFields } = input;
 
@@ -36,29 +36,19 @@ export class ChatRepository {
 
             return room.toJSON();
         } catch (error) {
-            if (error instanceof AppError) {
-                throw error;
-            }
+            if (error instanceof AppError) throw error;
             throw new AppError('Failed to create Room!', 500, 'Chat Repository');
         }
     }
 
-    public async updateRoom(input: UpdateRoomInput): Promise<RoomBase> {
+    public async updateRoom(input: RoomUpdateInput): Promise<RoomBase> {
         try {
             const { roomId, ...updateFields } = input;
 
             const room = await RoomModel.findOneAndUpdate(
-                {
-                    _id: new ObjectId(roomId),
-                },
-                {
-                    $set: {
-                        ...updateFields,
-                    },
-                },
-                {
-                    new: true,
-                }
+                { _id: new ObjectId(roomId) },
+                { $set: updateFields },
+                { new: true }
             ).populate('host', hostQuery);
 
             if (!room) {
@@ -67,9 +57,7 @@ export class ChatRepository {
 
             return room.toJSON();
         } catch (error) {
-            if (error instanceof AppError) {
-                throw error;
-            }
+            if (error instanceof AppError) throw error;
             throw new AppError('Failed to update Room!', 500, 'Chat Repository');
         }
     }
@@ -83,11 +71,9 @@ export class ChatRepository {
                 .populate('participants.user', participantQuery)
                 .sort({ createdAt: -1 });
 
-            return rooms.map((room) => room.toJSON());
+            return rooms.map(room => room.toJSON());
         } catch (error) {
-            if (error instanceof AppError) {
-                throw error;
-            }
+            if (error instanceof AppError) throw error;
             throw new AppError('Failed to fetch rooms!', 500, 'Chat Repository');
         }
     }
@@ -105,15 +91,13 @@ export class ChatRepository {
 
             return room.toJSON();
         } catch (error) {
-            if (error instanceof AppError) {
-                throw error;
-            }
+            if (error instanceof AppError) throw error;
             throw new AppError('Failed to get Room by ID!', 500, 'Chat Repository');
         }
     }
 
-    public async joinRoom(input: JoinRoomInput): Promise<RoomBase> {
-        const { roomId, userId } = input;
+    public async joinRoom(input: RoomJoinInput): Promise<RoomBase> {
+        const { roomId, userId, isHost } = input;
         try {
             const room = await RoomModel.findById(roomId);
 
@@ -122,7 +106,7 @@ export class ChatRepository {
             }
 
             const isAlreadyParticipant = room.participants.some(
-                (participant) => participant.user.toString() === userId
+                (participant) => participant.user.toString() === userId.toString()
             );
 
             if (!isAlreadyParticipant) {
@@ -130,7 +114,11 @@ export class ChatRepository {
                     throw new AppError('Room is full', 400, 'Chat Repository');
                 }
 
-                room.participants.push({ user: userId as any, joinedAt: new Date() });
+                room.participants.push({
+                    user: new ObjectId(userId),
+                    joinedAt: new Date(),
+                    isHost,
+                });
                 await room.save();
             }
 
@@ -139,14 +127,12 @@ export class ChatRepository {
 
             return room.toJSON();
         } catch (error) {
-            if (error instanceof AppError) {
-                throw error;
-            }
+            if (error instanceof AppError) throw error;
             throw new AppError('Failed to join Room!', 500, 'Chat Repository');
         }
     }
 
-    public async leaveRoom(input: LeaveRoomInput): Promise<void> {
+    public async leaveRoom(input: RoomLeaveInput): Promise<void> {
         try {
             const { roomId, userId, kicked } = input;
 
@@ -156,7 +142,7 @@ export class ChatRepository {
             }
 
             room.participants = room.participants.filter(
-                (participant) => participant.user.toString() !== userId
+                (participant) => participant.user.toString() !== userId.toString()
             );
 
             if (kicked && !room.kickedUserIds.includes(userId as any)) {
@@ -165,9 +151,7 @@ export class ChatRepository {
 
             await room.save();
         } catch (error) {
-            if (error instanceof AppError) {
-                throw error;
-            }
+            if (error instanceof AppError) throw error;
             throw new AppError('Failed to leave Room!', 500, 'Chat Repository');
         }
     }
