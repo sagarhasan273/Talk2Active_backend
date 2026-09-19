@@ -46,7 +46,7 @@ PostModelSchema.virtual('authorDetails', {
     localField: 'author',
     foreignField: '_id',
     justOne: true,
-    options: { select: 'email username name profilePhoto coverPhoto bio status lastActive verified followerCount followingCount friendCount accountType' }
+    options: { select: 'email username name profilePhoto coverPhoto bio status lastActive verified follower_count following_count friend_count accountType' }
 });
 
 

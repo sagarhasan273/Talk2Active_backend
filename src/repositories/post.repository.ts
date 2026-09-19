@@ -124,9 +124,9 @@ export class PostRepository {
                         'authorDetails.status': 1,
                         'authorDetails.lastActive': 1,
                         'authorDetails.verified': 1,
-                        'authorDetails.followerCount': 1,
-                        'authorDetails.followingCount': 1,
-                        'authorDetails.friendCount': 1,
+                        'authorDetails.follower_count': 1,
+                        'authorDetails.following_count': 1,
+                        'authorDetails.friend_count': 1,
                         'authorDetails.accountType': 1,
                     }
                 },

@@ -1,7 +1,7 @@
 import { LanguageLevelEnum } from 'src/enums/chat.enum';
 import { z } from 'zod';
 import { objectIdSchema } from './base.schema';
-import { ParticipantResponseSchema, UserResponseSchema } from './user.schema';
+import { HostResponseSchema, ParticipantResponseSchema } from './user.schema';
 
 // ----------------------------------------------------------------------
 // Reusable Sub-schemas
@@ -40,7 +40,7 @@ export const RoomBaseSchema = z.object({
     languages: z.array(z.string().min(1, 'languages is required')),
     level: z.nativeEnum(LanguageLevelEnum),
     max_participants: z.number().int().nonnegative().default(5),
-    host: z.union([objectIdSchema, ParticipantResponseSchema]),
+    host: z.union([objectIdSchema, HostResponseSchema]),
     participants: z.array(RoomParticipantBaseSchema).default([]),
     isActive: z.boolean().optional().default(true),
     kickedUserIds: z.array(objectIdSchema),
@@ -76,7 +76,7 @@ export const RoomUpdateSchema = RoomBaseSchema.pick({
 
 // Schema for populated API DB responses
 export const RoomResponseSchema = RoomBaseSchema.extend({
-    host: UserResponseSchema,
+    host: HostResponseSchema,
     participants: z.array(RoomParticipantResponseSchema).default([]),
 });
 

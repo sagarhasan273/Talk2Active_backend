@@ -203,7 +203,7 @@ export class RelationshipService {
         }
     }
 
-    async getUserStats(userId: string): Promise<{ followerCount: number, followingCount: number, friendCount: number, pendingRequests: number }> {
+    async getUserStats(userId: string): Promise<{ follower_count: number, following_count: number, friend_count: number, pendingRequests: number }> {
         try {
             return await this.relationshipRepository.getUserStats(userId);
         } catch (error) {

@@ -12,17 +12,23 @@ declare global {
   }
 }
 
-export const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
+export const ReadOnlyMiddleware = (req: Request, res: Response, next: NextFunction) => {
   try {
+    req.user = null;
+
     const token = req.header('Authorization')?.replace('Bearer ', '');
 
     if (!token) {
-      throw new Error('Authentication required');
+      next();
+      return;
     }
 
     const decoded = JwtService.verifyToken(token);
 
-    req.user = decoded;
+    if (decoded.isValid) {
+      req.user = decoded;
+    }
+
     next();
   } catch (error) {
     res.status(401).json({ error: 'Authentication required' });

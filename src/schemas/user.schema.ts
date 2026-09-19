@@ -67,9 +67,9 @@ export const UserBaseSchema = zod.object({
     lastActive: DatePreprocessor.optional().default(() => new Date()),
     verified: zod.boolean().default(false),
     accountType: zod.enum(['admin', 'supporter', 'vip', 'moderator', 'member']).default('member'),
-    followerCount: zod.number().int().nonnegative().default(0),
-    followingCount: zod.number().int().nonnegative().default(0),
-    friendCount: zod.number().int().nonnegative().default(0),
+    follower_count: zod.number().int().nonnegative().default(0),
+    following_count: zod.number().int().nonnegative().default(0),
+    friend_count: zod.number().int().nonnegative().default(0),
     pendingRequests: zod.number().int().nonnegative().default(0),
 
     createdAt: DatePreprocessor.optional(),
@@ -91,9 +91,9 @@ export const UserResponseSchema = UserBaseSchema.pick({
     lastActive: true,
     verified: true,
     accountType: true,
-    followerCount: true,
-    followingCount: true,
-    friendCount: true,
+    follower_count: true,
+    following_count: true,
+    friend_count: true,
     pendingRequests: true,
     createdAt: true,
     updatedAt: true,
@@ -136,6 +136,23 @@ export const UserAccountUpdateSchema = UserBaseSchema.pick({
 });
 
 // Stage/Room Participant Profile
+export const HostResponseSchema = UserBaseSchema.pick({
+    userId: true,
+    genUserId: true,
+    name: true,
+    username: true,
+    profilePhoto: true,
+    bio: true,
+    verified: true,
+    accountType: true,
+    follower_count: true,
+    following_count: true,
+    friend_count: true,
+}).extend({
+    isFollowing: zod.boolean().default(false),
+    isBlocked: zod.boolean().default(false),
+});
+
 export const ParticipantResponseSchema = UserBaseSchema.pick({
     userId: true,
     genUserId: true,
@@ -145,9 +162,9 @@ export const ParticipantResponseSchema = UserBaseSchema.pick({
     bio: true,
     verified: true,
     accountType: true,
-    followerCount: true,
-    followingCount: true,
-    friendCount: true,
+    follower_count: true,
+    following_count: true,
+    friend_count: true,
 }).extend({
     isFollowing: zod.boolean().default(false),
     isBlocked: zod.boolean().default(false),

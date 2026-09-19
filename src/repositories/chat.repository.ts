@@ -10,8 +10,8 @@ import {
 import { AppError } from 'src/utils/errors';
 import { generateRoomKey } from 'src/utils/generate.room-key';
 
-const participantQuery = 'genUserId email username name profilePhoto verified accountType followingCount followerCount friendCount';
-const hostQuery = 'genUserId email username name profilePhoto verified accountType';
+const participantQuery = 'genUserId username name profilePhoto verified accountType following_count follower_count friend_count';
+const hostQuery = 'genUserId username name profilePhoto verified accountType';
 
 export class ChatRepository {
     public async createRoom(input: RoomCreateInput): Promise<RoomBase> {

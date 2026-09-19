@@ -74,9 +74,9 @@ export const RelationshipResponseSchema = RelationshipSchema.extend({
 
 export const UserStatsSchema = z.object({
     userId: objectIdSchema,
-    followerCount: z.number().int().nonnegative().default(0),
-    followingCount: z.number().int().nonnegative().default(0),
-    friendCount: z.number().int().nonnegative().default(0),
+    follower_count: z.number().int().nonnegative().default(0),
+    following_count: z.number().int().nonnegative().default(0),
+    friend_count: z.number().int().nonnegative().default(0),
     pendingRequests: z.number().int().nonnegative().default(0),
 });
 

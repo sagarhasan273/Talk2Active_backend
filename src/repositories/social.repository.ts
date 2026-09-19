@@ -12,7 +12,7 @@ import {
 import { AppError } from 'src/utils/errors';
 
 export const CommonRelationshipPopulateQuery =
-    'email username name firstName lastName profilePhoto avatarUrl bio status lastActive verified accountType followerCount followingCount friendCount pendingRequests genUserId';
+    'email username name firstName lastName profilePhoto avatarUrl bio status lastActive verified accountType follower_count following_count friend_count pendingRequests genUserId';
 
 export class RelationshipRepository {
     /**
@@ -32,10 +32,7 @@ export class RelationshipRepository {
                 lastActive: null,
                 verified: false,
                 accountType: '',
-                followerCount: 0,
-                followingCount: 0,
-                friendCount: 0,
-                pendingRequests: 0,
+                follower_count: 0,
             };
         }
 
@@ -55,9 +52,9 @@ export class RelationshipRepository {
             lastActive: user.lastActive || null,
             verified: Boolean(user.verified),
             accountType: user.accountType || '',
-            followerCount: user.followerCount || 0,
-            followingCount: user.followingCount || 0,
-            friendCount: user.friendCount || 0,
+            follower_count: user.follower_count || 0,
+            following_count: user.following_count || 0,
+            friend_count: user.friend_count || 0,
             pendingRequests: user.pendingRequests || 0,
         };
     }
@@ -155,10 +152,7 @@ export class RelationshipRepository {
         return relationships
     }
 
-    /**
-   * Returns a flat array of user IDs that the current user is following.
-   */
-    public async getFollowingIds(userId: string): Promise<string[]> {
+    async getFollowingIds(userId: string): Promise<string[]> {
         const rawIds = await RelationshipModel.distinct('recipient', {
             requester: new ObjectId(userId),
             type: RelationshipTypeEnum.FOLLOW,
@@ -167,17 +161,22 @@ export class RelationshipRepository {
         return rawIds.map((id) => id.toString());
     }
 
-    /**
-     * Alternative: If you need to filter against specific candidate IDs
-     * (e.g., check which participants in a room you are following)
-     */
-    public async getRelationshipIdsSubset(userId: string): Promise<{
+    async getBlockedIds(userId: string): Promise<string[]> {
+        const rawIds = await RelationshipModel.distinct('recipient', {
+            requester: new ObjectId(userId),
+            type: RelationshipTypeEnum.BLOCK,
+        });
+
+        return rawIds.map((id) => id.toString());
+    }
+
+    async getRelationshipIds(userId: string): Promise<{
         followingSet: Set<string>;
         blockedSet: Set<string>;
     }> {
         const relationships = await RelationshipModel.find({
             requester: new ObjectId(userId),
-            type: [RelationshipTypeEnum.FOLLOW, RelationshipTypeEnum.BLOCK],
+            type: { $in: [RelationshipTypeEnum.FOLLOW, RelationshipTypeEnum.BLOCK] },
         });
 
         const followingSet = new Set<string>();
@@ -194,17 +193,6 @@ export class RelationshipRepository {
         return { followingSet, blockedSet };
     }
 
-    /**
-  * Returns a flat array of user IDs that the current user is following.
-  */
-    public async getBlockedIds(userId: string): Promise<string[]> {
-        const rawIds = await RelationshipModel.distinct('recipient', {
-            requester: new ObjectId(userId),
-            type: RelationshipTypeEnum.BLOCK,
-        });
-
-        return rawIds.map((id) => id.toString());
-    }
 
     // Get followers of a user (people who follow this user)
     async getFollowers(
@@ -434,7 +422,7 @@ export class RelationshipRepository {
 
     async getUserStats(userId: string): Promise<UserStats> {
         const user = await UserModel.findById(userId)
-            .select('followerCount followingCount friendCount pendingRequests')
+            .select('follower_count following_count friend_count pendingRequests')
             .lean();
 
         if (!user) {
@@ -443,9 +431,9 @@ export class RelationshipRepository {
 
         return {
             userId,
-            followerCount: user.followerCount || 0,
-            followingCount: user.followingCount || 0,
-            friendCount: user.friendCount || 0,
+            follower_count: user.follower_count || 0,
+            following_count: user.following_count || 0,
+            friend_count: user.friend_count || 0,
             pendingRequests: user.pendingRequests || 0,
         };
     }
@@ -494,7 +482,7 @@ export class RelationshipRepository {
             { _id: new ObjectId(requesterId) },
             {
                 $set: {
-                    followingCount: requesterFollowing,
+                    following_count: requesterFollowing,
                     pendingRequests: requesterPendingSent,
                 },
             }
@@ -512,16 +500,16 @@ export class RelationshipRepository {
                     type: RelationshipTypeEnum.FRIEND,
                     status: RelationshipStatusEnum.PENDING,
                 }),
-                this.getFriendCount(recipientId),
+                this.getfriend_count(recipientId),
             ]);
 
             await UserModel.updateOne(
                 { _id: new ObjectId(recipientId) },
                 {
                     $set: {
-                        followerCount: recipientFollowers,
+                        follower_count: recipientFollowers,
                         pendingRequests: recipientPending,
-                        friendCount: recipientFriends,
+                        friend_count: recipientFriends,
                         lastUpdated: new Date(),
                     },
                 }
@@ -529,7 +517,7 @@ export class RelationshipRepository {
         }
     }
 
-    private async getFriendCount(userId: string): Promise<number> {
+    private async getfriend_count(userId: string): Promise<number> {
         const userFollowing = await RelationshipModel.find({
             requester: userId,
             type: RelationshipTypeEnum.FOLLOW,

@@ -11,8 +11,8 @@ declare module 'express' {
 export async function databaseMiddleware(req: Request, res: Response, next: NextFunction) {
   try {
     const db = await getDatabase();
-    req.db = db; // Attach the database instance to the request object
-    next(); // Call the next middleware or route handler
+    req.db = db;
+    next();
   } catch (error) {
     next(error);
   }

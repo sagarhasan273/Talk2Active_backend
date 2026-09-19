@@ -1,7 +1,6 @@
 import { Request, Response } from 'express';
 import { AccessToken } from 'livekit-server-sdk';
 import { RoomCreateSchema, RoomLeaveSchema, RoomUpdateSchema } from 'src/schemas/chat.schema';
-import { JwtService } from 'src/services/auth/jwt.service';
 import { ChatService } from 'src/services/chat-service';
 import { AppError } from 'src/utils/errors';
 import logger from 'src/utils/logger';
@@ -66,16 +65,11 @@ export class ChatController {
     }
 
     public async getRooms(req: Request, res: Response): Promise<void> {
-        const token = req.header('Authorization')?.replace('Bearer ', '');
+        const currentUserId = req.user?.userId
 
-        if (!token) {
-            throw new Error('Authentication required');
-        }
-
-        const decoded = JwtService.verifyToken(token);
-        const currentUserId = decoded.userId
         try {
             const rooms = await this.chatService.getRooms(currentUserId);
+
             res.status(200).json({
                 status: true,
                 message: 'Rooms fetched successfully',

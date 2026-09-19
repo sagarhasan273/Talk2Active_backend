@@ -436,7 +436,7 @@ export class UserSuggestionRepository {
             },
             {
                 $addFields: {
-                    followerCount: { $size: '$allFollowers' }
+                    follower_count: { $size: '$allFollowers' }
                 }
             },
             {
@@ -451,13 +451,13 @@ export class UserSuggestionRepository {
                                 coverPhoto: 1,
                                 isVerified: 1,
                                 bio: 1,
-                                followerCount: 1,
-                                followingCount: 1,
-                                friendCount: 1,
+                                follower_count: 1,
+                                following_count: 1,
+                                friend_count: 1,
                                 createdAt: 1
                             }
                         },
-                        { $sort: { followerCount: -1, createdAt: -1 } },
+                        { $sort: { follower_count: -1, createdAt: -1 } },
                         { $skip: skip },
                         { $limit: limit }
                     ],

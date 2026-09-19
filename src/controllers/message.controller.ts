@@ -3,12 +3,10 @@ import { CreateMessageSchema, ReactionSchema, UpdateMessageSchema } from 'src/sc
 import { JwtService } from 'src/services/auth/jwt.service';
 import { MessageService } from 'src/services/message.service';
 
-interface AuthRequest extends Request {
-    user?: { userId: string; name: string };
-}
+
 
 export class MessageController {
-    public static async getHistory(req: AuthRequest, res: Response): Promise<void> {
+    public static async getHistory(req: Request, res: Response): Promise<void> {
         try {
             const token = req.header('Authorization')?.replace('Bearer ', '');
 
@@ -36,10 +34,10 @@ export class MessageController {
         }
     }
 
-    public static async saveMessage(req: AuthRequest, res: Response): Promise<void> {
+    public static async saveMessage(req: Request, res: Response): Promise<void> {
         try {
             const { userId: currentUserId } = req.body;
-            const currentUserName = req.user?.name || 'Anonymous';
+            const currentUserName = 'Anonymous';
             if (!currentUserId) {
                 res.status(401).json({ error: 'Unauthorized' });
                 return;
@@ -58,7 +56,7 @@ export class MessageController {
         }
     }
 
-    public static async updateMessage(req: AuthRequest, res: Response): Promise<void> {
+    public static async updateMessage(req: Request, res: Response): Promise<void> {
         try {
             const currentUserId = req.user?.userId;
             const { messageId } = req.params;
@@ -81,7 +79,7 @@ export class MessageController {
         }
     }
 
-    public static async toggleReaction(req: AuthRequest, res: Response): Promise<void> {
+    public static async toggleReaction(req: Request, res: Response): Promise<void> {
         try {
             const currentUserId = req.user?.userId;
             const { messageId } = req.params;
@@ -104,7 +102,7 @@ export class MessageController {
         }
     }
 
-    public static async readMessages(req: AuthRequest, res: Response): Promise<void> {
+    public static async readMessages(req: Request, res: Response): Promise<void> {
         try {
             const currentUserId = req.user?.userId;
 

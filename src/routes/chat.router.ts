@@ -1,11 +1,12 @@
 import { ChatController } from 'src/controllers/chat.controller';
+import { ReadOnlyMiddleware } from 'src/middlewares/readonly-middleware';
 import { BaseRouter } from './base.router';
 
 export class ChatRouter extends BaseRouter {
     private chatController = new ChatController();
 
     protected routes(): void {
-        this.router.get('/list', (req, res) =>
+        this.router.get('/list', ReadOnlyMiddleware, (req, res) =>
             this.chatController.getRooms(req, res)
         );
 
