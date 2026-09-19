@@ -23,7 +23,7 @@ export interface IChatMessageDoc {
     systemType?: SystemType;
     replyToId?: string;
     editedAt?: number;
-    isRead?: boolean; // <-- Added
+    isRead?: boolean; // <-- Added 
     readAt?: Date;    // <-- Added
     reactions: IReaction[];
     createdAt: Date;

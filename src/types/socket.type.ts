@@ -1,4 +1,3 @@
-import { UserMessage } from "src/models/message.model";
 import { Message } from "./chat.type";
 import { UserResponseType } from "./user.type";
 
@@ -21,7 +20,7 @@ export interface LeaveIndividualMessageData {
     targetUserId: string;
 }
 
-export type IndividualMessageData = UserMessage & {
+export type IndividualMessageData = {
     userId: string;
     text: string;
     receiverSocketId: string;

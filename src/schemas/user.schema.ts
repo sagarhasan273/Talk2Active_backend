@@ -126,15 +126,6 @@ export const UpdateUserSchema = UserBaseSchema.pick({
         userId: objectIdSchema,
     });
 
-export const UserAccountUpdateSchema = UserBaseSchema.pick({
-    username: true,
-    genUserId: true,
-}).extend({
-    userId: objectIdSchema,
-    password: zod.string().min(8, { message: 'Password must be at least 8 characters' }),
-    newPassword: zod.string().min(8, { message: 'New password must be at least 8 characters' }),
-});
-
 // Stage/Room Participant Profile
 export const HostResponseSchema = UserBaseSchema.pick({
     userId: true,

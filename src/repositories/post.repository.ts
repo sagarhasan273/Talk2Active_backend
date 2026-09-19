@@ -1,6 +1,5 @@
 import { ObjectId } from 'mongodb';
 import type { PipelineStage } from 'mongoose';
-import { DislikeModel, LikeModel, PinpostModel } from 'src/models/post-engagement.model';
 import { PostModel } from 'src/models/post.model';
 import { ReturnResponseType } from 'src/types/base.type';
 import { CreatePostInput, DeletePostInput, GetPostsByUserIdInput, PostResponseType, UpdatePostInput } from 'src/types/post.type';
@@ -213,49 +212,6 @@ export class PostRepository {
                     }
                 }
             ];
-            if (type === 'likes') {
-                const likedPosts = await LikeModel.aggregate(pipeline);
-
-                return likedPosts.map((post) => {
-
-                    return {
-                        ...post,
-                        postId: post._id.toString(),
-                        authorDetails: (post as any).authorDetails ?? null,
-                        authorRelationship: (post as any).authorRelationship ?? null,
-                    } as PostResponseType;
-                });
-            }
-
-            if (type === 'dislikes') {
-                const dislikedPosts = await DislikeModel.aggregate(pipeline);
-
-                return dislikedPosts.map((post) => {
-
-                    return {
-                        ...post,
-                        postId: post._id.toString(),
-                        authorDetails: (post as any).authorDetails ?? null,
-                        authorRelationship: (post as any).authorRelationship ?? null,
-                    } as PostResponseType;
-                });
-            }
-
-            if (type === 'pins') {
-                const pinnedPosts = await PinpostModel.aggregate(pipeline);
-
-                return pinnedPosts.map((post) => {
-
-                    return {
-                        ...post,
-                        postId: post._id.toString(),
-                        authorDetails: (post as any).authorDetails ?? null,
-                        authorRelationship: (post as any).authorRelationship ?? null,
-                    } as PostResponseType;
-                });
-            }
-
-
 
             const posts = await PostModel.find({ author: new ObjectId(userId), isDeleted: false })
                 .populate('authorDetails')

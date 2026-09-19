@@ -1,6 +1,5 @@
-import { PostEngagementRepository } from "src/repositories/post-engagement.repository";
+
 import { PostRepository } from "src/repositories/post.repository";
-import { RelationshipRepository } from "src/repositories/social.repository";
 import { ReturnResponseType } from "src/types/base.type";
 import { CreatePostInput, DeletePostInput, GetPostsByUserIdInput, GetPostsInput, PostResponseType, UpdatePostInput } from "src/types/post.type";
 import { AppError } from "src/utils/errors";
@@ -8,9 +7,6 @@ import { AppError } from "src/utils/errors";
 
 export class PostService {
     private repository = new PostRepository();
-    private engagementRepository = new PostEngagementRepository();
-    private relationshipService = new RelationshipRepository();
-
 
     public async createPost(input: CreatePostInput): Promise<any> {
         try {
