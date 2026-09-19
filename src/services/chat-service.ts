@@ -150,12 +150,20 @@ export class ChatService {
 		try {
 			const room = await this.chatRepository.joinRoom(input);
 			const currentUserId = input.userId.toString();
-			const targetIds = this.collectTargetIdsFromRooms([room], currentUserId);
-			const { followingSet, blockedSet } = await this.getRelationshipSets(currentUserId, targetIds);
+
+			const { followingSet, blockedSet } = await this.socialRepository.getRelationshipIds(currentUserId);
+
 			return this.toRoomResponse(room, followingSet, blockedSet);
 		} catch (error) {
-			if (error instanceof AppError) throw error;
-			throw new AppError('Failed to join room!', 500, 'Chat Service');
+			if (error instanceof AppError) {
+				throw error;
+			}
+
+			const message = error instanceof DatabaseError
+				? 'Failed to join room due to database error'
+				: 'An unexpected error occurred while joining room';
+
+			throw new AppError(message, 500, 'ChatService.joinRoom');
 		}
 	}
 
