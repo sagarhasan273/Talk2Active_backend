@@ -10,34 +10,48 @@ import {
 import { AppError, DatabaseError } from 'src/utils/errors';
 import { generateRoomKey } from 'src/utils/generate.room-key';
 
-const participantQuery = 'genUserId username name profilePhoto verified accountType following_count follower_count friend_count';
-const hostQuery = 'genUserId username name profilePhoto verified accountType';
+// Unified camelCase query projections matching User schema
+const participantQuery =
+  'genUserId username name profilePhoto verified accountType followingCount followerCount friendCount';
+const hostQuery =
+  'genUserId username name profilePhoto verified accountType followingCount followerCount friendCount';
 
 export class ChatRepository {
   public async createRoom(input: RoomCreateInput): Promise<RoomBase> {
     try {
-      const { ...createFields } = input;
+      const { host, ...createFields } = input;
 
       const room_key = generateRoomKey();
       if (!room_key) {
-        throw new AppError('Failed to generate room key', 500, 'Chat Repository');
+        throw new AppError('Failed to generate room key', 500, 'ChatRepository.createRoom');
       }
+
+      const hostObjectId = new ObjectId(host.toString());
 
       const room = await RoomModel.create({
         ...createFields,
+        host: hostObjectId,
         room_key,
+        participants: [
+          {
+            user: hostObjectId,
+            joinedAt: new Date(),
+            isHost: true,
+          },
+        ],
       });
 
       if (!room) {
-        throw new AppError('Failed to create room', 404, 'Chat Repository');
+        throw new AppError('Failed to create room', 404, 'ChatRepository.createRoom');
       }
 
       await room.populate('host', hostQuery);
+      await room.populate('participants.user', participantQuery);
 
       return room.toJSON();
     } catch (error) {
       if (error instanceof AppError) throw error;
-      throw new AppError('Failed to create Room!', 500, 'Chat Repository');
+      throw new DatabaseError(error, 'ChatRepository.createRoom');
     }
   }
 
@@ -49,16 +63,18 @@ export class ChatRepository {
         { _id: new ObjectId(roomId) },
         { $set: updateFields },
         { new: true }
-      ).populate('host', hostQuery);
+      )
+        .populate('host', hostQuery)
+        .populate('participants.user', participantQuery);
 
       if (!room) {
-        throw new AppError('Failed to update room', 404, 'Chat Repository');
+        throw new AppError('Room not found', 404, 'ChatRepository.updateRoom');
       }
 
       return room.toJSON();
     } catch (error) {
       if (error instanceof AppError) throw error;
-      throw new AppError('Failed to update Room!', 500, 'Chat Repository');
+      throw new DatabaseError(error, 'ChatRepository.updateRoom');
     }
   }
 
@@ -80,26 +96,26 @@ export class ChatRepository {
     try {
       const room = await RoomModel.findOne({ _id: new ObjectId(roomId) })
         .populate('host', hostQuery)
-        .populate('participants.user', participantQuery)
-        .sort({ createdAt: -1 });
+        .populate('participants.user', participantQuery);
 
       if (!room) {
-        throw new AppError('Room not found', 404, 'Chat Repository');
+        throw new AppError('Room not found', 404, 'ChatRepository.getRoomById');
       }
 
       return room.toJSON();
     } catch (error) {
       if (error instanceof AppError) throw error;
-      throw new AppError('Failed to get Room by ID!', 500, 'Chat Repository');
+      throw new DatabaseError(error, 'ChatRepository.getRoomById');
     }
   }
 
   public async joinRoom(input: RoomJoinInput): Promise<RoomBase> {
     const { roomId, userId } = input;
-    const userObjectId = new ObjectId(userId);
-    const roomObjectId = new ObjectId(roomId);
 
     try {
+      const userObjectId = new ObjectId(userId);
+      const roomObjectId = new ObjectId(roomId);
+
       // 1. Check if room exists and user is eligible (not banned/kicked)
       const existingRoom = await RoomModel.findById(roomObjectId, {
         host: 1,
@@ -112,14 +128,14 @@ export class ChatRepository {
         throw new AppError('Room not found', 404, 'ChatRepository.joinRoom');
       }
 
-      const isKicked = existingRoom.kickedUserIds?.some(
+      const isKicked = (existingRoom.kickedUserIds || []).some(
         (kickedId) => kickedId.toString() === userId.toString()
       );
       if (isKicked) {
         throw new AppError('You have been removed from this room', 403, 'ChatRepository.joinRoom');
       }
 
-      const isAlreadyParticipant = existingRoom.participants?.some(
+      const isAlreadyParticipant = (existingRoom.participants || []).some(
         (p) => p.user.toString() === userId.toString()
       );
 
@@ -128,7 +144,8 @@ export class ChatRepository {
           throw new AppError('Room is full', 400, 'ChatRepository.joinRoom');
         }
 
-        const isHost = existingRoom.host.toString() === userId;
+        const rawHostId = existingRoom.host?.toString?.() || (existingRoom.host as any)?.userId;
+        const isHost = rawHostId === userId.toString();
 
         const updatedRoom = await RoomModel.findOneAndUpdate(
           {
@@ -151,13 +168,17 @@ export class ChatRepository {
           .populate('participants.user', participantQuery);
 
         if (!updatedRoom) {
-          throw new AppError('Room is full or you have already joined', 400, 'ChatRepository.joinRoom');
+          throw new AppError(
+            'Room is full or you have already joined',
+            400,
+            'ChatRepository.joinRoom'
+          );
         }
 
         return updatedRoom.toJSON();
       }
 
-      // 3. User is already in the room, populate and return current state
+      // 2. User is already in the room, populate and return current state
       const populatedRoom = await RoomModel.findById(roomObjectId)
         .populate('host', hostQuery)
         .populate('participants.user', participantQuery);
@@ -171,10 +192,11 @@ export class ChatRepository {
 
   public async leaveRoom(input: RoomLeaveInput): Promise<void> {
     const { roomId, userId, kicked } = input;
-    const userObjectId = new ObjectId(userId);
-    const roomObjectId = new ObjectId(roomId);
 
     try {
+      const userObjectId = new ObjectId(userId);
+      const roomObjectId = new ObjectId(roomId);
+
       const room = await RoomModel.findById(roomObjectId);
       if (!room) {
         throw new AppError('Room not found', 404, 'ChatRepository.leaveRoom');
@@ -191,20 +213,18 @@ export class ChatRepository {
           (kId) => kId.toString() === userId.toString()
         );
         if (!isAlreadyKicked) {
-          room.kickedUserIds.push(userObjectId as any);
+          room.kickedUserIds.push(userObjectId);
         }
       }
 
-      // If room is empty, close it
       if (room.participants.length === 0) {
         room.isActive = false;
       } else {
-        // If the user who left was the host, reassign to the next oldest participant
         const isLeavingUserHost =
           room.host?.toString() === userId.toString() ||
           (typeof room.host === 'object' &&
             room.host !== null &&
-            ((room.host as any).userId || (room.host as any)._id)?.toString() === userId.toString());
+            ((room.host as any).userId || (room.host as any).id)?.toString() === userId.toString());
 
         if (isLeavingUserHost) {
           room.participants[0].isHost = true;

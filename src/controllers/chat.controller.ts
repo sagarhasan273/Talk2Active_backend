@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { AccessToken } from 'livekit-server-sdk';
-import { RoomCreateSchema, RoomLeaveSchema, RoomUpdateSchema } from 'src/schemas/chat.schema';
+import { RoomCreateSchema, RoomJoinSchema, RoomLeaveSchema, RoomUpdateSchema } from 'src/schemas/chat.schema';
 import { ChatService } from 'src/services/chat-service';
 import { AppError } from 'src/utils/errors';
 import logger from 'src/utils/logger';
@@ -117,51 +117,41 @@ export class ChatController {
     public async joinRoom(req: Request, res: Response): Promise<void> {
         try {
             const { roomId } = req.params;
-            const { userId, userName, isHost } = req.body;
+            // Prioritize authenticated user from middleware; fallback to body if public
+            const userId = req.user?.userId || req.body.userId;
+            const { userName, isHost } = req.body;
 
-            if (!roomId || !userId) {
-                res.status(400).json({
-                    status: false,
-                    message: 'Both roomId and userId are required to join.',
-                });
-                return;
-            }
+            // 1. Zod input validation
+            const validatedInput = RoomJoinSchema.parse({
+                roomId,
+                userId,
+                isHost: Boolean(isHost),
+            });
 
-            // 1. Update database state via ChatService
-            let roomData;
-            try {
-                roomData = await this.chatService.joinRoom({ roomId, userId, isHost });
-            } catch (serviceError) {
-                // If joinRoom in ChatService throws an AppError, log and pass status
-                if (serviceError instanceof AppError) {
-                    logger.error(`${serviceError.at}: ${serviceError.message}`);
-                    res.status(serviceError.statusCode).json({ message: serviceError.message, status: false });
-                    return;
-                }
-            }
-
-            // 2. Validate LiveKit credentials
+            // 2. Validate LiveKit credentials early
             const apiKey = process.env.LIVEKIT_API_KEY;
             const apiSecret = process.env.LIVEKIT_API_SECRET;
 
             if (!apiKey || !apiSecret) {
-                logger.error('Missing LIVEKIT_API_KEY or LIVEKIT_API_SECRET environment variables');
-                res.status(500).json({
-                    status: false,
-                    message: 'Voice server configuration missing on backend',
-                });
-                return;
+                throw new AppError(
+                    'Voice server configuration is missing on backend',
+                    500,
+                    'ChatController.joinRoom'
+                );
             }
 
-            // 3. Issue LiveKit WebRTC Access Token
+            // 3. Update room database state via ChatService
+            const roomData = await this.chatService.joinRoom(validatedInput);
+
+            // 4. Issue LiveKit WebRTC Access Token
             const at = new AccessToken(apiKey, apiSecret, {
-                identity: String(userId),
-                name: userName || String(userId),
+                identity: String(validatedInput.userId),
+                name: userName || String(validatedInput.userId),
                 ttl: '4h',
             });
 
             at.addGrant({
-                room: roomId,
+                room: validatedInput.roomId.toString(),
                 roomJoin: true,
                 canPublish: true,
                 canSubscribe: true,
@@ -174,38 +164,64 @@ export class ChatController {
                 status: true,
                 message: 'Joined room successfully',
                 data: {
-                    roomId,
+                    roomId: validatedInput.roomId,
                     token,
-                    room: roomData || null,
+                    room: roomData,
                 },
             });
         } catch (error) {
-            logger.error(`Error in joinRoom: ${error}`);
-            res.status(500).json({ status: false, message: 'Could not join room' });
+            this.handleControllerError(error, res, 'ChatController.joinRoom');
         }
     }
 
     public async leaveRoom(req: Request, res: Response): Promise<void> {
-        let validatedInput;
         try {
-            validatedInput = RoomLeaveSchema.parse(req.body);
+            const userId = req.user?.userId || req.body.userId;
+            const roomId = req.params.roomId || req.body.roomId;
+
+            const validatedInput = RoomLeaveSchema.parse({
+                roomId,
+                userId,
+                kicked: req.body.kicked,
+            });
+
+            await this.chatService.leaveRoom(validatedInput);
+
+            res.status(200).json({
+                status: true,
+                message: 'Left room successfully',
+            });
         } catch (error) {
-            logger.error('Invalid leave room input data');
-            res.status(400).json({ status: false, message: 'Invalid leave room input data' });
+            this.handleControllerError(error, res, 'ChatController.leaveRoom');
+        }
+    }
+
+    // ── Centralized Error Dispatcher ────────────────────────────────────────
+    private handleControllerError(error: unknown, res: Response, source: string) {
+        if (error instanceof AppError) {
+            res.status(error.statusCode).json({
+                status: false,
+                message: error.message,
+                at: error.at,
+            });
             return;
         }
 
-        try {
-            await this.chatService.leaveRoom(validatedInput);
-            res.status(200).json({ status: true, message: 'Left room successfully' });
-        } catch (error) {
-            if (error instanceof AppError) {
-                logger.error(`${error.at}: ${error.message}`);
-                res.status(error.statusCode).json({ message: error.message, status: false });
-                return;
-            }
-            logger.error('An error occurred while leaving room');
-            res.status(500).json({ message: 'An error occurred while leaving room', status: false });
+        // Zod Validation Errors
+        if (error && typeof error === 'object' && 'issues' in error) {
+            res.status(400).json({
+                status: false,
+                message: 'Invalid input parameters',
+                errors: (error as any).issues,
+            });
+            return;
         }
+
+        // Fallback for unhandled runtime / system errors
+        logger.error(`[Unhandled Error in ${source}]:`, error);
+        res.status(500).json({
+            status: false,
+            message: 'An unexpected error occurred while processing your request',
+        });
     }
 }
