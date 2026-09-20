@@ -1,5 +1,6 @@
 import { Server as HttpServer } from 'http';
 import { Server, Socket } from 'socket.io';
+import { BroadcastNewRoomData, BroadcastUserJoinData, BroadcastUserLeaveData } from './types/socket.type';
 
 let io: Server | null = null;
 
@@ -136,4 +137,31 @@ export const emitMessagesRead = (senderId: string, recipientId: string): void =>
     if (!io) return;
     // Let the sender know that the recipient has read their messages
     io.to(senderId).emit('messages_read', { readBy: recipientId });
+};
+
+// ... broadcast new room ....
+
+export const emitBroadcastNewRoom = (data: BroadcastNewRoomData): void => {
+    const io = getIO();
+    if (!io) return;
+    // Let the sender know that the recipient has read their messages
+    io.emit('broadcart_new_room', data);
+};
+
+// ... broadcast user join ....
+
+export const emitBroadcastUserJoin = (data: BroadcastUserJoinData): void => {
+    const io = getIO();
+    if (!io) return;
+    // Let the sender know that the recipient has read their messages
+    io.emit('broadcart_user_join', data);
+};
+
+// ... broadcast user leave ....
+
+export const emitBroadcastUserLeave = (data: BroadcastUserLeaveData): void => {
+    const io = getIO();
+    if (!io) return;
+    // Let the sender know that the recipient has read their messages
+    io.emit('broadcart_user_leave', data);
 };

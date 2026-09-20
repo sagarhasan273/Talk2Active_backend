@@ -10,8 +10,8 @@ export type RoomCreateInput = z.infer<typeof RoomCreateSchema>;
 export type RoomUpdateInput = z.infer<typeof RoomUpdateSchema>;
 export type RoomBase = z.infer<typeof RoomBaseSchema>;
 export type RoomResponse = z.infer<typeof RoomResponseSchema>;
-export type RoomParticipantEntryBase = z.infer<typeof RoomParticipantBaseSchema>;
-export type RoomParticipantEntryResponse = z.infer<typeof RoomParticipantResponseSchema>;
+export type RoomParticipantBase = z.infer<typeof RoomParticipantBaseSchema>;
+export type RoomParticipantResponse = z.infer<typeof RoomParticipantResponseSchema>;
 export type RoomJoinInput = z.infer<typeof RoomJoinSchema>;
 export type RoomLeaveInput = z.infer<typeof RoomLeaveSchema>;
 

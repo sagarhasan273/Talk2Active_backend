@@ -1,14 +1,6 @@
 // models/user.model.ts
 import mongoose, { Document, Schema } from 'mongoose';
-import { SocialLinks, UserBaseType } from 'src/types/user.type';
-
-// Social Links Sub-Schema
-const SocialLinksSchema = new Schema<SocialLinks>({
-  facebook: { type: String },
-  twitter: { type: String },
-  instagram: { type: String },
-  linkedin: { type: String },
-}, { _id: false });
+import { UserBaseType } from 'src/types/user.type';
 
 // Main User Schema
 const UserModalSchema = new Schema<UserBaseType & Document>({

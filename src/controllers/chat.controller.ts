@@ -7,6 +7,8 @@ import {
     RoomUpdateSchema,
 } from 'src/schemas/chat.schema';
 import { ChatService } from 'src/services/chat-service';
+import { emitBroadcastNewRoom, emitBroadcastUserJoin, emitBroadcastUserLeave } from 'src/socket';
+import { RoomParticipantResponse } from 'src/types/chat.type';
 import { AppError } from 'src/utils/errors';
 import logger from 'src/utils/logger';
 
@@ -56,7 +58,10 @@ export class ChatController {
                 host: currentUserId || req.body.host,
             });
 
-            const newRoom = await this.chatService.createRoom(validatedInput, currentUserId);
+            const newRoom = await this.chatService.createRoom(validatedInput);
+
+            emitBroadcastNewRoom({ room: newRoom });
+
             res.status(201).json({
                 status: true,
                 message: 'Room created successfully',
@@ -121,7 +126,6 @@ export class ChatController {
         try {
             const { roomId } = req.params;
             const userId = req.user?.userId || req.body.userId;
-            const { userName, isHost } = req.body;
 
             // 1. Zod input validation
             const validatedInput = RoomJoinSchema.parse({
@@ -135,12 +139,28 @@ export class ChatController {
             // 3. Update database state
             const roomData = await this.chatService.joinRoom(validatedInput);
 
-            // 4. Issue LiveKit WebRTC Access Token
+            // 4. Extract joining participant's public profile from the joined roomData
+            const participant = roomData.participants.find(
+                (p: any) => p.userId.toString() === validatedInput.userId.toString()
+            );
+
+            const participantMetadata = JSON.stringify({
+                userId: validatedInput.userId,
+                name: participant?.name || 'Participant',
+                username: participant?.username || '',
+                profilePhoto: participant?.profilePhoto || '',
+                isHost: participant?.isHost ?? false,
+                ...participant,
+            });
+
+            // 5. Issue LiveKit WebRTC Access Token
             const at = new AccessToken(apiKey, apiSecret, {
                 identity: String(validatedInput.userId),
-                name: userName || String(validatedInput.userId),
+                attributes: { roomId: String(roomData.roomId) },
+                metadata: participantMetadata,
                 ttl: '4h',
             });
+
 
             at.addGrant({
                 room: validatedInput.roomId.toString(),
@@ -151,6 +171,11 @@ export class ChatController {
             });
 
             const token = await at.toJwt();
+
+            emitBroadcastUserJoin({
+                roomId: roomData.roomId.toString(),
+                participant: participant as RoomParticipantResponse
+            })
 
             res.status(200).json({
                 status: true,
@@ -196,6 +221,11 @@ export class ChatController {
 
             // 2. Update database state via ChatService
             await this.chatService.leaveRoom(validatedInput);
+
+            emitBroadcastUserLeave({
+                roomId: roomId.toString(),
+                participantId: userId
+            })
 
             res.status(200).json({
                 status: true,

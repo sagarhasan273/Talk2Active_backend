@@ -12,9 +12,9 @@ import { generateRoomKey } from 'src/utils/generate.room-key';
 
 // Projections matching the User schema properties
 const participantQuery =
-  'genUserId username name profilePhoto verified accountType followingCount followerCount friendCount';
+  'genUserId username name profilePhoto verified accountType following_count follower_count friend_count';
 const hostQuery =
-  'genUserId username name profilePhoto verified accountType followingCount followerCount friendCount';
+  'genUserId username name profilePhoto verified accountType following_count follower_count friend_count';
 
 export class ChatRepository {
   public async createRoom(input: RoomCreateInput): Promise<RoomBase> {
@@ -33,13 +33,7 @@ export class ChatRepository {
         ...createFields,
         host: hostObjectId,
         room_key,
-        participants: [
-          {
-            user: hostObjectId,
-            joinedAt: new Date(),
-            isHost: true,
-          },
-        ],
+        participants: [],
       });
 
       if (!room) {
@@ -217,21 +211,6 @@ export class ChatRepository {
         );
         if (!isAlreadyKicked) {
           room.kickedUserIds.push(userObjectId as any);
-        }
-      }
-
-      // 3. Handle room closure or host succession
-      if (room.participants.length === 0) {
-        room.isActive = false;
-      } else {
-        const rawHostId =
-          typeof room.host === 'object' && room.host !== null && 'userId' in (room.host as any)
-            ? (room.host as any).userId
-            : room.host?.toString();
-
-        if (rawHostId === userId.toString()) {
-          room.participants[0].isHost = true;
-          room.host = room.participants[0].user;
         }
       }
 

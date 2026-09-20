@@ -74,12 +74,10 @@ export class ChatService {
 		return Array.from(targetIds);
 	}
 
-	public async createRoom(input: RoomCreateInput, currentUserId?: string): Promise<RoomResponse> {
+	public async createRoom(input: RoomCreateInput): Promise<RoomResponse> {
 		try {
 			const room = await this.chatRepository.createRoom(input);
-			const targetIds = this.collectTargetIdsFromRooms([room], currentUserId);
-			const { followingSet, blockedSet } = await this.getRelationshipSets(currentUserId, targetIds);
-			return this.toRoomResponse(room, followingSet, blockedSet);
+			return this.toRoomResponse(room);
 		} catch (error) {
 			if (error instanceof AppError) throw error;
 			throw new AppError('Failed to create room!', 500, 'ChatService.createRoom');
@@ -89,9 +87,11 @@ export class ChatService {
 	public async updateRoom(input: RoomUpdateInput, currentUserId?: string): Promise<RoomResponse> {
 		try {
 			const room = await this.chatRepository.updateRoom(input);
-			const targetIds = this.collectTargetIdsFromRooms([room], currentUserId);
-			const { followingSet, blockedSet } = await this.getRelationshipSets(currentUserId, targetIds);
-			return this.toRoomResponse(room, followingSet, blockedSet);
+			if (currentUserId) {
+				const { followingSet, blockedSet } = await this.socialRepository.getRelationshipIds(currentUserId);
+				return this.toRoomResponse(room, followingSet, blockedSet);
+			}
+			return this.toRoomResponse(room);
 		} catch (error) {
 			if (error instanceof AppError) throw error;
 			throw new AppError('Failed to update room!', 500, 'ChatService.updateRoom');
