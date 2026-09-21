@@ -1,5 +1,4 @@
 import { Request, Response } from 'express';
-import { AccessToken, RoomServiceClient } from 'livekit-server-sdk';
 import {
     RoomCreateSchema,
     RoomJoinSchema,
@@ -14,41 +13,6 @@ import logger from 'src/utils/logger';
 
 export class ChatController {
     private chatService = new ChatService();
-    private livekitClient: RoomServiceClient | null = null;
-
-    // ── LiveKit Helper ───────────────────────────────────────────────────────
-    private getLiveKitCredentials() {
-        const apiKey = process.env.LIVEKIT_API_KEY;
-        const apiSecret = process.env.LIVEKIT_API_SECRET;
-        const host = process.env.LIVEKIT_URL;
-
-        if (!apiKey || !apiSecret) {
-            throw new AppError(
-                'Voice server configuration is missing on backend',
-                500,
-                'ChatController.LiveKit'
-            );
-        }
-
-        return { apiKey, apiSecret, host };
-    }
-
-    private getRoomServiceClient(): RoomServiceClient {
-        if (!this.livekitClient) {
-            const { apiKey, apiSecret, host } = this.getLiveKitCredentials();
-            if (!host) {
-                throw new AppError(
-                    'LIVEKIT_URL configuration is missing on backend',
-                    500,
-                    'ChatController.getRoomServiceClient'
-                );
-            }
-            this.livekitClient = new RoomServiceClient(host, apiKey, apiSecret);
-        }
-        return this.livekitClient;
-    }
-
-    // ── Controllers ─────────────────────────────────────────────────────────
 
     public createRoom = async (req: Request, res: Response): Promise<void> => {
         try {
@@ -127,55 +91,18 @@ export class ChatController {
             const { roomId } = req.params;
             const userId = req.user?.userId || req.body.userId;
 
-            // 1. Zod input validation
-            const validatedInput = RoomJoinSchema.parse({
-                roomId,
-                userId,
-            });
+            const validatedInput = RoomJoinSchema.parse({ roomId, userId });
 
-            // 2. Validate LiveKit credentials before doing DB mutations
-            const { apiKey, apiSecret } = this.getLiveKitCredentials();
+            const { room, token } = await this.chatService.joinRoom(validatedInput);
 
-            // 3. Update database state
-            const roomData = await this.chatService.joinRoom(validatedInput);
-
-            // 4. Extract joining participant's public profile from the joined roomData
-            const participant = roomData.participants.find(
-                (p: any) => p.userId.toString() === validatedInput.userId.toString()
+            const participant = room.participants.find(
+                (p: any) => (p.userId || p._id)?.toString() === validatedInput.userId.toString()
             );
 
-            const participantMetadata = JSON.stringify({
-                userId: validatedInput.userId,
-                name: participant?.name || 'Participant',
-                username: participant?.username || '',
-                profilePhoto: participant?.profilePhoto || '',
-                isHost: participant?.isHost ?? false,
-                ...participant,
-            });
-
-            // 5. Issue LiveKit WebRTC Access Token
-            const at = new AccessToken(apiKey, apiSecret, {
-                identity: String(validatedInput.userId),
-                attributes: { roomId: String(roomData.roomId) },
-                metadata: participantMetadata,
-                ttl: '4h',
-            });
-
-
-            at.addGrant({
-                room: validatedInput.roomId.toString(),
-                roomJoin: true,
-                canPublish: true,
-                canSubscribe: true,
-                canPublishData: true,
-            });
-
-            const token = await at.toJwt();
-
             emitBroadcastUserJoin({
-                roomId: roomData.roomId.toString(),
-                participant: participant as RoomParticipantResponse
-            })
+                roomId: String(room.roomId),
+                participant: participant as RoomParticipantResponse,
+            });
 
             res.status(200).json({
                 status: true,
@@ -183,7 +110,7 @@ export class ChatController {
                 data: {
                     roomId: validatedInput.roomId,
                     token,
-                    room: roomData,
+                    room,
                 },
             });
         } catch (error) {
@@ -191,6 +118,7 @@ export class ChatController {
         }
     };
 
+    // ChatController.leaveRoom
     public leaveRoom = async (req: Request, res: Response): Promise<void> => {
         try {
             const userId = req.user?.userId || req.body.userId;
@@ -202,30 +130,12 @@ export class ChatController {
                 kicked: Boolean(req.body.kicked),
             });
 
-            // 1. If user is kicked, evict directly from LiveKit WebRTC session
-            if (validatedInput.kicked) {
-                try {
-                    const roomService = this.getRoomServiceClient();
-                    await roomService.removeParticipant(
-                        validatedInput.roomId.toString(),
-                        validatedInput.userId.toString()
-                    );
-                } catch (webrtcError) {
-                    logger.error('[LiveKit] Failed to evict kicked participant from server session', {
-                        roomId: validatedInput.roomId,
-                        userId: validatedInput.userId,
-                        error: webrtcError,
-                    });
-                }
-            }
-
-            // 2. Update database state via ChatService
             await this.chatService.leaveRoom(validatedInput);
 
             emitBroadcastUserLeave({
                 roomId: roomId.toString(),
-                participantId: userId
-            })
+                participantId: userId,
+            });
 
             res.status(200).json({
                 status: true,
@@ -257,7 +167,7 @@ export class ChatController {
             return;
         }
 
-        // Fallback for unexpected runtime exceptions
+        // Fallback for unhandled runtime exceptions
         logger.error(`[Unhandled Error in ${source}]:`, error);
         res.status(500).json({
             status: false,

@@ -1,6 +1,8 @@
 import { Server as HttpServer } from 'http';
 import { Server, Socket } from 'socket.io';
+import { ChatService } from './services/chat-service';
 import { BroadcastNewRoomData, BroadcastUserJoinData, BroadcastUserLeaveData } from './types/socket.type';
+import logger from './utils/logger';
 
 let io: Server | null = null;
 
@@ -35,6 +37,9 @@ export interface SocketReactionPayload {
 /**
  * Initialize Socket.io instance with the HTTP server
  */
+
+const chatService = new ChatService()
+
 export const initSocketServer = (httpServer: HttpServer, allowedOrigins: string[] = ['*']): Server => {
     io = new Server(httpServer, {
         cors: {
@@ -47,6 +52,12 @@ export const initSocketServer = (httpServer: HttpServer, allowedOrigins: string[
 
     io.on('connection', (socket: Socket) => {
         let currentUserId: string | null = null;
+        let currentRoomId: string | null = null;
+
+        socket.on('join_room', (roomId: string) => {
+            currentRoomId = roomId;
+            logger.info(`join_room: ${currentUserId} => ${roomId}`);
+        })
 
         // Join user to their personal direct-message room
         socket.on('join_global_chat', (userId: string) => {
@@ -66,15 +77,38 @@ export const initSocketServer = (httpServer: HttpServer, allowedOrigins: string[
         });
 
         // Cleanup on disconnect
-        socket.on('disconnect', () => {
-            if (currentUserId && userSocketsMap.has(currentUserId)) {
-                const userSockets = userSocketsMap.get(currentUserId)!;
-                userSockets.delete(socket.id);
+        socket.on('disconnect', async () => {
+            try {
+                if (currentUserId && userSocketsMap.has(currentUserId)) {
+                    const userSockets = userSocketsMap.get(currentUserId)!;
+                    userSockets.delete(socket.id);
 
-                if (userSockets.size === 0) {
-                    userSocketsMap.delete(currentUserId);
-                    io?.emit('user_status_changed', { userId: currentUserId, status: 'offline' });
+                    if (currentRoomId && currentRoomId !== 'null' && currentRoomId.trim().length === 24) {
+                        logger.info(`User Left Room on Disconnect: ${currentUserId} => ${currentRoomId}`);
+
+                        try {
+                            await chatService.leaveRoom({
+                                roomId: currentRoomId,
+                                userId: currentUserId,
+                                kicked: false,
+                            });
+
+                            emitBroadcastUserLeave({
+                                roomId: currentRoomId,
+                                participantId: currentUserId,
+                            });
+                        } catch (roomLeaveErr) {
+                            logger.error('Failed to leave room on socket disconnect:', roomLeaveErr);
+                        }
+                    }
+
+                    if (userSockets.size === 0) {
+                        userSocketsMap.delete(currentUserId);
+                        io?.emit('user_status_changed', { userId: currentUserId, status: 'offline' });
+                    }
                 }
+            } catch (disconnectErr) {
+                logger.error('Error in socket disconnect handler:', disconnectErr);
             }
         });
     });

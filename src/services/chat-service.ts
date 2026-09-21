@@ -1,5 +1,6 @@
 import { ChatRepository } from 'src/repositories/chat.repository';
 import { RelationshipRepository } from 'src/repositories/social.repository';
+import { LiveKitService } from 'src/services/livekit.service';
 import {
 	RoomBase,
 	RoomCreateInput,
@@ -10,9 +11,15 @@ import {
 } from 'src/types/chat.type';
 import { AppError, DatabaseError } from 'src/utils/errors';
 
+export interface JoinRoomServiceResult {
+	room: RoomResponse;
+	token: string;
+}
+
 export class ChatService {
 	private chatRepository = new ChatRepository();
 	private socialRepository = new RelationshipRepository();
+	private liveKitService = new LiveKitService();
 
 	private extractId(userOrId: any): string | null {
 		if (!userOrId) return null;
@@ -21,57 +28,6 @@ export class ChatService {
 			return rawId ? rawId.toString() : null;
 		}
 		return userOrId.toString();
-	}
-
-	private async getRelationshipSets(
-		currentUserId?: string,
-		targetIds: string[] = []
-	): Promise<{ followingSet: Set<string>; blockedSet: Set<string> }> {
-		const followingSet = new Set<string>();
-		const blockedSet = new Set<string>();
-
-		if (!currentUserId || targetIds.length === 0) {
-			return { followingSet, blockedSet };
-		}
-
-		const uniqueTargets = Array.from(new Set(targetIds)).filter((id) => id !== currentUserId);
-
-		if (uniqueTargets.length === 0) {
-			return { followingSet, blockedSet };
-		}
-
-		const relationships = await this.socialRepository.getRelationships(
-			currentUserId,
-			uniqueTargets as [string, ...string[]]
-		);
-
-		(relationships as any[] | undefined || []).forEach((rel: any) => {
-			const recipientId = rel.recipient?.toString();
-			if (rel.type === 'FOLLOW') followingSet.add(recipientId);
-			if (rel.type === 'BLOCK') blockedSet.add(recipientId);
-		});
-
-		return { followingSet, blockedSet };
-	}
-
-	private collectTargetIdsFromRooms(rooms: RoomBase[], currentUserId?: string): string[] {
-		const targetIds = new Set<string>();
-
-		for (const room of rooms) {
-			const hostId = this.extractId(room.host);
-			if (hostId && hostId !== currentUserId) {
-				targetIds.add(hostId);
-			}
-
-			for (const p of room.participants || []) {
-				const participantId = this.extractId(p.user);
-				if (participantId && participantId !== currentUserId) {
-					targetIds.add(participantId);
-				}
-			}
-		}
-
-		return Array.from(targetIds);
 	}
 
 	public async createRoom(input: RoomCreateInput): Promise<RoomResponse> {
@@ -88,8 +44,8 @@ export class ChatService {
 		try {
 			const room = await this.chatRepository.updateRoom(input);
 			if (currentUserId) {
-				const { followingSet, blockedSet } = await this.socialRepository.getRelationshipIds(currentUserId);
-				return this.toRoomResponse(room, followingSet, blockedSet);
+
+				return this.toRoomResponse(room);
 			}
 			return this.toRoomResponse(room);
 		} catch (error) {
@@ -104,8 +60,8 @@ export class ChatService {
 			if (!rooms.length) return [];
 
 			if (currentUserId) {
-				const { followingSet, blockedSet } = await this.socialRepository.getRelationshipIds(currentUserId);
-				return rooms.map((room) => this.toRoomResponse(room, followingSet, blockedSet));
+
+				return rooms.map((room) => this.toRoomResponse(room));
 			}
 
 			return rooms.map((room) => this.toRoomResponse(room));
@@ -118,21 +74,48 @@ export class ChatService {
 	public async getRoomById(roomId: string, currentUserId?: string): Promise<RoomResponse> {
 		try {
 			const room = await this.chatRepository.getRoomById(roomId);
-			const targetIds = this.collectTargetIdsFromRooms([room], currentUserId);
-			const { followingSet, blockedSet } = await this.getRelationshipSets(currentUserId, targetIds);
-			return this.toRoomResponse(room, followingSet, blockedSet);
+
+			return this.toRoomResponse(room);
 		} catch (error) {
 			if (error instanceof AppError) throw error;
 			throw new AppError('Failed to get room by ID!', 500, 'ChatService.getRoomById');
 		}
 	}
 
-	public async joinRoom(input: RoomJoinInput): Promise<RoomResponse> {
+	public async joinRoom(input: RoomJoinInput): Promise<JoinRoomServiceResult> {
 		try {
+			// 1. Join room via repository
 			const room = await this.chatRepository.joinRoom(input);
 			const currentUserId = input.userId.toString();
-			const { followingSet, blockedSet } = await this.socialRepository.getRelationshipIds(currentUserId);
-			return this.toRoomResponse(room, followingSet, blockedSet);
+
+			const roomResponse = this.toRoomResponse(room);
+
+			// 3. Find joining participant to serialize LiveKit token metadata
+			const participant = roomResponse.participants.find(
+				(p: any) => this.extractId(p) === currentUserId
+			);
+
+			const participantMetadata = {
+				userId: currentUserId,
+				name: participant?.name || 'Participant',
+				username: participant?.username || '',
+				profilePhoto: participant?.profilePhoto || '',
+				isHost: participant?.isHost ?? false,
+				...participant,
+			};
+
+			// 4. Generate LiveKit WebRTC Access Token
+			const token = await this.liveKitService.createJoinToken({
+				userId: currentUserId,
+				roomId: String(roomResponse.roomId),
+				userName: participant?.name,
+				metadata: participantMetadata,
+			});
+
+			return {
+				room: roomResponse,
+				token,
+			};
 		} catch (error) {
 			if (error instanceof AppError) throw error;
 			throw new AppError('Failed to join room!', 500, 'ChatService.joinRoom');
@@ -140,7 +123,19 @@ export class ChatService {
 	}
 
 	public async leaveRoom(input: RoomLeaveInput): Promise<void> {
+		const { roomId, userId, kicked } = input;
+
+		if (!roomId || !userId) {
+			throw new AppError('Invalid roomId or userId format', 400, 'ChatRepository.leaveRoom');
+		}
 		try {
+			if (kicked) {
+				await this.liveKitService.removeParticipant(
+					input.roomId.toString(),
+					input.userId.toString()
+				);
+			}
+
 			await this.chatRepository.leaveRoom(input);
 		} catch (error) {
 			if (error instanceof AppError) throw error;
@@ -155,18 +150,13 @@ export class ChatService {
 	}
 
 	public toRoomResponse = (
-		room: RoomBase & { _id?: any },
-		followingSet?: Set<string>,
-		blockedSet?: Set<string>
+		room: RoomBase & { _id?: any }
 	): RoomResponse => {
-		const resolvedRoomId = (room.roomId || (room as any).id)?.toString();
+		const resolvedRoomId = (room.roomId || room._id || (room as any).id)?.toString();
 
 		const hostData = (
 			typeof room.host === 'object' && room.host !== null ? room.host : { userId: room.host }
 		) as RoomResponse['host'];
-		const hostId = this.extractId(hostData);
-		hostData.isFollowing = hostId ? (followingSet?.has(hostId) ?? false) : false;
-		hostData.isBlocked = hostId ? (blockedSet?.has(hostId) ?? false) : false;
 
 		return {
 			roomId: resolvedRoomId,
@@ -178,7 +168,7 @@ export class ChatService {
 			languages: room.languages,
 			host: hostData,
 			participants: (room.participants || []).map((p) =>
-				this.toParticipantResponse(p, followingSet, blockedSet)
+				this.toParticipantResponse(p, String(hostData.userId))
 			),
 			isActive: room.isActive,
 			kickedUserIds: room.kickedUserIds,
@@ -189,20 +179,15 @@ export class ChatService {
 
 	public toParticipantResponse = (
 		participant: RoomBase['participants'][number],
-		followingSet?: Set<string>,
-		blockedSet?: Set<string>
+		hostId: string
 	): RoomResponse['participants'][number] => {
 		const isUserObject = typeof participant.user === 'object' && participant.user !== null;
 		const userData = (
 			isUserObject ? participant.user : { userId: participant.user }
 		) as RoomResponse['participants'][number];
 
-		const targetId = this.extractId(userData);
-
 		userData.joinedAt = participant.joinedAt;
-		userData.isHost = participant.isHost ?? false;
-		userData.isFollowing = targetId ? (followingSet?.has(targetId) ?? false) : false;
-		userData.isBlocked = targetId ? (blockedSet?.has(targetId) ?? false) : false;
+		userData.isHost = Boolean(hostId === userData.userId) ?? false;
 
 		return userData;
 	};
