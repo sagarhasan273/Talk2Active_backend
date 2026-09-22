@@ -147,7 +147,6 @@ export class ChatService {
 				roomId: String(roomId),
 				participantId: String(userId),
 			});
-
 		} catch (error) {
 			if (error instanceof AppError) throw error;
 

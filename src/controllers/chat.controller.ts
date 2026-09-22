@@ -132,10 +132,8 @@ export class ChatController {
         }
     };
 
-    // Inside ChatController:
     public handleBrowserUnloadLeave = async (req: Request, res: Response): Promise<void> => {
         try {
-            // Parse the body safely whether it arrives as text/plain or application/json
             const data = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
             const { roomId, userId } = data;
 
@@ -144,19 +142,10 @@ export class ChatController {
                 return;
             }
 
-            logger.info(`[Browser Unload] Removing user ${userId} from room ${roomId}`);
-
-            // 1. Leave in DB
             await this.chatService.leaveRoom({
                 roomId,
                 userId,
                 kicked: false,
-            });
-
-            // 2. Broadcast via socket
-            socketService.emitBroadcastUserLeave({
-                roomId: String(roomId),
-                participantId: String(userId),
             });
 
             res.status(200).json({ status: true, message: 'User removed on unload' });
@@ -166,10 +155,6 @@ export class ChatController {
         }
     };
 
-    /**
-     * LiveKit Webhook Handler
-     * Automatically triggers when a participant drops, reloads past timeout, or closes the tab.
-     */
     public handleLiveKitWebhook = async (req: Request, res: Response): Promise<void> => {
         try {
             const receiver = this.livekitService.getWebhookReceiver();

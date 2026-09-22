@@ -55,12 +55,6 @@ export class SocketService {
 
     public handleConnection(socket: Socket): void {
         let currentUserId: string | null = null;
-        let currentRoomId: string | null = null;
-
-        socket.on('join_room', (roomId: string) => {
-            currentRoomId = roomId;
-            logger.info(`join_room: ${currentUserId} => ${roomId}`);
-        });
 
         socket.on('join_global_chat', (userId: string) => {
             if (!userId) return;
