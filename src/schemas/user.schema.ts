@@ -156,7 +156,4 @@ export const ParticipantResponseSchema = UserBaseSchema.pick({
     follower_count: true,
     following_count: true,
     friend_count: true,
-}).extend({
-    isFollowing: zod.boolean().default(false),
-    isBlocked: zod.boolean().default(false),
 });

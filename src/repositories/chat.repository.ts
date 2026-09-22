@@ -194,27 +194,34 @@ export class ChatRepository {
       const userObjectId = new ObjectId(userId);
       const roomObjectId = new ObjectId(roomId);
 
-      const room = await RoomModel.findById(roomObjectId);
-      if (!room) {
-        throw new AppError('Room not found', 404, 'ChatRepository.leaveRoom');
+      // 1. Prepare atomic update operations
+      const updateOperations: any = {
+        $pull: {
+          // Atomically pull the participant whose "user" matches userId
+          // Supports both ObjectId and string matches
+          participants: {
+            user: { $in: [userObjectId, userId.toString()] },
+          },
+        },
+      };
+
+      // 2. If kicked, atomically add to kickedUserIds without duplicates
+      if (kicked) {
+        updateOperations.$addToSet = {
+          kickedUserIds: userObjectId,
+        };
       }
 
-      // 1. Remove participant from active roster
-      room.participants = (room.participants || []).filter(
-        (p) => p.user.toString() !== userId.toString()
+      // 3. Execute atomic update
+      const updatedRoom = await RoomModel.findByIdAndUpdate(
+        roomObjectId,
+        updateOperations,
+        { new: true }
       );
 
-      // 2. Track kick/ban status
-      if (kicked) {
-        const isAlreadyKicked = (room.kickedUserIds || []).some(
-          (kId) => kId.toString() === userId.toString()
-        );
-        if (!isAlreadyKicked) {
-          room.kickedUserIds.push(userObjectId as any);
-        }
+      if (!updatedRoom) {
+        throw new AppError('Room not found', 404, 'ChatRepository.leaveRoom');
       }
-
-      await room.save();
     } catch (error) {
       if (error instanceof AppError) throw error;
       throw new DatabaseError(error, 'ChatRepository.leaveRoom');

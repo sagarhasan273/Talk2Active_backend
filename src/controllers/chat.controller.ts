@@ -5,14 +5,15 @@ import {
     RoomLeaveSchema,
     RoomUpdateSchema,
 } from 'src/schemas/chat.schema';
-import { ChatService } from 'src/services/chat-service';
-import { emitBroadcastNewRoom, emitBroadcastUserJoin, emitBroadcastUserLeave } from 'src/socket';
-import { RoomParticipantResponse } from 'src/types/chat.type';
+import { ChatService } from 'src/services/chat.service';
+import { LiveKitService } from 'src/services/livekit.service';
+import { socketService } from 'src/socket';
 import { AppError } from 'src/utils/errors';
 import logger from 'src/utils/logger';
 
 export class ChatController {
     private chatService = new ChatService();
+    private livekitService = new LiveKitService();
 
     public createRoom = async (req: Request, res: Response): Promise<void> => {
         try {
@@ -24,7 +25,7 @@ export class ChatController {
 
             const newRoom = await this.chatService.createRoom(validatedInput);
 
-            emitBroadcastNewRoom({ room: newRoom });
+            socketService.emitBroadcastNewRoom({ room: newRoom });
 
             res.status(201).json({
                 status: true,
@@ -95,15 +96,6 @@ export class ChatController {
 
             const { room, token } = await this.chatService.joinRoom(validatedInput);
 
-            const participant = room.participants.find(
-                (p: any) => (p.userId || p._id)?.toString() === validatedInput.userId.toString()
-            );
-
-            emitBroadcastUserJoin({
-                roomId: String(room.roomId),
-                participant: participant as RoomParticipantResponse,
-            });
-
             res.status(200).json({
                 status: true,
                 message: 'Joined room successfully',
@@ -118,7 +110,6 @@ export class ChatController {
         }
     };
 
-    // ChatController.leaveRoom
     public leaveRoom = async (req: Request, res: Response): Promise<void> => {
         try {
             const userId = req.user?.userId || req.body.userId;
@@ -132,17 +123,104 @@ export class ChatController {
 
             await this.chatService.leaveRoom(validatedInput);
 
-            emitBroadcastUserLeave({
-                roomId: roomId.toString(),
-                participantId: userId,
-            });
-
             res.status(200).json({
                 status: true,
                 message: 'Left room successfully',
             });
         } catch (error) {
             this.handleControllerError(error, res, 'ChatController.leaveRoom');
+        }
+    };
+
+    // Inside ChatController:
+    public handleBrowserUnloadLeave = async (req: Request, res: Response): Promise<void> => {
+        try {
+            // Parse the body safely whether it arrives as text/plain or application/json
+            const data = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+            const { roomId, userId } = data;
+
+            if (!roomId || !userId) {
+                res.status(400).json({ status: false, message: 'Missing roomId or userId' });
+                return;
+            }
+
+            logger.info(`[Browser Unload] Removing user ${userId} from room ${roomId}`);
+
+            // 1. Leave in DB
+            await this.chatService.leaveRoom({
+                roomId,
+                userId,
+                kicked: false,
+            });
+
+            // 2. Broadcast via socket
+            socketService.emitBroadcastUserLeave({
+                roomId: String(roomId),
+                participantId: String(userId),
+            });
+
+            res.status(200).json({ status: true, message: 'User removed on unload' });
+        } catch (error) {
+            logger.error('[Browser Unload Error]:', error);
+            res.status(500).json({ status: false, message: 'Failed to process unload leave' });
+        }
+    };
+
+    /**
+     * LiveKit Webhook Handler
+     * Automatically triggers when a participant drops, reloads past timeout, or closes the tab.
+     */
+    public handleLiveKitWebhook = async (req: Request, res: Response): Promise<void> => {
+        try {
+            const receiver = this.livekitService.getWebhookReceiver();
+            const authHeader = req.get('Authorization');
+
+            if (!authHeader) {
+                logger.error("Authorization Failed");
+                res.status(401).json({ status: false, message: 'Missing Authorization header' });
+                return;
+            }
+
+            // 1. Strictly convert incoming payload to raw UTF-8 string
+            let rawBody: string;
+            if (Buffer.isBuffer(req.body)) {
+                rawBody = req.body.toString('utf-8');
+            } else if (typeof req.body === 'string') {
+                rawBody = req.body;
+            } else {
+                // If another middleware converted it to JSON, fallback to stringifying
+                rawBody = JSON.stringify(req.body);
+            }
+
+            // 2. Validate HMAC signature and parse event
+            const event = await receiver.receive(rawBody, authHeader);
+
+            // 3. Handle participant leaving
+            if (event.event === 'participant_left') {
+                const roomId = event.room?.name;
+                const userId = event.participant?.identity;
+
+                if (roomId && userId) {
+                    logger.info(`[LiveKit Webhook] Participant left: ${userId} from ${roomId}`);
+
+                    await this.chatService.leaveRoom({
+                        roomId,
+                        userId,
+                        kicked: false,
+                    });
+
+                    socketService.emitBroadcastUserLeave({
+                        roomId: roomId.toString(),
+                        participantId: userId,
+                    });
+                }
+            }
+
+            // Always reply 200 OK so LiveKit knows the webhook succeeded
+            res.status(200).json({ status: true, message: 'Webhook processed' });
+        } catch (error) {
+            logger.error('[LiveKit Webhook Error]:', error);
+            res.status(400).json({ status: false, message: 'Webhook validation failed' });
         }
     };
 

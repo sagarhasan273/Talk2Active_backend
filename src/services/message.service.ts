@@ -1,12 +1,6 @@
 import { MessageRepository } from 'src/repositories/message.repository';
 import { CreateMessageDto } from 'src/schemas/message.schema';
-import {
-    emitMessageEdited,
-    emitMessagesRead,
-    emitNewMessage,
-    emitReactionToggled,
-} from 'src/socket';
-
+import { socketService } from 'src/socket';
 import {
     IChatMessageDoc,
     IFrontendChatMessage,
@@ -72,9 +66,9 @@ export class MessageService {
 
         const formattedMessage = this.formatMessage(doc, authorId);
 
-        // SOCKET.IO GLOBAL DISPATCH: Send data directly to the recipient's personal room
+        // Direct singleton dispatch
         try {
-            emitNewMessage(dto.recipientId, formattedMessage as any);
+            socketService.emitNewMessage(dto.recipientId, formattedMessage as any);
         } catch (socketError) {
             console.error('Failed to dispatch global Socket message:', socketError);
         }
@@ -90,9 +84,9 @@ export class MessageService {
         const updated = await MessageRepository.updateText(messageId, userId, text);
         const formattedMessage = this.formatMessage(updated, userId);
 
-        // Broadcast edit to recipient via Socket.io
+        // Direct singleton dispatch
         try {
-            emitMessageEdited(doc.recipientId, formattedMessage as any);
+            socketService.emitMessageEdited(doc.recipientId, formattedMessage as any);
         } catch (socketError) {
             console.error('Failed to dispatch global Socket edit message:', socketError);
         }
@@ -133,11 +127,11 @@ export class MessageService {
         const updated = await MessageRepository.updateReactions(messageId, reactions);
         const formattedMessage = this.formatMessage(updated, userId);
 
-        // Broadcast reaction toggle to recipient via Socket.io
+        // Direct singleton dispatch
         try {
-            emitReactionToggled(doc.recipientId, {
+            socketService.emitReactionToggled(doc.recipientId, {
                 messageId,
-                reactions: formattedMessage.reactions || []
+                reactions: formattedMessage.reactions || [],
             });
         } catch (socketError) {
             console.error('Failed to dispatch global Socket reaction:', socketError);
@@ -146,15 +140,12 @@ export class MessageService {
         return formattedMessage;
     }
 
-    // --> ADDED: Service logic to mark messages as read
     public static async markAsRead(currentUserId: string, targetUserId: string): Promise<void> {
-        // currentUserId is the recipient reading the message
-        // targetUserId is the author who sent the messages
         await MessageRepository.markMessagesAsRead(currentUserId, targetUserId);
 
-        // Broadcast via socket to the sender that their messages have been read
+        // Direct singleton dispatch
         try {
-            emitMessagesRead(targetUserId, currentUserId);
+            socketService.emitMessagesRead(targetUserId, currentUserId);
         } catch (err) {
             console.error('Failed to dispatch message read event:', err);
         }

@@ -1,4 +1,4 @@
-import { AccessToken, RoomServiceClient } from 'livekit-server-sdk';
+import { AccessToken, RoomServiceClient, WebhookReceiver } from 'livekit-server-sdk';
 import { AppError } from 'src/utils/errors';
 import logger from 'src/utils/logger';
 
@@ -12,6 +12,7 @@ export interface CreateJoinTokenOptions {
 
 export class LiveKitService {
     private client: RoomServiceClient | null = null;
+    private receiver: WebhookReceiver | null = null;
 
     private getCredentials() {
         const apiKey = process.env.LIVEKIT_API_KEY;
@@ -42,6 +43,17 @@ export class LiveKitService {
             this.client = new RoomServiceClient(host, apiKey, apiSecret);
         }
         return this.client;
+    }
+
+    /**
+     * Lazy-loaded WebhookReceiver instance for cryptographic signature validation
+     */
+    public getWebhookReceiver(): WebhookReceiver {
+        if (!this.receiver) {
+            const { apiKey, apiSecret } = this.getCredentials();
+            this.receiver = new WebhookReceiver(apiKey, apiSecret);
+        }
+        return this.receiver;
     }
 
     /**
@@ -78,7 +90,7 @@ export class LiveKitService {
     /**
      * Safely evicts a participant from an active LiveKit WebRTC room
      */
-    public async removeParticipant(roomId: string, userId: string): Promise<void> {
+    public async evictParticipant(roomId: string, userId: string): Promise<void> {
         try {
             const client = this.getRoomServiceClient();
             await client.removeParticipant(String(roomId), String(userId));
@@ -92,4 +104,5 @@ export class LiveKitService {
     }
 }
 
+// Singleton export matching socketService pattern
 export const liveKitService = new LiveKitService();

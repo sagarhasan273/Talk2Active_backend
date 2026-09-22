@@ -6,10 +6,12 @@ import {
 	RoomCreateInput,
 	RoomJoinInput,
 	RoomLeaveInput,
+	RoomParticipantResponse,
 	RoomResponse,
 	RoomUpdateInput,
 } from 'src/types/chat.type';
 import { AppError, DatabaseError } from 'src/utils/errors';
+import { socketService } from './socket.service';
 
 export interface JoinRoomServiceResult {
 	room: RoomResponse;
@@ -84,13 +86,11 @@ export class ChatService {
 
 	public async joinRoom(input: RoomJoinInput): Promise<JoinRoomServiceResult> {
 		try {
-			// 1. Join room via repository
 			const room = await this.chatRepository.joinRoom(input);
 			const currentUserId = input.userId.toString();
 
 			const roomResponse = this.toRoomResponse(room);
 
-			// 3. Find joining participant to serialize LiveKit token metadata
 			const participant = roomResponse.participants.find(
 				(p: any) => this.extractId(p) === currentUserId
 			);
@@ -100,16 +100,21 @@ export class ChatService {
 				name: participant?.name || 'Participant',
 				username: participant?.username || '',
 				profilePhoto: participant?.profilePhoto || '',
-				isHost: participant?.isHost ?? false,
-				...participant,
+				accountType: participant?.accountType || 'member',
+				verified: participant?.verified || false,
+				isHost: participant?.isHost || false,
 			};
 
-			// 4. Generate LiveKit WebRTC Access Token
 			const token = await this.liveKitService.createJoinToken({
 				userId: currentUserId,
 				roomId: String(roomResponse.roomId),
 				userName: participant?.name,
 				metadata: participantMetadata,
+			});
+
+			socketService.emitBroadcastUserJoin({
+				roomId: String(room.roomId),
+				participant: participant as RoomParticipantResponse,
 			});
 
 			return {
@@ -130,13 +135,19 @@ export class ChatService {
 		}
 		try {
 			if (kicked) {
-				await this.liveKitService.removeParticipant(
+				await this.liveKitService.evictParticipant(
 					input.roomId.toString(),
 					input.userId.toString()
 				);
 			}
 
 			await this.chatRepository.leaveRoom(input);
+
+			socketService.emitBroadcastUserLeave({
+				roomId: String(roomId),
+				participantId: String(userId),
+			});
+
 		} catch (error) {
 			if (error instanceof AppError) throw error;
 
