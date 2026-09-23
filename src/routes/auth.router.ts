@@ -6,6 +6,6 @@ export class AuthRoutes extends BaseRouter {
 
     protected routes(): void {
         this.router.post('/google', (req, res) => this.authController.googleLogin(req, res));
-        this.router.post('/google/mobile', (req, res) => this.authController.googleLoginMobile(req, res))
+        this.router.post('/google/mobile', (req, res) => this.authController.googleLogin(req, res))
     }
 }
