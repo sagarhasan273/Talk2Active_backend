@@ -102,7 +102,6 @@ export class ChatService {
 				profilePhoto: participant?.profilePhoto || '',
 				accountType: participant?.accountType || 'member',
 				verified: participant?.verified || false,
-				isHost: participant?.isHost || false,
 			};
 
 			const token = await this.liveKitService.createJoinToken({
