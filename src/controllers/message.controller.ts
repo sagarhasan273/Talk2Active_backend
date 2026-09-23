@@ -1,89 +1,131 @@
 import { Request, Response } from 'express';
-import { UserMessage } from 'src/models/message.model';
+import { CreateMessageSchema, ReactionSchema, UpdateMessageSchema } from 'src/schemas/message.schema';
+import { JwtService } from 'src/services/auth/jwt.service';
 import { MessageService } from 'src/services/message.service';
 
 
+
 export class MessageController {
-    private messageService = new MessageService();
-
-    constructor() { }
-
-    sendMessage = async (req: Request, res: Response) => {
+    public static async getHistory(req: Request, res: Response): Promise<void> {
         try {
-            const { senderId, receiverId, text, isPrivate } = req.body;
+            const token = req.header('Authorization')?.replace('Bearer ', '');
 
-            const conversationId = this.messageService.generateConversationId(senderId, receiverId);
-
-            if (typeof text !== 'string') {
-                return res.status(400).json({ success: false, message: 'Text is required and must be a string.' });
+            if (!token) {
+                throw new Error('Authentication required');
             }
 
-            const messageData: Partial<UserMessage> = {
-                text,
-                time: req.body.time,
-                isUnread: true,
-                type: 'message',
-                senderInfo: req.body.senderInfo,
-                receiverInfo: req.body.receiverInfo,
-                conversationId,
-                isReply: req.body.parentMessage ? true : false,
-                parentMessage: req.body.parentMessage,
-            };
+            const decoded = JwtService.verifyToken(token);
+            const currentUserId = decoded.userId
 
-            await this.messageService.saveMessage(messageData);
+            if (!currentUserId) {
+                res.status(401).json({ error: 'Unauthorized' });
+                return;
+            }
+            const { targetUserId } = req.params;
+            if (!currentUserId) {
+                res.status(401).json({ error: 'Unauthorized' });
+                return;
+            }
 
-            res.status(201).json({ success: true, message: 'Message sent successfully' });
-        } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
-            res.status(500).json({ message: errorMessage });
+            const messages = await MessageService.getHistory(currentUserId, targetUserId);
+            res.status(200).json({ success: true, data: messages });
+        } catch (err: any) {
+            res.status(500).json({ error: err.message });
         }
-    };
+    }
 
-    getConversation = async (req: Request, res: Response) => {
+    public static async saveMessage(req: Request, res: Response): Promise<void> {
         try {
-            const { userId1, userId2 } = req.params;
-            const { limit, before } = req.query;
+            const { userId: currentUserId } = req.body;
+            const currentUserName = 'Anonymous';
+            if (!currentUserId) {
+                res.status(401).json({ error: 'Unauthorized' });
+                return;
+            }
 
-            const messages = await this.messageService.getMessages(
-                userId1,
-                userId2,
-                parseInt(limit as string) || 50,
-                before ? new Date(before as string) : undefined
-            );
+            const parsed = CreateMessageSchema.safeParse(req.body);
+            if (!parsed.success) {
+                res.status(400).json({ error: parsed.error.flatten() });
+                return;
+            }
 
-            res.json({ success: true, messages, chatUserId: userId2 });
-        } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
-            res.status(500).json({ message: errorMessage });
+            const message = await MessageService.saveMessage(currentUserId, currentUserName, parsed.data);
+            res.status(201).json({ success: true, data: message });
+        } catch (err: any) {
+            res.status(500).json({ error: err.message });
         }
-    };
+    }
 
-    readMessages = async (req: Request, res: Response) => {
+    public static async updateMessage(req: Request, res: Response): Promise<void> {
         try {
-            const { userId1, userId2 } = req.params;
-            await this.messageService.readMessages(userId1, userId2);
-            res.json({ success: true, message: 'Messages marked as read' });
-        } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
-            res.status(500).json({ message: errorMessage });
-        }
-    };
-
-    deleteMessage = async (req: Request, res: Response) => {
-        try {
+            const currentUserId = req.user?.userId;
             const { messageId } = req.params;
-            const userId = req.user.id; // From auth
-
-            const deletedMessage = await this.messageService.deleteMessage(messageId, userId);
-
-            if (!deletedMessage) {
-                return res.status(404).json({ success: false, error: 'Message not found or unauthorized' });
+            if (!currentUserId) {
+                res.status(401).json({ error: 'Unauthorized' });
+                return;
             }
 
-            res.json({ success: true, message: deletedMessage });
-        } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
-            res.status(500).json({ message: errorMessage });
+            const parsed = UpdateMessageSchema.safeParse(req.body);
+            if (!parsed.success) {
+                res.status(400).json({ error: parsed.error.flatten() });
+                return;
+            }
+
+            const updated = await MessageService.editMessage(messageId, currentUserId, parsed.data.text);
+            res.status(200).json({ success: true, data: updated });
+        } catch (err: any) {
+            const status = err.message === 'NOT_FOUND' ? 404 : err.message === 'FORBIDDEN' ? 403 : 500;
+            res.status(status).json({ error: err.message });
         }
-    };
+    }
+
+    public static async toggleReaction(req: Request, res: Response): Promise<void> {
+        try {
+            const currentUserId = req.user?.userId;
+            const { messageId } = req.params;
+            if (!currentUserId) {
+                res.status(401).json({ error: 'Unauthorized' });
+                return;
+            }
+
+            const parsed = ReactionSchema.safeParse(req.body);
+            if (!parsed.success) {
+                res.status(400).json({ error: parsed.error.flatten() });
+                return;
+            }
+
+            const updated = await MessageService.toggleReaction(messageId, currentUserId, parsed.data.emoji);
+            res.status(200).json({ success: true, data: updated });
+        } catch (err: any) {
+            const status = err.message === 'NOT_FOUND' ? 404 : 500;
+            res.status(status).json({ error: err.message });
+        }
+    }
+
+    public static async readMessages(req: Request, res: Response): Promise<void> {
+        try {
+            const currentUserId = req.user?.userId;
+
+            if (!currentUserId) {
+                res.status(401).json({ error: 'Unauthorized' });
+                return;
+            }
+
+            const { userId1, userId2 } = req.params;
+
+            if (!currentUserId) {
+                res.status(401).json({ error: 'Unauthorized' });
+                return;
+            }
+
+            // If the current user is userId1, then the target is userId2 (and vice versa)
+            const targetUserId = currentUserId === userId1 ? userId2 : userId1;
+
+            await MessageService.markAsRead(currentUserId, targetUserId);
+
+            res.status(200).json({ success: true, message: 'Messages marked as read', data: null });
+        } catch (error: any) {
+            res.status(500).json({ error: error.message || 'Internal Server Error' });
+        }
+    }
 }

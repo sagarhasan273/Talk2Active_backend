@@ -1,142 +1,47 @@
-import mongoose, { Document, Model, Schema } from 'mongoose';
-import { UserResponseType } from 'src/types/user.type';
+import mongoose, { Document, Schema } from 'mongoose';
+import { SystemType } from 'src/enums/social.enum';
+import { IChatMessageDoc, IReaction } from 'src/types/message.type';
 
-export interface UserMessage extends Document {
-    // Core message fields
-    text: string;
-    time: Date;
-    isUnread: boolean;
 
-    // Message type
-    type: 'message';
+export interface IMessageDocument extends Omit<IChatMessageDoc, '_id'>, Document { }
 
-    // User information
-    senderInfo: {
-        userId: string;
-        name: string;
-        avatar?: string;
-    } | mongoose.mongo.ObjectId | UserResponseType;
-
-    receiverInfo: {
-        userId: string;
-        name: string;
-        avatar?: string;
-    } | mongoose.Types.ObjectId | UserResponseType;
-
-    // Thread/conversation context
-    conversationId: string;
-
-    // Reply/thread feature
-    parentMessage?: mongoose.Types.ObjectId; // Reference to parent message
-    isReply: boolean;
-
-    // Message state
-    isEdited: boolean;
-    isDeleted: boolean;
-    deletedAt?: Date;
-
-    // Reactions
-    reactions?: Array<{
-        userId: string;
-        emoji: string;
-        createdAt?: Date;
-    }>;
-
-    // Timestamps (automatically added by mongoose)
-    createdAt: Date;
-    updatedAt: Date;
-}
-
-const MessageSchema: Schema<UserMessage> = new Schema(
+const ReactionSchema = new Schema<IReaction>(
     {
-        text: {
-            type: String,
-            required: true,
-            trim: true,
-        },
-
-        time: {
-            type: Date,
-            required: true,
-            default: () => new Date(),
-        },
-
-        isUnread: {
-            type: Boolean,
-            default: true,
-        },
-
-        type: {
-            type: String,
-            enum: ['message'],
-            default: 'message',
-        },
-
-        senderInfo: {
-            type: Schema.Types.ObjectId,
-            ref: 'users',
-            required: true,
-            index: true
-        },
-
-        receiverInfo: {
-            type: Schema.Types.ObjectId,
-            ref: 'users',
-            required: true,
-            index: true
-        },
-
-        // Conversation between two users
-        conversationId: {
-            type: String,
-            required: true,
-            index: true, // Index for faster queries
-        },
-
-        isEdited: {
-            type: Boolean,
-            default: false,
-        },
-
-        isDeleted: {
-            type: Boolean,
-            default: false,
-        },
-
-        deletedAt: Date,
-
-        reactions: [{
-            userId: {
-                type: Schema.Types.ObjectId,
-                required: true,
-                ref: 'users',
-                index: true, // Index for faster queries
-            },
-            emoji: String,
-        }],
-
-        parentMessage: {
-            type: Schema.Types.ObjectId,
-            ref: 'message',
-        },
-
-        isReply: {
-            type: Boolean,
-            default: false,
-        },
+        emoji: { type: String, required: true },
+        userIds: [{ type: String, required: true }],
     },
-    {
-        timestamps: true, // Adds createdAt and updatedAt automatically
-    }
+    { _id: false }
 );
 
-// Compound index for efficient querying
-MessageSchema.index({ conversationId: 1, createdAt: -1 });
+const MessageSchema = new Schema<IMessageDocument>(
+    {
+        roomId: { type: String, required: true, index: true },
+        authorId: { type: String, index: true },
+        authorName: { type: String },
+        recipientId: { type: String, required: true, index: true },
+        text: { type: String, required: true, trim: true },
+        isSystem: { type: Boolean, default: false },
+        systemType: {
+            type: String,
+            enum: Object.values(SystemType),
+            default: undefined,
+        },
+        replyToId: { type: String, default: null },
+        editedAt: { type: Number, default: null },
+        isRead: { type: Boolean, default: false }, // <-- Added
+        readAt: { type: Date, default: null },     // <-- Added
+        reactions: { type: [ReactionSchema], default: [] },
+        createdAt: {
+            type: Date,
+            default: Date.now,
+            // Automatic removal after 7 days (7 * 24 * 60 * 60 seconds)
+            expires: 604800,
+            index: true,
+        },
+    },
+    { timestamps: true }
+);
 
-// Virtual for formatted time (optional)
-MessageSchema.virtual('formattedTime').get(function () {
-    return this.time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-});
+MessageSchema.index({ roomId: 1, createdAt: 1 });
 
-export const MessageModel: Model<UserMessage> = mongoose.model<UserMessage>('message', MessageSchema);
-
+export const MessageModel = mongoose.model<IMessageDocument>('messages', MessageSchema);

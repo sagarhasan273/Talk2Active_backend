@@ -227,7 +227,7 @@ export class RelationshipController {
                 throw new AppError('User ID is required', 400, 'User Controller');
             }
             const result = await this.relationshipService.getFollowers(userId, page, limit);
-            res.status(200).json({ status: true, message: 'Followers fetched successfully', data: result });
+            res.status(200).json({ status: true, message: 'Followers fetched successfully', ...result });
         } catch (error) {
             if (error instanceof AppError) {
                 logger.error(`${error.at}: ${error.message}`);
@@ -345,30 +345,6 @@ export class RelationshipController {
             }
             logger.error('An error occurred while fetching user stats!');
             res.status(500).json({ message: 'An error occurred while fetching user stats!', status: false });
-        }
-    }
-
-    // get batch relationship status
-    async getBatchRelationshipStatus(req: Request, res: Response) {
-        const userId = req.params.userId;
-        let targetUserIds: string[] = [];
-        if (Array.isArray(req.query.targetUserIds)) {
-            targetUserIds = req.query.targetUserIds as string[];
-        } else if (typeof req.query.targetUserIds === 'string') {
-            targetUserIds = (req.query.targetUserIds as string).split(',');
-        }
-        try {
-            const result = await this.relationshipService.getBatchRelationshipStatus(userId, targetUserIds);
-            res.status(200).json({ status: true, data: result });
-        }
-        catch (error) {
-            if (error instanceof AppError) {
-                logger.error(`${error.at}: ${error.message}`);
-                res.status(error.statusCode).json({ message: error.message, status: false });
-                return;
-            }
-            logger.error('An error occurred while fetching batch relationship status!');
-            res.status(500).json({ message: 'An error occurred while fetching batch relationship status!', status: false });
         }
     }
 }

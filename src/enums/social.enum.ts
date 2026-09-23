@@ -12,3 +12,16 @@ export const RelationshipTypeEnum = {
     FRIEND: 'friend',
     BLOCK: 'block'
 } as const;
+
+export enum SystemType {
+    INFO = 'info',
+    SUCCESS = 'success',
+    WARNING = 'warning',
+    ERROR = 'error',
+}
+
+export enum MessageDataTopic {
+    CHAT_MESSAGE = 'CHAT_MESSAGE',
+    MESSAGE_EDIT = 'MESSAGE_EDIT',
+    MESSAGE_REACTION = 'MESSAGE_REACTION',
+}

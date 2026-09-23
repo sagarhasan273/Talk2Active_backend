@@ -1,107 +1,16 @@
-import { UserMessage } from "src/models/message.model";
-import { Message } from "./chat.type";
-import { UserResponseType } from "./user.type";
+import { RoomParticipantResponse, RoomResponse } from "./chat.type";
 
-export interface WebRTCData {
-    roomId: string,
-    target: string;
-    offer?: RTCSessionDescriptionInit;
-    answer?: RTCSessionDescriptionInit;
-    candidate?: RTCIceCandidateInit;
-    sender?: string;
+
+export interface BroadcastNewRoomData {
+    room: RoomResponse;
 }
 
-export interface JoinLeaveIndividualMessageData {
-    listeningUserId?: string;
-    leaveListeningUserId?: string;
-}
-
-export interface LeaveIndividualMessageData {
-    userId: string;
-    targetUserId: string;
-}
-
-export type IndividualMessageData = UserMessage & {
-    userId: string;
-    text: string;
-    receiverSocketId: string;
-
-    senderInfo: Partial<UserResponseType>;
-
-    receiverInfo: Partial<UserResponseType>;
-
-    unreadMessageIds?: string[];
-}
-
-export interface EditIndividualMessageData {
-    messageId: string;
-    userId: string;
-    text: string;
-    receiverInfo: Partial<UserResponseType>;
-}
-
-export interface GroupMessageData {
+export interface BroadcastUserJoinData {
     roomId: string;
-    text: string;
-    type: 'message' | 'system';
-    systemMessageType?: 'user-joined' | 'user-left' | 'you-joined';
-    userInfo?: {
-        name: string;
-        userId: string;
-        avatar?: string;
-    };
+    participant: RoomParticipantResponse;
 }
 
-export interface EditGroupMessageData {
+export interface BroadcastUserLeaveData {
     roomId: string;
-    text?: string;
-    messageId: Message['id'];
-}
-
-export interface DeleteGroupMessageData {
-    roomId: string;
-    text?: string;
-    messageId: Message['id'];
-}
-
-export interface PrivateMessageData {
-    receiverSocketId: string;
-    message: string;
-    name: string;
-    receiverInfo: {
-        name: string;
-        userId: string;
-        profilePhoto?: string;
-    };
-}
-
-export interface DeleteIndividualMessageData {
-    senderId: string;
-    receiverId: string;
-    text?: string;
-    messageId: Message['id'];
-}
-
-export interface ReactionIndividualMessageData {
-    senderId: string;
-    receiverId: string;
-    messageId: string;
-    reaction: {
-        userId: string;
-        emoji: string;
-    };
-}
-
-export interface AudioToggleData {
-    roomId: string;
-    isMuted: boolean;
-    name: string;
-    userId: string;
-}
-
-export interface StatusSelectData {
-    roomId: string;
-    status: string;
-    name: string;
-    userId: string;
+    participantId: string;
 }

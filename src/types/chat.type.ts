@@ -1,13 +1,23 @@
-import { JoinRoomSchema, LeaveRoomSchema, RoomBaseSchema, RoomCreateSchema, RoomResponseSchema, RoomUpdateSchema } from "src/schemas/chat.schema";
+import { RoomBaseSchema, RoomCreateSchema, RoomJoinSchema, RoomLeaveSchema, RoomParticipantBaseSchema, RoomParticipantResponseSchema, RoomResponseSchema, RoomUpdateSchema } from "src/schemas/chat.schema";
 import { z } from 'zod';
 import { UserBaseType } from "./user.type";
 
+// ----------------------------------------------------------------------
+// Type-From-schemas
+// ----------------------------------------------------------------------
+
+export type RoomCreateInput = z.infer<typeof RoomCreateSchema>;
+export type RoomUpdateInput = z.infer<typeof RoomUpdateSchema>;
 export type RoomBase = z.infer<typeof RoomBaseSchema>;
-export type CreateRoomInput = z.infer<typeof RoomCreateSchema>;
-export type UpdateRoomInput = z.infer<typeof RoomUpdateSchema>;
 export type RoomResponse = z.infer<typeof RoomResponseSchema>;
-export type JoinRoomInput = z.infer<typeof JoinRoomSchema>;
-export type LeaveRoomInput = z.infer<typeof LeaveRoomSchema>;
+export type RoomParticipantBase = z.infer<typeof RoomParticipantBaseSchema>;
+export type RoomParticipantResponse = z.infer<typeof RoomParticipantResponseSchema>;
+export type RoomJoinInput = z.infer<typeof RoomJoinSchema>;
+export type RoomLeaveInput = z.infer<typeof RoomLeaveSchema>;
+
+// ----------------------------------------------------------------------
+// Type-From-Internal-Function
+// ----------------------------------------------------------------------
 
 // Message
 export type Reaction = {
@@ -37,7 +47,7 @@ export type Message = {
     isDeleted?: boolean;
     reactions?: Reaction[];
     messageRepliedOf?: Partial<Message>;
-    parentMessage?: string | Partial<Message>; // For threading
+    parentMessage?: string | Partial<Message>;
 };
 
 export type ReactionMessageData = {

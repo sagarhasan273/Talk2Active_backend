@@ -1,14 +1,6 @@
 // models/user.model.ts
 import mongoose, { Document, Schema } from 'mongoose';
-import { SocialLinks, UserBaseType } from 'src/types/user.type';
-
-// Social Links Sub-Schema
-const SocialLinksSchema = new Schema<SocialLinks>({
-  facebook: { type: String },
-  twitter: { type: String },
-  instagram: { type: String },
-  linkedin: { type: String },
-}, { _id: false });
+import { UserBaseType } from 'src/types/user.type';
 
 // Main User Schema
 const UserModalSchema = new Schema<UserBaseType & Document>({
@@ -68,17 +60,17 @@ const UserModalSchema = new Schema<UserBaseType & Document>({
     default: 'member'
   },
 
-  followerCount: {
+  follower_count: {
     type: Number,
     default: 0,
     min: 0
   },
-  followingCount: {
+  following_count: {
     type: Number,
     default: 0,
     min: 0
   },
-  friendCount: {
+  friend_count: {
     type: Number,
     default: 0,
     min: 0
@@ -105,7 +97,7 @@ const UserModalSchema = new Schema<UserBaseType & Document>({
   toObject: {
     transform: function (doc, ret: any) {
       if (ret._id) {
-        ret.id = ret._id.toString();
+        ret.userId = ret._id.toString();
         delete ret._id;
       }
       if ('__v' in ret) delete ret.__v;
@@ -126,9 +118,9 @@ UserModalSchema.virtual('fullProfile').get(function () {
     email: this.email,
     profilePhoto: this.profilePhoto,
     bio: this.bio,
-    followerCount: this.followerCount,
-    followingCount: this.followingCount,
-    friendCount: this.friendCount,
+    follower_count: this.follower_count,
+    following_count: this.following_count,
+    friend_count: this.friend_count,
     pendingRequests: this.pendingRequests,
   };
 });
