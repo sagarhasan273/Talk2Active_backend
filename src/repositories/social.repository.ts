@@ -6,18 +6,14 @@ import {
     AllRelationsType,
     CreateRelationshipInput,
     RelationshipResponse,
-    UpdateRelationshipInput,
-    UserStats
+    UserStats,
 } from 'src/types/social.type';
 import { AppError, DatabaseError } from 'src/utils/errors';
 
 export const CommonRelationshipPopulateQuery =
-    'email username name firstName lastName profilePhoto avatarUrl bio status lastActive verified accountType follower_count following_count friend_count pendingRequests genUserId';
+    'username name profilePhoto bio status lastActive verified accountType follower_count following_count friend_count genUserId';
 
 export class RelationshipRepository {
-    /**
-     * Helper to normalize populated Mongoose user objects into the accountDetails contract
-     */
     private formatAccountDetails(user: any) {
         if (!user) {
             return {
@@ -33,6 +29,8 @@ export class RelationshipRepository {
                 verified: false,
                 accountType: '',
                 follower_count: 0,
+                following_count: 0,
+                friend_count: 0,
             };
         }
 
@@ -55,12 +53,18 @@ export class RelationshipRepository {
             follower_count: user.follower_count || 0,
             following_count: user.following_count || 0,
             friend_count: user.friend_count || 0,
-            pendingRequests: user.pendingRequests || 0,
         };
     }
 
     public async createRelationship(relationshipData: CreateRelationshipInput): Promise<void> {
         try {
+            const requesterId = relationshipData.requester.toString();
+            const recipientId = relationshipData.recipient.toString();
+
+            if (requesterId === recipientId) {
+                throw new AppError('Cannot create a relationship with yourself', 400, 'Relationship Repository');
+            }
+
             const existingRelationship = await RelationshipModel.findOne({
                 requester: relationshipData.requester,
                 recipient: relationshipData.recipient,
@@ -71,56 +75,31 @@ export class RelationshipRepository {
             }
 
             const status =
-                relationshipData.type === RelationshipTypeEnum.FOLLOW
-                    ? RelationshipStatusEnum.ACCEPTED
-                    : RelationshipStatusEnum.PENDING;
+                relationshipData.type === RelationshipTypeEnum.BLOCK
+                    ? RelationshipStatusEnum.BLOCKED
+                    : RelationshipStatusEnum.ACCEPTED;
 
             const relationship = await RelationshipModel.create({
                 ...relationshipData,
                 status,
-                acceptedAt: status === RelationshipStatusEnum.ACCEPTED ? new Date() : undefined,
             });
 
             if (!relationship) {
                 throw new AppError('Failed to create relationship', 500, 'Relationship Repository');
             }
 
-            await this.updateUserStats(
-                relationshipData.requester.toString(),
-                relationshipData.recipient.toString()
-            );
+            // Sync follower, following, and friend counts for both users
+            await this.updateUserStats(requesterId, recipientId);
         } catch (error) {
-            if (error instanceof AppError) {
-                throw error;
-            }
+            if (error instanceof AppError) throw error;
             throw new AppError('Failed to create relationship', 500, 'Relationship Repository');
         }
     }
 
-    async updateRelationship(relationshipId: string, updateData: UpdateRelationshipInput): Promise<void> {
-        const relationship = await RelationshipModel.findById(relationshipId);
-
-        if (!relationship) {
-            throw new AppError('Relationship not found', 404, 'Relationship Repository');
-        }
-
-        if (updateData.status === RelationshipStatusEnum.ACCEPTED) {
-            relationship.acceptedAt = new Date();
-        }
-
-        relationship.status = updateData.status;
-        const update = await relationship.save();
-
-        if (!update) {
-            throw new AppError('Failed to update relationship', 500, 'Relationship Repository');
-        }
-        await this.updateUserStats(relationship.requester.toString(), relationship.recipient.toString());
-    }
-
-    async removeRelationship(
+    public async removeRelationship(
         requesterId: string,
         recipientId: string,
-        type: RelationshipResponse['type']
+        type: RelationshipResponse['type'] = RelationshipTypeEnum.FOLLOW
     ): Promise<boolean> {
         const result = await RelationshipModel.deleteOne({
             requester: requesterId,
@@ -135,33 +114,31 @@ export class RelationshipRepository {
         return result.deletedCount > 0;
     }
 
-    async getRealationship(requesterId: string, recipientId: string): Promise<RelationshipResponse | null> {
+    public async getRelationship(requesterId: string, recipientId: string): Promise<RelationshipResponse | null> {
         return await RelationshipModel.findOne({
-            $or: [
-                { requester: requesterId, recipient: recipientId },
-                { requester: recipientId, recipient: requesterId },
-            ],
+            requester: requesterId,
+            recipient: recipientId,
         }).lean();
     }
 
-    async getRelationships(requesterId: string, recipientIds: string[]): Promise<RelationshipResponse[]> {
-        const relationships = await RelationshipModel.find({
+    public async getRelationships(requesterId: string, recipientIds: string[]): Promise<RelationshipResponse[]> {
+        return await RelationshipModel.find({
             requester: requesterId,
             recipient: { $in: recipientIds },
         }).lean();
-        return relationships
     }
 
-    async getFollowingIds(userId: string): Promise<string[]> {
+    public async getFollowingIds(userId: string): Promise<string[]> {
         const rawIds = await RelationshipModel.distinct('recipient', {
             requester: new ObjectId(userId),
             type: RelationshipTypeEnum.FOLLOW,
+            status: RelationshipStatusEnum.ACCEPTED,
         });
 
         return rawIds.map((id) => id.toString());
     }
 
-    async getBlockedIds(userId: string): Promise<string[]> {
+    public async getBlockedIds(userId: string): Promise<string[]> {
         const rawIds = await RelationshipModel.distinct('recipient', {
             requester: new ObjectId(userId),
             type: RelationshipTypeEnum.BLOCK,
@@ -170,7 +147,7 @@ export class RelationshipRepository {
         return rawIds.map((id) => id.toString());
     }
 
-    async getRelationshipIds(userId: string): Promise<{
+    public async getRelationshipIds(userId: string): Promise<{
         followingSet: Set<string>;
         blockedSet: Set<string>;
     }> {
@@ -203,9 +180,8 @@ export class RelationshipRepository {
         }
     }
 
-
-    // Get followers of a user (people who follow this user)
-    async getFollowers(
+    // Followers: Users who follow this user
+    public async getFollowers(
         userId: string,
         page: number = 1,
         limit: number = 10
@@ -232,15 +208,15 @@ export class RelationshipRepository {
             accountDetails: this.formatAccountDetails(rel.requester),
             type: rel.type,
             status: rel.status,
-            relation: 'follower',
+            relation: 'follower' as AllRelationsType['relation'],
             latestMessage: '',
-        })) as AllRelationsType[];
+        }));
 
         return { relationships, page, total, totalPages: Math.ceil(total / limit) };
     }
 
-    // Get users followed by this user (excluding mutual follows/friends)
-    async getFollowing(
+    // Following: Users followed by this user who DO NOT follow back
+    public async getFollowing(
         userId: string,
         page: number = 1,
         limit: number = 10
@@ -261,6 +237,7 @@ export class RelationshipRepository {
             return { relationships: [], page, total: 0, totalPages: 0 };
         }
 
+        // Find mutual followers
         const mutualFollows = await RelationshipModel.find({
             requester: { $in: followingIds },
             recipient: userId,
@@ -305,8 +282,8 @@ export class RelationshipRepository {
         return { relationships, page, total, totalPages: Math.ceil(total / limit) };
     }
 
-    // Get user's friends (mutual follows)
-    async getFriends(
+    // Friends: Mutual follows
+    public async getFriends(
         userId: string,
         page: number = 1,
         limit: number = 10
@@ -337,7 +314,6 @@ export class RelationshipRepository {
         const [friendships, total] = await Promise.all([
             RelationshipModel.find(query)
                 .populate('requester', CommonRelationshipPopulateQuery)
-                .select('recipient requester status type createdAt')
                 .sort({ createdAt: -1 })
                 .skip(skip)
                 .limit(limit)
@@ -361,8 +337,8 @@ export class RelationshipRepository {
         };
     }
 
-    // Get all relations initiated by this user (marked as either 'friend' or 'following')
-    async getAllRelations(
+    // All relations initiated by the user ('friend' if mutual, otherwise 'following')
+    public async getAllRelations(
         userId: string,
         page: number = 1,
         limit: number = 10
@@ -430,9 +406,9 @@ export class RelationshipRepository {
         };
     }
 
-    async getUserStats(userId: string): Promise<UserStats> {
+    public async getUserStats(userId: string): Promise<UserStats> {
         const user = await UserModel.findById(userId)
-            .select('follower_count following_count friend_count pendingRequests')
+            .select('follower_count following_count friend_count')
             .lean();
 
         if (!user) {
@@ -444,90 +420,48 @@ export class RelationshipRepository {
             follower_count: user.follower_count || 0,
             following_count: user.following_count || 0,
             friend_count: user.friend_count || 0,
-            pendingRequests: user.pendingRequests || 0,
         };
     }
 
-    async getPendingRequests(
-        userId: string,
-        page: number = 1,
-        limit: number = 10
-    ): Promise<{ relationships: RelationshipResponse[]; total: number; page: number; totalPages: number }> {
-        const skip = (page - 1) * limit;
-
-        const query = {
-            recipient: userId,
-            type: RelationshipTypeEnum.FRIEND,
-            status: RelationshipStatusEnum.PENDING,
-        };
-
-        const [relationships, total] = await Promise.all([
-            RelationshipModel.find(query)
-                .populate('requester', 'username name profilePhoto verified')
-                .sort({ createdAt: -1 })
-                .skip(skip)
-                .limit(limit)
-                .lean(),
-            RelationshipModel.countDocuments(query),
+    // Calculates and syncs stats for both users involved in a follow/unfollow
+    public async updateUserStats(userA: string, userB: string): Promise<void> {
+        await Promise.all([
+            this.syncSingleUserStats(userA),
+            this.syncSingleUserStats(userB),
         ]);
-
-        return { relationships: relationships as any, page, total, totalPages: Math.ceil(total / limit) };
     }
 
-    async updateUserStats(requesterId: string, recipientId: string): Promise<void> {
-        const [requesterFollowing, requesterPendingSent] = await Promise.all([
+    private async syncSingleUserStats(userId: string): Promise<void> {
+        if (!userId) return;
+
+        const [followingCount, followerCount, friendCount] = await Promise.all([
             RelationshipModel.countDocuments({
-                requester: requesterId,
+                requester: userId,
                 type: RelationshipTypeEnum.FOLLOW,
                 status: RelationshipStatusEnum.ACCEPTED,
             }),
             RelationshipModel.countDocuments({
-                requester: requesterId,
-                type: RelationshipTypeEnum.FRIEND,
-                status: RelationshipStatusEnum.PENDING,
+                recipient: userId,
+                type: RelationshipTypeEnum.FOLLOW,
+                status: RelationshipStatusEnum.ACCEPTED,
             }),
+            this.getFriendCount(userId),
         ]);
 
         await UserModel.updateOne(
-            { _id: new ObjectId(requesterId) },
+            { _id: new ObjectId(userId) },
             {
                 $set: {
-                    following_count: requesterFollowing,
-                    pendingRequests: requesterPendingSent,
+                    following_count: followingCount,
+                    follower_count: followerCount,
+                    friend_count: friendCount,
+                    lastUpdated: new Date(),
                 },
             }
         );
-
-        if (recipientId) {
-            const [recipientFollowers, recipientPending, recipientFriends] = await Promise.all([
-                RelationshipModel.countDocuments({
-                    recipient: recipientId,
-                    type: RelationshipTypeEnum.FOLLOW,
-                    status: RelationshipStatusEnum.ACCEPTED,
-                }),
-                RelationshipModel.countDocuments({
-                    recipient: recipientId,
-                    type: RelationshipTypeEnum.FRIEND,
-                    status: RelationshipStatusEnum.PENDING,
-                }),
-                this.getfriend_count(recipientId),
-            ]);
-
-            await UserModel.updateOne(
-                { _id: new ObjectId(recipientId) },
-                {
-                    $set: {
-                        follower_count: recipientFollowers,
-                        pendingRequests: recipientPending,
-                        friend_count: recipientFriends,
-                        lastUpdated: new Date(),
-                    },
-                }
-            );
-        }
     }
 
-    private async getfriend_count(userId: string): Promise<number> {
+    private async getFriendCount(userId: string): Promise<number> {
         const userFollowing = await RelationshipModel.find({
             requester: userId,
             type: RelationshipTypeEnum.FOLLOW,
@@ -548,8 +482,8 @@ export class RelationshipRepository {
         });
     }
 
-    async areFriends(userId1: string, userId2: string): Promise<boolean> {
-        const [userFollowsUser2, user2FollowsUser1] = await Promise.all([
+    public async areFriends(userId1: string, userId2: string): Promise<boolean> {
+        const [u1FollowsU2, u2FollowsU1] = await Promise.all([
             RelationshipModel.exists({
                 requester: userId1,
                 recipient: userId2,
@@ -564,6 +498,6 @@ export class RelationshipRepository {
             }),
         ]);
 
-        return Boolean(userFollowsUser2 && user2FollowsUser1);
+        return Boolean(u1FollowsU2 && u2FollowsU1);
     }
 }

@@ -1,16 +1,14 @@
-// Relationship Status Enum
 export const RelationshipStatusEnum = {
-    PENDING: 'pending',
     ACCEPTED: 'accepted',
-    DECLINED: 'declined',
-    BLOCKED: 'blocked'
+    BLOCKED: 'blocked',
 } as const;
 
-// Relationship Type Enum
+export type RelationshipStatusType =
+    (typeof RelationshipStatusEnum)[keyof typeof RelationshipStatusEnum];
+
 export const RelationshipTypeEnum = {
     FOLLOW: 'follow',
-    FRIEND: 'friend',
-    BLOCK: 'block'
+    BLOCK: 'block',
 } as const;
 
 export enum SystemType {

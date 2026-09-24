@@ -25,7 +25,7 @@ const RelationshipSchema: Schema = new Schema<RelationshipBase & Document>({
     status: {
         type: String,
         enum: Object.values(RelationshipStatusEnum),
-        default: RelationshipStatusEnum.PENDING
+        default: RelationshipStatusEnum.ACCEPTED
     },
     createdAt: {
         type: Date,
@@ -36,19 +36,13 @@ const RelationshipSchema: Schema = new Schema<RelationshipBase & Document>({
         type: Date,
         default: Date.now
     },
-    acceptedAt: {
-        type: Date,
-        optional: true
-    }
 });
 
 // Compound indexes for performance
 RelationshipSchema.index({ requester: 1, recipient: 1 }, { unique: true });
-RelationshipSchema.index({ recipient: 1, status: 1 });
 RelationshipSchema.index({ requester: 1, type: 1, status: 1 });
 RelationshipSchema.index({ recipient: 1, type: 1, status: 1 });
 RelationshipSchema.index({ createdAt: -1 });
-RelationshipSchema.index({ updatedAt: -1 });
 
 // Pre-save middleware to update updatedAt
 RelationshipSchema.pre('save', function (next) {

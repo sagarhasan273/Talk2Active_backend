@@ -70,7 +70,6 @@ export const UserBaseSchema = zod.object({
     follower_count: zod.number().int().nonnegative().default(0),
     following_count: zod.number().int().nonnegative().default(0),
     friend_count: zod.number().int().nonnegative().default(0),
-    pendingRequests: zod.number().int().nonnegative().default(0),
 
     createdAt: DatePreprocessor.optional(),
     updatedAt: DatePreprocessor.optional(),
@@ -94,7 +93,6 @@ export const UserResponseSchema = UserBaseSchema.pick({
     follower_count: true,
     following_count: true,
     friend_count: true,
-    pendingRequests: true,
     createdAt: true,
     updatedAt: true,
 });

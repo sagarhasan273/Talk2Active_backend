@@ -24,13 +24,12 @@ export const RelationshipUserSnippetSchema = z.object({
 // ----------------------------------------------------------------------
 
 export const RelationshipSchema = z.object({
-    requester: objectIdSchema, // User who initiated the relationship
-    recipient: objectIdSchema, // User who received the request
+    requester: objectIdSchema,
+    recipient: objectIdSchema,
     type: z.nativeEnum(RelationshipTypeEnum),
-    status: z.nativeEnum(RelationshipStatusEnum).default(RelationshipStatusEnum.PENDING),
+    status: z.nativeEnum(RelationshipStatusEnum).default(RelationshipStatusEnum.ACCEPTED),
     createdAt: DatePreprocessor.default(() => new Date()),
     updatedAt: DatePreprocessor.default(() => new Date()),
-    acceptedAt: DatePreprocessor.optional(),
 });
 
 // ----------------------------------------------------------------------
@@ -53,10 +52,6 @@ export const FollowRequestSchema = CreateRelationshipSchema.extend({
     type: z.literal(RelationshipTypeEnum.FOLLOW),
 });
 
-export const FriendRequestSchema = CreateRelationshipSchema.extend({
-    type: z.literal(RelationshipTypeEnum.FRIEND),
-});
-
 export const BlockUserSchema = CreateRelationshipSchema.extend({
     type: z.literal(RelationshipTypeEnum.BLOCK),
 });
@@ -77,7 +72,6 @@ export const UserStatsSchema = z.object({
     follower_count: z.number().int().nonnegative().default(0),
     following_count: z.number().int().nonnegative().default(0),
     friend_count: z.number().int().nonnegative().default(0),
-    pendingRequests: z.number().int().nonnegative().default(0),
 });
 
 export const RelationshipListSchema = z.object({
@@ -86,18 +80,17 @@ export const RelationshipListSchema = z.object({
     total: z.number().int().nonnegative(),
     page: z.number().int().positive(),
     totalPages: z.number().int().nonnegative(),
-    type: z.enum(['followers', 'following', 'friends', 'pending']),
+    type: z.enum(['followers', 'following', 'friends']),
 });
 
-// Single user's relationship evaluation record
+// Single target relationship evaluation record
 export const TargetRelationshipStatusSchema = z.object({
     targetUserId: objectIdSchema,
-    relationship: z.enum(['following', 'friends', 'blocked', 'pending', 'none']),
+    relationship: z.enum(['following', 'friends', 'blocked', 'none']),
     isFollowing: z.boolean().default(false),
     isFollower: z.boolean().default(false),
     isFriend: z.boolean().default(false),
     isBlocked: z.boolean().default(false),
-    isPending: z.boolean().default(false),
 });
 
 // Batch lookup payload (e.g. used by ChatService.enrichRoomWithRelationships)
@@ -106,4 +99,3 @@ export const BatchRelationshipStatusSchema = z.object({
     targetUserIds: z.array(objectIdSchema),
     statuses: z.array(TargetRelationshipStatusSchema),
 });
-
