@@ -75,12 +75,6 @@ const UserModalSchema = new Schema<UserBaseType & Document>({
     default: 0,
     min: 0
   },
-  pendingRequests: {
-    type: Number,
-    default: 0,
-    min: 0
-  },
-
 }, {
   timestamps: true,
   toJSON: {
@@ -121,7 +115,6 @@ UserModalSchema.virtual('fullProfile').get(function () {
     follower_count: this.follower_count,
     following_count: this.following_count,
     friend_count: this.friend_count,
-    pendingRequests: this.pendingRequests,
   };
 });
 
