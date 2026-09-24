@@ -15,7 +15,6 @@ function getHighResGoogleAvatar(url?: string | null): string {
 export class AuthController {
   public googleLogin = async (req: Request, res: Response): Promise<void> => {
     try {
-      // Support both { token } and { credential } depending on frontend Google component
       const rawToken = req.body.token || req.body.credential;
 
       if (!rawToken) {
@@ -28,8 +27,11 @@ export class AuthController {
       let name: string;
       let picture: string | undefined;
 
-      // 1. If it's a JWT ID Token (contains dots), verify directly via google-auth-library
-      if (rawToken.includes('.')) {
+      // A valid JWT ID Token has exactly 3 base64 segments (2 dots) and starts with ey
+      const isIdToken = rawToken.split('.').length === 3 && !rawToken.startsWith('ya29.');
+
+      if (isIdToken) {
+        // 1. JWT ID Token verification
         const ticket = await client.verifyIdToken({
           idToken: rawToken,
           audience: process.env.GOOGLE_CLIENT_ID,
@@ -46,7 +48,7 @@ export class AuthController {
         name = payload.name || payload.given_name || 'User';
         picture = payload.picture;
       } else {
-        // 2. Otherwise it's an OAuth access token, fetch from Google userinfo
+        // 2. OAuth2 Access Token (ya29...) - fetch profile via Google UserInfo API
         const googleRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
           headers: { Authorization: `Bearer ${rawToken}` },
         });
@@ -59,14 +61,14 @@ export class AuthController {
         const data = await googleRes.json();
         sub = data.sub;
         email = data.email;
-        name = data.name;
+        name = data.name || data.given_name || 'User';
         picture = data.picture;
       }
 
       const response = await this.findOrCreateUser(sub, email, name, picture);
       res.status(200).json(response);
     } catch (error) {
-      console.error('[GoogleLogin Error]:', error); // Prints exact error in your Render logs
+      console.error('[GoogleLogin Error]:', error);
       this.handleError(error, res);
     }
   };
@@ -77,13 +79,15 @@ export class AuthController {
     let user = await UserModel.findOne({ $or: [{ googleId: sub }, { email }] });
 
     if (user) {
-      // Link Google ID if missing
       if (!user.googleId) user.googleId = sub;
       if (highResPicture && !user.profilePhoto) user.profilePhoto = highResPicture;
       await user.save();
     } else {
       const genUserId = generateUserId() || Date.now().toString();
-      const baseName = (name || email.split('@')[0]).replace(/[^a-zA-Z0-9]/g, '').toLowerCase().slice(0, 12);
+      const baseName = (name || email.split('@')[0])
+        .replace(/[^a-zA-Z0-9]/g, '')
+        .toLowerCase()
+        .slice(0, 12);
       const username = `${baseName || 'user'}_${Math.floor(1000 + Math.random() * 9000)}`;
 
       user = await UserModel.create({
