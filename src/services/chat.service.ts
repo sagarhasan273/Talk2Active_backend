@@ -1,5 +1,4 @@
 import { ChatRepository } from 'src/repositories/chat.repository';
-import { RelationshipRepository } from 'src/repositories/social.repository';
 import { LiveKitService } from 'src/services/livekit.service';
 import {
 	RoomBase,
@@ -20,7 +19,6 @@ export interface JoinRoomServiceResult {
 
 export class ChatService {
 	private chatRepository = new ChatRepository();
-	private socialRepository = new RelationshipRepository();
 	private liveKitService = new LiveKitService();
 
 	private extractId(userOrId: any): string | null {
