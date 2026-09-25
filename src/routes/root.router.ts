@@ -6,6 +6,7 @@ import { MessageRouter } from "./message.router";
 import { PostRoutes } from "./post.router";
 import { RelationshipRouter } from "./social.router";
 
+import { LiveKitRouter } from "./live-kit.router";
 import { UserRoutes } from "./user.router";
 
 const app = express();
@@ -24,6 +25,9 @@ app.use('/post', postRouters.router);
 
 const socialRouters = new RelationshipRouter();
 app.use('/social', socialRouters.router);
+
+const livekitRouters = new LiveKitRouter();
+app.use('/webhooks', livekitRouters.router);
 
 const chatRouters = new ChatRouter();
 app.use('/room', chatRouters.router);

@@ -31,10 +31,6 @@ export class ChatRouter extends BaseRouter {
             this.chatController.leaveRoom(req, res)
         );
 
-        this.router.post('/livekit/webhook', express.raw({ type: 'application/webhook+json' }), (req, res) =>
-            this.chatController.handleLiveKitWebhook(req, res)
-        );
-
         this.router.post(
             '/on-reload',
             express.text({ type: ['text/plain', 'application/json'] }),
