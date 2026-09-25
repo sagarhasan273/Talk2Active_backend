@@ -14,7 +14,7 @@ export class LiveKitWebhookController {
             const receiver = this.livekitService.getWebhookReceiver();
             const authHeader = req.get('Authorization');
 
-            console.log('hello1')
+            logger.info('Live-kit-webhook');
 
             if (!authHeader) {
                 logger.error("Authorization Failed");

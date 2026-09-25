@@ -46,10 +46,8 @@ initSocketServer(server, allowedOrigins);
 
 const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 5000;
 
-// Listen on '0.0.0.0' to accept connections from localhost, LAN IPs, and emulators
 server.listen(PORT, '0.0.0.0', () => {
   logger.info(`Server is running at http://${getLocalIp()}:${PORT}`);
-  logger.info(`Local fallback: http://localhost:${PORT}`);
   logger.info('Socket.io server initialized and attached');
 });
 
