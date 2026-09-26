@@ -10,6 +10,7 @@ import {
 	RoomUpdateInput,
 } from 'src/types/chat.type';
 import { AppError, DatabaseError } from 'src/utils/errors';
+import { MessageService } from './message.service';
 import { socketService } from './socket.service';
 
 export interface JoinRoomServiceResult {
@@ -19,7 +20,9 @@ export interface JoinRoomServiceResult {
 
 export class ChatService {
 	private chatRepository = new ChatRepository();
+
 	private liveKitService = new LiveKitService();
+	private messageService = new MessageService();
 
 	private extractId(userOrId: any): string | null {
 		if (!userOrId) return null;
@@ -120,6 +123,8 @@ export class ChatService {
 				participant: participant as RoomParticipantResponse,
 			});
 
+			this.messageService.sendSystemMessage(String(roomResponse.roomId), `🎉 ${participantMetadata.name} has joined the room.`, 'success')
+
 			return {
 				room: roomResponse,
 				token,
@@ -144,12 +149,14 @@ export class ChatService {
 				);
 			}
 
-			await this.chatRepository.leaveRoom(input);
+			const user = await this.chatRepository.leaveRoom(input);
 
 			socketService.emitBroadcastUserLeave({
 				roomId: String(roomId),
 				participantId: String(userId),
 			});
+
+			this.messageService.sendSystemMessage(String(input.roomId), `${user?.name} has left the room.`, 'error');
 		} catch (error) {
 			if (error instanceof AppError) throw error;
 

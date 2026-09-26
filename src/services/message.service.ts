@@ -1,3 +1,4 @@
+import { DataPacket_Kind } from 'livekit-server-sdk';
 import { MessageRepository } from 'src/repositories/message.repository';
 import { CreateMessageDto } from 'src/schemas/message.schema';
 import { socketService } from 'src/socket';
@@ -7,8 +8,11 @@ import {
     IFrontendReaction,
     IReaction,
 } from 'src/types/message.type';
+import { LiveKitService } from './livekit.service';
 
 export class MessageService {
+    private liveKitService = new LiveKitService();
+
     public static getRoomId(userA: string, userB: string): string {
         return `chat_${[userA, userB].sort().join('_')}`;
     }
@@ -148,6 +152,67 @@ export class MessageService {
             socketService.emitMessagesRead(targetUserId, currentUserId);
         } catch (err) {
             console.error('Failed to dispatch message read event:', err);
+        }
+    }
+
+    public async sendSystemMessage(
+        roomName: string,
+        text: string,
+        systemType: 'info' | 'success' | 'warning' | 'error' = 'info',
+        destinationIdentities?: string[]
+    ): Promise<void> {
+        const roomService = this.liveKitService.getRoomServiceClient();
+
+        // 1. Ensure room exists on LiveKit SFU so sendData doesn't throw a 404 TwirpError
+        try {
+            await roomService.createRoom({
+                name: roomName,
+                emptyTimeout: 10 * 60, // Keep room allocated for 10 mins after participants leave
+            });
+        } catch (err: any) {
+            // LiveKit throws if the room is already created or active; ignore and proceed
+        }
+
+        const timestamp = new Date().toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit',
+        });
+
+        const systemMessagePayload = {
+            type: 'CHAT_MESSAGE',
+            message: {
+                id: `sys-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+                authorId: 'system',
+                authorName: 'System',
+                text,
+                timestamp,
+                isSystem: true,
+                systemType,
+                isSelf: false,
+            },
+        };
+
+        const data = new TextEncoder().encode(JSON.stringify(systemMessagePayload));
+
+        // 2. Dispatch data packet safely
+        try {
+            await roomService.sendData(
+                roomName,
+                data,
+                DataPacket_Kind.RELIABLE,
+                {
+                    topic: 'room_chat',
+                    destinationIdentities: destinationIdentities ?? [],
+                }
+            );
+        } catch (error: any) {
+            // If room still has no participants or doesn't exist, log cleanly without breaking the caller
+            if (error?.status === 404 || error?.code === 'not_found') {
+                console.warn(`[LiveKit] Room "${roomName}" does not exist or has no active participants. Message skipped.`);
+                return;
+            }
+            console.error('[LiveKit] sendSystemMessage error:', error);
+            throw error;
         }
     }
 }

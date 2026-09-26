@@ -18,6 +18,11 @@ export type RoomLeaveInput = z.infer<typeof RoomLeaveSchema>;
 // ----------------------------------------------------------------------
 // Type-From-Internal-Function
 // ----------------------------------------------------------------------
+export interface LeftUserInfo {
+    userId: string;
+    name: string;
+    profilePhoto?: string;
+}
 
 // Message
 export type Reaction = {
