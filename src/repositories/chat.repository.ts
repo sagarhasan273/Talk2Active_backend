@@ -1,6 +1,7 @@
 import { ObjectId } from 'mongodb';
 import { RoomModel } from 'src/models/chat.model';
 import {
+  LeftUserInfo,
   RoomBase,
   RoomCreateInput,
   RoomJoinInput,
@@ -187,41 +188,61 @@ export class ChatRepository {
     }
   }
 
-  public async leaveRoom(input: RoomLeaveInput): Promise<void> {
+  public async leaveRoom(input: RoomLeaveInput): Promise<LeftUserInfo | null> {
     const { roomId, userId, kicked } = input;
 
     try {
       const userObjectId = new ObjectId(userId);
       const roomObjectId = new ObjectId(roomId);
 
-      // 1. Prepare atomic update operations
+      // 1. Find room and populate user details if 'participants.user' is a ref
+      const room = await RoomModel.findById(roomObjectId).populate(
+        'participants.user',
+        'name profilePhoto'
+      );
+
+      if (!room) {
+        throw new AppError('Room not found', 404, 'ChatRepository.leaveRoom');
+      }
+
+      // 2. Locate the leaving participant
+      const targetParticipant = room.participants?.find((p: any) => {
+        const user = p.user.toJSON();
+        const pUserId = user?.userId ? user.userId.toString() : user?.toString();
+        return pUserId === userId.toString();
+      });
+
+      let removedUser: LeftUserInfo | null = null;
+
+      if (targetParticipant) {
+        // Handles both populated user object or embedded snapshot
+        const userRef = targetParticipant.user as any;
+        removedUser = {
+          userId: userId.toString(),
+          name: userRef?.name || 'Unknown',
+          profilePhoto: userRef?.profilePhoto
+        };
+      }
+
+      // 3. Prepare atomic update operations
       const updateOperations: any = {
         $pull: {
-          // Atomically pull the participant whose "user" matches userId
-          // Supports both ObjectId and string matches
           participants: {
             user: { $in: [userObjectId, userId.toString()] },
           },
         },
       };
 
-      // 2. If kicked, atomically add to kickedUserIds without duplicates
       if (kicked) {
         updateOperations.$addToSet = {
           kickedUserIds: userObjectId,
         };
       }
 
-      // 3. Execute atomic update
-      const updatedRoom = await RoomModel.findByIdAndUpdate(
-        roomObjectId,
-        updateOperations,
-        { new: true }
-      );
+      // 4. Atomically remove participant
+      await RoomModel.findByIdAndUpdate(roomObjectId, updateOperations);
 
-      if (!updatedRoom) {
-        throw new AppError('Room not found', 404, 'ChatRepository.leaveRoom');
-      }
+      return removedUser;
     } catch (error) {
       if (error instanceof AppError) throw error;
       throw new DatabaseError(error, 'ChatRepository.leaveRoom');

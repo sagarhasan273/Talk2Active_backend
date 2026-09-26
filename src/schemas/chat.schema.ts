@@ -89,5 +89,6 @@ export const RoomJoinSchema = z.object({
 export const RoomLeaveSchema = z.object({
   roomId: objectIdSchema,
   userId: objectIdSchema,
+  name: z.string().optional(),
   kicked: z.boolean().optional().default(false),
 });
