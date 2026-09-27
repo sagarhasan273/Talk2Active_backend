@@ -1,5 +1,4 @@
-import { SystemType } from "src/enums/social.enum";
-
+import { SystemType } from 'src/enums/social.enum';
 
 export interface IReaction {
     emoji: string;
@@ -23,8 +22,8 @@ export interface IChatMessageDoc {
     systemType?: SystemType;
     replyToId?: string;
     editedAt?: number;
-    isRead?: boolean; // <-- Added 
-    readAt?: Date;    // <-- Added
+    isRead?: boolean;
+    readAt?: Date | null;
     reactions: IReaction[];
     createdAt: Date;
     updatedAt: Date;
@@ -38,9 +37,10 @@ export interface IFrontendChatMessage {
     systemType?: SystemType;
     authorId?: string;
     authorName?: string;
+    recipientId?: string;
     editedAt?: number;
-    isRead?: boolean; // <-- Added
-    readAt?: Date;    // <-- Added
+    isRead?: boolean;
+    readAt?: string | null;
     reactions?: IFrontendReaction[];
     replyToId?: string;
     createdAt: string;

@@ -2,7 +2,6 @@ import mongoose, { Document, Schema } from 'mongoose';
 import { SystemType } from 'src/enums/social.enum';
 import { IChatMessageDoc, IReaction } from 'src/types/message.type';
 
-
 export interface IMessageDocument extends Omit<IChatMessageDoc, '_id'>, Document { }
 
 const ReactionSchema = new Schema<IReaction>(
@@ -28,8 +27,8 @@ const MessageSchema = new Schema<IMessageDocument>(
         },
         replyToId: { type: String, default: null },
         editedAt: { type: Number, default: null },
-        isRead: { type: Boolean, default: false }, // <-- Added
-        readAt: { type: Date, default: null },     // <-- Added
+        isRead: { type: Boolean, default: false, index: true },
+        readAt: { type: Date, default: null },
         reactions: { type: [ReactionSchema], default: [] },
         createdAt: {
             type: Date,
@@ -43,5 +42,6 @@ const MessageSchema = new Schema<IMessageDocument>(
 );
 
 MessageSchema.index({ roomId: 1, createdAt: 1 });
+MessageSchema.index({ recipientId: 1, authorId: 1, isRead: 1 });
 
 export const MessageModel = mongoose.model<IMessageDocument>('messages', MessageSchema);
