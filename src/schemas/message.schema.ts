@@ -3,9 +3,11 @@ import { z } from 'zod';
 
 export const CreateMessageSchema = z.object({
     id: z.string().optional(),
+    userId: z.string().optional(),
+    authorName: z.string().optional(),
     recipientId: z.string().min(1),
     text: z.string().min(1).max(2000),
-    replyToId: z.string().optional(),
+    replyToId: z.string().nullable().optional(),
     isSystem: z.boolean().optional(),
     systemType: z.nativeEnum(SystemType).optional(),
 });

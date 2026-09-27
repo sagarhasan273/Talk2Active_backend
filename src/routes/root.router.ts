@@ -7,6 +7,7 @@ import { PostRoutes } from "./post.router";
 import { RelationshipRouter } from "./social.router";
 
 import { LiveKitRouter } from "./live-kit.router";
+import { RatingRouter } from "./rating.router";
 import { UserRoutes } from "./user.router";
 
 const app = express();
@@ -16,6 +17,9 @@ app.use('/auth', authRouters.router);
 
 const userRouters = new UserRoutes();
 app.use('/user', userRouters.router);
+
+const ratingRouters = new RatingRouter();
+app.use('/rating', ratingRouters.router);
 
 const inventoryRouters = new InventoryRouter();
 app.use('/inventory', inventoryRouters.router);
