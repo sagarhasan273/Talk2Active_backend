@@ -147,4 +147,19 @@ export class MessageController {
             res.status(500).json({ error: error.message || 'Internal Server Error' });
         }
     }
+
+    public static async getUnreadSummary(req: Request, res: Response): Promise<void> {
+        try {
+            const currentUserId = MessageController.extractUserId(req);
+            if (!currentUserId) {
+                res.status(401).json({ error: 'Unauthorized' });
+                return;
+            }
+
+            const summary = await MessageService.getUnreadSummary(currentUserId);
+            res.status(200).json({ success: true, data: summary });
+        } catch (error: any) {
+            res.status(500).json({ error: error.message || 'Internal Server Error' });
+        }
+    }
 }

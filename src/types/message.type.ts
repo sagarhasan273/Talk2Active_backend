@@ -45,3 +45,9 @@ export interface IFrontendChatMessage {
     replyToId?: string;
     createdAt: string;
 }
+
+export interface IUnreadSummary {
+  unreadBySender: Record<string, number>; 
+  unreadFriendsCount: number;            
+  totalUnreadMessages: number; 
+}

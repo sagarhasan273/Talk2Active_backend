@@ -43,4 +43,25 @@ export class MessageRepository {
             { $set: { isRead: true, readAt: new Date() } }
         ).exec();
     }
+
+    public static async getUnreadCountsBySender(
+        recipientId: string
+    ): Promise<Array<{ _id: string; count: number }>> {
+        return MessageModel.aggregate([
+            {
+                $match: {
+                    recipientId,
+                    isRead: false,
+                    isSystem: { $ne: true },
+                    authorId: { $exists: true, $ne: null },
+                },
+            },
+            {
+                $group: {
+                    _id: '$authorId',
+                    count: { $sum: 1 },
+                },
+            },
+        ]).exec();
+    }
 }

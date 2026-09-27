@@ -8,6 +8,7 @@ import {
     IFrontendChatMessage,
     IFrontendReaction,
     IReaction,
+    IUnreadSummary,
 } from 'src/types/message.type';
 import { LiveKitService } from './livekit.service';
 
@@ -237,5 +238,27 @@ export class MessageService {
             console.error('[LiveKit] sendSystemMessage error:', error);
             throw error;
         }
+    }
+
+    public static async getUnreadSummary(currentUserId: string): Promise<IUnreadSummary> {
+        const rows = await MessageRepository.getUnreadCountsBySender(currentUserId);
+
+        const unreadBySender: Record<string, number> = {};
+        let unreadFriendsCount = 0;
+        let totalUnreadMessages = 0;
+
+        for (const row of rows) {
+            if (row._id && row.count > 0) {
+                unreadBySender[row._id] = row.count;
+                unreadFriendsCount += 1;
+                totalUnreadMessages += row.count;
+            }
+        }
+
+        return {
+            unreadBySender,
+            unreadFriendsCount,
+            totalUnreadMessages,
+        };
     }
 }

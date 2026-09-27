@@ -4,6 +4,7 @@ import { BaseRouter } from './base.router';
 
 export class MessageRouter extends BaseRouter {
     protected routes(): void {
+        this.router.get('/unread', authMiddleware, MessageController.getUnreadSummary);
         this.router.get('/history/:targetUserId', authMiddleware, MessageController.getHistory);
         this.router.post('/save', authMiddleware, MessageController.saveMessage);
         this.router.patch('/:messageId', authMiddleware, MessageController.updateMessage);
