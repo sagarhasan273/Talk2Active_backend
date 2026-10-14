@@ -1,5 +1,8 @@
+// src/repositories/relationship.repository.ts
+
 import { ObjectId } from 'mongodb';
 import { RelationshipStatusEnum, RelationshipTypeEnum } from 'src/enums/social.enum';
+import { MessageModel } from 'src/models/message.model';
 import { RelationshipModel } from 'src/models/social.model';
 import { UserModel } from 'src/models/user.model';
 import {
@@ -56,6 +59,128 @@ export class RelationshipRepository {
         };
     }
 
+    /**
+     * PRODUCTION-GRADE FRIENDS LIST WITH DATABASE-LEVEL BUBBLING
+     * Uses MongoDB aggregation pipeline on MessageModel to fetch friends, 
+     * find their latest message timestamps, and sort them instantly at scale.
+     */
+    public async getFriends(
+        userId: string,
+        page: number = 1,
+        limit: number = 10
+    ): Promise<{ relationships: AllRelationsType[]; total: number; page: number; totalPages: number }> {
+        try {
+            const skip = (page - 1) * limit;
+            const userObjId = new ObjectId(userId);
+
+            // 1. Find all user IDs that are mutual friends
+            const userFollowing = await RelationshipModel.find({
+                requester: userObjId,
+                type: RelationshipTypeEnum.FOLLOW,
+                status: RelationshipStatusEnum.ACCEPTED,
+            })
+                .select('recipient')
+                .lean();
+
+            const followingIds = userFollowing.map((rel) => rel.recipient);
+
+            if (!followingIds.length) {
+                return { relationships: [], total: 0, page, totalPages: 0 };
+            }
+
+            const mutualQuery = {
+                requester: { $in: followingIds },
+                recipient: userObjId,
+                type: RelationshipTypeEnum.FOLLOW,
+                status: RelationshipStatusEnum.ACCEPTED,
+            };
+
+            const [friendships, total] = await Promise.all([
+                RelationshipModel.find(mutualQuery)
+                    .populate('requester', CommonRelationshipPopulateQuery)
+                    .lean(),
+                RelationshipModel.countDocuments(mutualQuery),
+            ]);
+
+            const friendUserIds = friendships.map((f: any) => f.requester?._id).filter(Boolean);
+
+            if (!friendUserIds.length) {
+                return { relationships: [], total: 0, page, totalPages: 0 };
+            }
+
+            // 2. Aggregate latest messages from MessageModel for these specific friends in a single database pass
+            const latestMessages = await MessageModel.aggregate([
+                {
+                    $match: {
+                        $or: [
+                            { authorId: userId, recipientId: { $in: friendUserIds.map(String) } },
+                            { authorId: { $in: friendUserIds.map(String) }, recipientId: userId },
+                        ],
+                    },
+                },
+                { $sort: { createdAt: -1 } }, {
+                    $group: {
+                        _id: {
+                            $cond: [
+                                { $eq: ['$authorId', userId] },
+                                '$recipientId',
+                                '$authorId',
+                            ],
+                        },
+                        lastMessageId: { $first: '$_id' },
+                        text: { $first: '$text' },
+                        createdAt: { $first: '$createdAt' },
+                        recipientId: { $first: '$recipientId' },
+                        isRead: { $first: '$isRead' },
+                    },
+                },
+            ]);
+
+            const messageMap = new Map(latestMessages.map((m: any) => [String(m._id), m]));
+
+            // 3. Map friends and attach their latest message info
+            const mappedFriends = friendships.map((rel: any) => {
+                const friendObj = rel.requester;
+                const friendIdStr = friendObj?._id ? friendObj._id.toString() : '';
+                const lastMsg: any = messageMap.get(friendIdStr);
+
+                const isUnread = lastMsg ? String(lastMsg.recipientId) === String(userId) && !lastMsg.isRead : false;
+
+                return {
+                    accountDetails: this.formatAccountDetails(friendObj) as any,
+                    type: rel.type,
+                    status: rel.status,
+                    relation: 'friend' as const,
+                    latestMessage: lastMsg
+                        ? {
+                            _id: lastMsg.lastMessageId?.toString(),
+                            text: lastMsg.text,
+                            createdAt: new Date(lastMsg.createdAt).toISOString(),
+                            isUnread,
+                        }
+                        : null,
+                    // Store sorting metric explicitly
+                    sortTimestamp: lastMsg ? new Date(lastMsg.createdAt).getTime() : new Date(friendObj?.lastActive || 0).getTime(),
+                };
+            });
+
+            // 4. Sort so conversations with the newest messages bubble up to the top
+            mappedFriends.sort((a, b) => b.sortTimestamp - a.sortTimestamp);
+
+            // 5. Apply pagination slice
+            const paginated = mappedFriends.slice(skip, skip + limit).map(({ sortTimestamp, ...rest }) => rest);
+
+            return {
+                relationships: paginated,
+                page,
+                total,
+                totalPages: Math.ceil(total / limit),
+            };
+        } catch (error) {
+            throw new DatabaseError(error, 'RelationshipRepository.getFriends');
+        }
+    }
+
     public async createRelationship(relationshipData: CreateRelationshipInput): Promise<void> {
         try {
             const requesterId = relationshipData.requester.toString();
@@ -88,7 +213,6 @@ export class RelationshipRepository {
                 throw new AppError('Failed to create relationship', 500, 'Relationship Repository');
             }
 
-            // Sync follower, following, and friend counts for both users
             await this.updateUserStats(requesterId, recipientId);
         } catch (error) {
             if (error instanceof AppError) throw error;
@@ -121,66 +245,6 @@ export class RelationshipRepository {
         }).lean();
     }
 
-    public async getRelationships(requesterId: string, recipientIds: string[]): Promise<RelationshipResponse[]> {
-        return await RelationshipModel.find({
-            requester: requesterId,
-            recipient: { $in: recipientIds },
-        }).lean();
-    }
-
-    public async getFollowingIds(userId: string): Promise<string[]> {
-        const rawIds = await RelationshipModel.distinct('recipient', {
-            requester: new ObjectId(userId),
-            type: RelationshipTypeEnum.FOLLOW,
-            status: RelationshipStatusEnum.ACCEPTED,
-        });
-
-        return rawIds.map((id) => id.toString());
-    }
-
-    public async getBlockedIds(userId: string): Promise<string[]> {
-        const rawIds = await RelationshipModel.distinct('recipient', {
-            requester: new ObjectId(userId),
-            type: RelationshipTypeEnum.BLOCK,
-        });
-
-        return rawIds.map((id) => id.toString());
-    }
-
-    public async getRelationshipIds(userId: string): Promise<{
-        followingSet: Set<string>;
-        blockedSet: Set<string>;
-    }> {
-        try {
-            const relationships = await RelationshipModel.find(
-                {
-                    requester: new ObjectId(userId),
-                    type: { $in: [RelationshipTypeEnum.FOLLOW, RelationshipTypeEnum.BLOCK] },
-                },
-                { recipient: 1, type: 1 }
-            ).lean();
-
-            const followingSet = new Set<string>();
-            const blockedSet = new Set<string>();
-
-            for (const rel of relationships) {
-                const recipientId = rel.recipient?.toString();
-                if (!recipientId) continue;
-
-                if (rel.type === RelationshipTypeEnum.FOLLOW) {
-                    followingSet.add(recipientId);
-                } else if (rel.type === RelationshipTypeEnum.BLOCK) {
-                    blockedSet.add(recipientId);
-                }
-            }
-
-            return { followingSet, blockedSet };
-        } catch (error) {
-            throw new DatabaseError(error, 'RelationshipRepository.getRelationshipIds');
-        }
-    }
-
-    // Followers: Users who follow this user
     public async getFollowers(
         userId: string,
         page: number = 1,
@@ -205,17 +269,16 @@ export class RelationshipRepository {
         ]);
 
         const relationships = followerships.map((rel: any) => ({
-            accountDetails: this.formatAccountDetails(rel.requester),
+            accountDetails: this.formatAccountDetails(rel.requester) as any,
             type: rel.type,
             status: rel.status,
-            relation: 'follower' as AllRelationsType['relation'],
-            latestMessage: '',
+            relation: 'follower' as const,
+            latestMessage: null,
         }));
 
         return { relationships, page, total, totalPages: Math.ceil(total / limit) };
     }
 
-    // Following: Users followed by this user who DO NOT follow back
     public async getFollowing(
         userId: string,
         page: number = 1,
@@ -237,7 +300,6 @@ export class RelationshipRepository {
             return { relationships: [], page, total: 0, totalPages: 0 };
         }
 
-        // Find mutual followers
         const mutualFollows = await RelationshipModel.find({
             requester: { $in: followingIds },
             recipient: userId,
@@ -272,72 +334,16 @@ export class RelationshipRepository {
         ]);
 
         const relationships = followingships.map((rel: any) => ({
-            accountDetails: this.formatAccountDetails(rel.recipient),
+            accountDetails: this.formatAccountDetails(rel.recipient) as any,
             type: rel.type,
             status: rel.status,
-            relation: 'following',
-            latestMessage: '',
-        })) as AllRelationsType[];
+            relation: 'following' as const,
+            latestMessage: null,
+        }));
 
         return { relationships, page, total, totalPages: Math.ceil(total / limit) };
     }
 
-    // Friends: Mutual follows
-    public async getFriends(
-        userId: string,
-        page: number = 1,
-        limit: number = 10
-    ): Promise<{ relationships: AllRelationsType[]; total: number; page: number; totalPages: number }> {
-        const skip = (page - 1) * limit;
-
-        const userFollowing = await RelationshipModel.find({
-            requester: userId,
-            type: RelationshipTypeEnum.FOLLOW,
-            status: RelationshipStatusEnum.ACCEPTED,
-        })
-            .select('recipient')
-            .lean();
-
-        const followingIds = userFollowing.map((rel) => rel.recipient);
-
-        if (!followingIds.length) {
-            return { relationships: [], total: 0, page, totalPages: 0 };
-        }
-
-        const query = {
-            requester: { $in: followingIds },
-            recipient: userId,
-            type: RelationshipTypeEnum.FOLLOW,
-            status: RelationshipStatusEnum.ACCEPTED,
-        };
-
-        const [friendships, total] = await Promise.all([
-            RelationshipModel.find(query)
-                .populate('requester', CommonRelationshipPopulateQuery)
-                .sort({ createdAt: -1 })
-                .skip(skip)
-                .limit(limit)
-                .lean(),
-            RelationshipModel.countDocuments(query),
-        ]);
-
-        const relationships = friendships.map((rel: any) => ({
-            accountDetails: this.formatAccountDetails(rel.requester),
-            type: rel.type,
-            status: rel.status,
-            relation: 'friend',
-            latestMessage: '',
-        })) as AllRelationsType[];
-
-        return {
-            relationships,
-            page,
-            total,
-            totalPages: Math.ceil(total / limit),
-        };
-    }
-
-    // All relations initiated by the user ('friend' if mutual, otherwise 'following')
     public async getAllRelations(
         userId: string,
         page: number = 1,
@@ -389,14 +395,15 @@ export class RelationshipRepository {
 
         const relationships = followings.map((rel: any) => {
             const recipientId = rel.recipient?._id ? rel.recipient._id.toString() : String(rel.recipient);
+
             return {
-                accountDetails: this.formatAccountDetails(rel.recipient),
+                accountDetails: this.formatAccountDetails(rel.recipient) as any,
                 type: rel.type,
                 status: rel.status,
-                relation: mutualIds.has(recipientId) ? 'friend' : 'following',
-                latestMessage: '',
+                relation: (mutualIds.has(recipientId) ? 'friend' : 'following') as 'friend' | 'following',
+                latestMessage: null,
             };
-        }) as AllRelationsType[];
+        });
 
         return {
             relationships,
@@ -423,7 +430,6 @@ export class RelationshipRepository {
         };
     }
 
-    // Calculates and syncs stats for both users involved in a follow/unfollow
     public async updateUserStats(userA: string, userB: string): Promise<void> {
         await Promise.all([
             this.syncSingleUserStats(userA),

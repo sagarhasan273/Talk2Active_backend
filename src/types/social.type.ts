@@ -50,5 +50,9 @@ export type AllRelationsType = {
     relation: 'friend' | 'following' | 'follower';
     status: RelationshipStatusEnum;
     type: RelationshipTypeEnum;
-    latestMessage?: string;
+    latestMessage?: {
+        _id?: string;
+        text: string;
+        createdAt: string;
+    } | null;
 };
