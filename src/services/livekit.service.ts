@@ -1,6 +1,9 @@
+import dotenv from 'dotenv';
 import { AccessToken, RoomServiceClient, WebhookReceiver } from 'livekit-server-sdk';
 import { AppError } from 'src/utils/errors';
 import logger from 'src/utils/logger';
+
+dotenv.config();
 
 export interface CreateJoinTokenOptions {
     userId: string;
@@ -17,7 +20,7 @@ export class LiveKitService {
     private getCredentials() {
         const apiKey = process.env.LIVEKIT_API_KEY;
         const apiSecret = process.env.LIVEKIT_API_SECRET;
-        const host = process.env.LIVEKIT_URL;
+        const host = process.env.LIVEKIT_API_URL;
 
         if (!apiKey || !apiSecret) {
             throw new AppError(
