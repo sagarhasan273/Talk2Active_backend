@@ -220,7 +220,7 @@ export class SocketService {
     }
 
     public emitBroadcastNewRoom(data: BroadcastNewRoomData): void {
-        this.io?.emit('broadcart_new_room', data);
+        this.io?.emit('broadcast_new_room', data);
     }
 
     public emitBroadcastUserJoin(data: BroadcastUserJoinData): void {
@@ -229,7 +229,7 @@ export class SocketService {
             this.userActiveRoomMap.set(participantUserId, data.roomId);
             this.notifyRoomPresenceToRelations(participantUserId, true, data.roomId);
         }
-        this.io?.to(data.roomId).emit('broadcart_user_join', data);
+        this.io?.emit('broadcast_user_join', data);
     }
 
     public emitBroadcastUserLeave(data: BroadcastUserLeaveData): void {
@@ -237,7 +237,7 @@ export class SocketService {
             this.userActiveRoomMap.delete(data.participantId);
             this.notifyRoomPresenceToRelations(data.participantId, false, null);
         }
-        this.io?.to(data.roomId).emit('broadcart_user_leave', data);
+        this.io?.emit('broadcast_user_leave', data);
     }
 }
 
