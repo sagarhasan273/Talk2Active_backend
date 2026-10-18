@@ -3,6 +3,7 @@
 import { ObjectId } from 'mongodb';
 import { RelationshipStatusEnum, RelationshipTypeEnum } from 'src/enums/social.enum';
 import { MessageModel } from 'src/models/message.model';
+import { ReportModel } from 'src/models/report.model';
 import { RelationshipModel } from 'src/models/social.model';
 import { UserModel } from 'src/models/user.model';
 import {
@@ -506,4 +507,100 @@ export class RelationshipRepository {
 
         return Boolean(u1FollowsU2 && u2FollowsU1);
     }
+
+    public async checkExistingBlock(requesterId: string, targetUserId: string) {
+        return await RelationshipModel.findOne({
+            requester: new ObjectId(requesterId),
+            recipient: new ObjectId(targetUserId),
+            type: RelationshipTypeEnum.BLOCK,
+        }).lean();
+    }
+
+    public async blockUser(requesterId: string, targetUserId: string) {
+        const reqId = new ObjectId(requesterId);
+        const targetId = new ObjectId(targetUserId);
+
+        // 1. Upsert relationship A -> B to BLOCK
+        const blockRecord = await RelationshipModel.findOneAndUpdate(
+            { requester: reqId, recipient: targetId },
+            {
+                $set: {
+                    type: RelationshipTypeEnum.BLOCK,
+                    status: RelationshipStatusEnum.BLOCKED,
+                    updatedAt: new Date()
+                }
+            },
+            { upsert: true, new: true }
+        );
+
+        // 2. Force B to unfollow A (Remove the reverse follow if it exists)
+        await RelationshipModel.deleteOne({
+            requester: targetId,
+            recipient: reqId,
+            type: RelationshipTypeEnum.FOLLOW
+        });
+
+        await this.updateUserStats(requesterId, targetUserId);
+
+        return blockRecord;
+    }
+
+    public async unblockUser(requesterId: string, targetUserId: string) {
+        // Delete the block record
+        const result = await RelationshipModel.deleteOne({
+            requester: new ObjectId(requesterId),
+            recipient: new ObjectId(targetUserId),
+            type: RelationshipTypeEnum.BLOCK
+        });
+
+        if (result.deletedCount > 0) {
+            await this.updateUserStats(requesterId, targetUserId);
+        }
+        return result.deletedCount > 0;
+    }
+
+    public async getBlockedUsers(userId: string, page: number = 1, limit: number = 10) {
+        const skip = (page - 1) * limit;
+        const query = {
+            requester: userId,
+            type: RelationshipTypeEnum.BLOCK,
+            status: RelationshipStatusEnum.BLOCKED,
+        };
+
+        const [blocks, total] = await Promise.all([
+            RelationshipModel.find(query)
+                .populate('recipient', CommonRelationshipPopulateQuery)
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limit)
+                .lean(),
+            RelationshipModel.countDocuments(query),
+        ]);
+
+        const blockedUsers = blocks.map((rel: any) => ({
+            accountDetails: this.formatAccountDetails(rel.recipient) as any,
+            type: rel.type,
+            status: rel.status,
+            relation: 'blocked' as const,
+        }));
+
+        return {
+            relationships: blockedUsers,
+            page,
+            total,
+            totalPages: Math.ceil(total / limit)
+        };
+    }
+
+    public async createReport(requesterId: string, targetUserId: string, reason: string) {
+        const report = await ReportModel.create({
+            reporter: new ObjectId(requesterId),
+            reportedUser: new ObjectId(targetUserId),
+            reason: reason,
+            status: 'PENDING'
+        });
+        return report;
+    }
+
+
 }

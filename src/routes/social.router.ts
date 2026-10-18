@@ -14,16 +14,21 @@ export class RelationshipRouter extends BaseRouter {
         this.router.post('/friend/remove', authMiddleware, (req, res) => this.relationshipController.removeFriend(req, res));
 
         // Social Graph Lists
-        this.router.get('/followers/:userId', authMiddleware, (req, res) => this.relationshipController.getFollowers(req, res));
-        this.router.get('/following/:userId', authMiddleware, (req, res) => this.relationshipController.getFollowing(req, res));
-        this.router.get('/friends/:userId', authMiddleware, (req, res) => this.relationshipController.getFriends(req, res));
-        this.router.get('/all-relations/:userId', authMiddleware, (req, res) => this.relationshipController.getAllRelations(req, res));
+        this.router.get('/:userId/followers', authMiddleware, (req, res) => this.relationshipController.getFollowers(req, res));
+        this.router.get('/:userId/following', authMiddleware, (req, res) => this.relationshipController.getFollowing(req, res));
+        this.router.get('/:userId/friends', authMiddleware, (req, res) => this.relationshipController.getFriends(req, res));
+        this.router.get('/:userId/all-relations', authMiddleware, (req, res) => this.relationshipController.getAllRelations(req, res));
 
         // User Stats (follower_count, following_count, friend_count)
         this.router.get('/stats/:userId', authMiddleware, (req, res) => this.relationshipController.getUserStats(req, res));
 
+        // Get Blocked Users
+        this.router.get('/:userId/blocked', authMiddleware, (req, res) => this.relationshipController.getBlockedUsers(req, res));
         // Block / Unblock
         this.router.post('/block', authMiddleware, (req, res) => this.relationshipController.blockUser(req, res));
         this.router.post('/unblock', authMiddleware, (req, res) => this.relationshipController.unblockUser(req, res));
+
+        // Report User
+        this.router.post('/report', authMiddleware, (req, res) => this.relationshipController.reportUser(req, res));
     }
 }
