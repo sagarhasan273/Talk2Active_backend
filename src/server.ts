@@ -20,6 +20,7 @@ const allowedOrigins = [
   'http://localhost:8081',
   'https://www.youtube.com',
   'https://talk2-active.vercel.app',
+  'https://unable-sloping-impeding.ngrok-free.dev'
 ];
 
 // CORS configuration

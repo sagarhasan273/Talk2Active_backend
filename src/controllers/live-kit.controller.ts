@@ -45,7 +45,6 @@ export class LiveKitWebhookController {
 
                 logger.info(`[LiveKit Webhook] Participant left: ${userId} from room: ${roomId}`);
 
-                // Guard: Only hit the database if roomId and userId are valid MongoDB ObjectIds
                 const isValidObjectId = (id?: string) => Boolean(id && mongoose.Types.ObjectId.isValid(id));
 
                 if (isValidObjectId(roomId) && isValidObjectId(userId)) {
@@ -71,6 +70,17 @@ export class LiveKitWebhookController {
                         participantId: userId.toString(),
                     });
                 }
+            }
+
+            if (event.event === 'participant_joined') {
+                let roomId = event.room?.name;
+                let userId = event.participant?.identity;
+
+                if (event.participant?.attributes?.roomId) {
+                    roomId = event.participant.attributes.roomId;
+                }
+
+                logger.info(`[LiveKit Webhook] Participant joined: ${userId} from room: ${roomId}`);
             }
 
             // Always reply 200 OK so LiveKit does not spam retry requests
