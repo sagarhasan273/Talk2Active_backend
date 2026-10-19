@@ -1,5 +1,5 @@
-import { uploadImage } from 'src/config';
 import { InventoryController } from 'src/controllers/inventory.controller';
+import { uploadImage } from 'src/utils/upload';
 import { BaseRouter } from './base.router';
 
 export class InventoryRouter extends BaseRouter {

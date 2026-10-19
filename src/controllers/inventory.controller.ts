@@ -1,6 +1,6 @@
 import { GoogleGenAI } from '@google/genai';
 import { Request, Response } from 'express';
-import { cloudinaryInstance, CloudinaryUploadResult } from 'src/config';
+import { cloudinaryInstance, CloudinaryUploadResult } from 'src/utils/upload';
 
 export class InventoryController {
   public async uploadImage(req: Request, res: Response): Promise<void> {

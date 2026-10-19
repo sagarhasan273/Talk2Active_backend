@@ -1,62 +1,27 @@
-import { Db, MongoClient } from 'mongodb';
 import mongoose from 'mongoose';
+import { config } from 'src/config';
+import { redisService } from 'src/services/redis.service';
 import logger from 'src/utils/logger';
-import { dbConfig } from './config';
-import { DatabaseError } from './utils/errors';
 
-let client: MongoClient;
-let db: Db;
-
-let isConnected = false;
-
-export async function connectToDatabase(): Promise<typeof mongoose> {
-  if (isConnected) {
-    return mongoose;
-  }
-  client = new MongoClient(dbConfig.url, dbConfig.options);
-  await client.connect();
-  db = client.db(dbConfig.dbName);
-
+export async function initializeDatabases(): Promise<void> {
   try {
-    await mongoose.connect(dbConfig.url, dbConfig.options);
+    logger.info('[Database] Initializing connections...');
 
-    isConnected = true;
-    logger.info('Connected to MongoDB via Mongoose');
-    return mongoose;
+    // Boot Mongo and Redis at the same time
+    await Promise.all([
+      mongoose.connect(config.dbUrl, config.dbOptions),
+      redisService.initRedisServer()
+    ]);
+
+    logger.info('[Database] MongoDB and Redis connected successfully');
   } catch (error) {
-    logger.error('Mongoose connection error:', error);
-    throw new DatabaseError(error as Error, 'initializing Mongoose connection');
+    logger.error('[Database] CRITICAL: Failed to connect to databases', { error });
+    process.exit(1);
   }
 }
-
-// Optional: Connection event handlers
-mongoose.connection.on('connected', () => {
-  logger.info('Mongoose connected to DB');
-});
-
-mongoose.connection.on('error', (err) => {
-  logger.error('Mongoose connection error:', err);
-});
-
-mongoose.connection.on('disconnected', () => {
-  logger.warn('Mongoose disconnected from DB');
-})
 
 export async function closeDatabaseConnection(): Promise<void> {
-  if (client) {
-    try {
-      await mongoose.connection.close();
-      logger.info('Mongoose connection closed due to app termination');
-    } catch (error) {
-      logger.error('Error closing database connection:', error);
-    }
-  }
+  await mongoose.disconnect();
+  await redisService.disconnect();
+  logger.info('[Database] Connections safely closed');
 }
-
-export async function getDatabase(): Promise<Db> {
-  if (!db) {
-    await connectToDatabase();
-  }
-  return db;
-}
-

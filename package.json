@@ -2,11 +2,11 @@
   "name": "typescript-express-app",
   "version": "1.0.0",
   "description": "A simple TypeScript Express application",
-  "main": "src/app.js",
+  "main": "src/server.js",
   "scripts": {
-    "dev": "nodemon --exec ts-node -r tsconfig-paths/register src/app.ts",
+    "dev": "nodemon --exec ts-node -r tsconfig-paths/register src/server.ts",
     "build": "tsc && tsc-alias",
-    "start": "node -r module-alias/register dist/app.js",
+    "start": "node -r module-alias/register dist/server.js",
     "postinstall": "npm run build"
   },
   "_moduleAliases": {
@@ -15,10 +15,12 @@
   "dependencies": {
     "@google/genai": "^2.22.0",
     "@types/mongodb": "^4.0.6",
+    "bullmq": "^6.3.17",
     "cloudinary": "^2.7.0",
     "dotenv": "^16.6.1",
     "express": "^5.2.1",
     "google-auth-library": "^10.6.2",
+    "ioredis": "^6.0.0",
     "livekit-server-sdk": "^2.19.0",
     "module-alias": "^2.3.4",
     "mongodb": "^6.15.0",

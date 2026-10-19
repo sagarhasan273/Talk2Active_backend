@@ -1,0 +1,35 @@
+services:
+  redis:
+    image: redis:alpine
+    container_name: redis-prod
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+
+  livekit:
+    image: livekit/livekit-server:latest
+    container_name: livekit-local
+    restart: unless-stopped
+    ports:
+      - '7880:7880'
+      - '7881:7881'
+      - '7882:7882/udp'
+    volumes:
+      - ./live-kit-config.yaml:/config/live-kit-config.yaml
+    command: --config /config/live-kit-config.yaml
+
+  # backend:
+  #   build: .
+  #   # image: your-backend-image:latest
+  #   container_name: backend-prod
+  #   restart: unless-stopped
+  #   ports:
+  #     - '2968:2968'
+  #   environment:
+  #     - LIVEKIT_HOST=ws://livekit:7880
+  #     - REDIS_URL=redis://redis:6379
+  #   depends_on:
+  #     - livekit
+  #     - redis
+# docker compose up -d
+# docker compose down
