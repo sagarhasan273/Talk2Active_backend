@@ -3,6 +3,7 @@ import { RelationshipRepository } from 'src/repositories/social.repository';
 import { ReturnResponseType } from 'src/types/base.type';
 import { BlockUserInput, FollowRequestInput, UserStats } from 'src/types/social.type';
 import { AppError } from 'src/utils/errors';
+import { socketService } from './socket.service';
 
 export class RelationshipService {
   private relationshipRepository = new RelationshipRepository();
@@ -14,6 +15,7 @@ export class RelationshipService {
         this.relationshipRepository.getUserStats(input.requester.toString()),
         this.relationshipRepository.getUserStats(input.recipient.toString()),
       ]);
+      socketService.emitUpdateSocial(input.recipient.toString(), "Update social")
       return result;
     } catch (error) {
       if (error instanceof AppError) throw error;
