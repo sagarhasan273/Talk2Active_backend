@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { BlockUserSchema, FollowRequestSchema } from 'src/schemas/social.schema';
+import { BlockUserSchema, FollowRequestSchema, UnblockUserSchema } from 'src/schemas/social.schema';
 import { RelationshipService } from 'src/services/social.services';
 import { AppError } from 'src/utils/errors';
 import logger from 'src/utils/logger';
@@ -80,6 +80,23 @@ export class RelationshipController {
         }
     }
 
+    // Get blocked users
+    async getBlockedUsers(req: Request, res: Response): Promise<void> {
+        const userId = req.params.userId;
+        const page = parseInt(req.query.page as string, 10) || 1;
+        const limit = parseInt(req.query.limit as string, 10) || 10;
+
+        try {
+            if (!userId) {
+                throw new AppError('User ID is required', 400, 'Relationship Controller');
+            }
+            const result = await this.relationshipService.getBlockedUsers(userId, page, limit);
+            res.status(200).json({ status: true, message: 'Blocked users fetched successfully', ...result });
+        } catch (error) {
+            this.handleError(error, res, 'fetching blocked users');
+        }
+    }
+
     // Block a user
     async blockUser(req: Request, res: Response): Promise<void> {
         let validatedInput;
@@ -100,8 +117,8 @@ export class RelationshipController {
         }
 
         try {
-            await this.relationshipService.blockUser(validatedInput);
-            res.status(200).json({ status: true, message: 'User blocked successfully' });
+            const result = await this.relationshipService.blockUser(validatedInput);
+            res.status(200).json({ status: true, message: 'User blocked successfully', data: result });
         } catch (error) {
             this.handleError(error, res, 'blocking user');
         }
@@ -111,18 +128,47 @@ export class RelationshipController {
     async unblockUser(req: Request, res: Response): Promise<void> {
         let validatedInput;
         try {
-            validatedInput = BlockUserSchema.parse(req.body);
+            validatedInput = UnblockUserSchema.parse(req.body);
+
+            if (validatedInput.recipient === validatedInput.requester) {
+                throw new AppError('You cannot unblock yourself!', 400, 'Relationship Controller');
+            }
         } catch (error) {
+            if (error instanceof AppError) {
+                res.status(error.statusCode).json({ status: false, message: error.message });
+                return;
+            }
             logger.error('Invalid unblock user data!');
             res.status(400).json({ status: false, message: 'Invalid unblock user data!' });
             return;
         }
 
         try {
-            await this.relationshipService.unblockUser(validatedInput);
-            res.status(200).json({ status: true, message: 'User unblocked successfully' });
+            const result = await this.relationshipService.unblockUser(validatedInput);
+            res.status(200).json({ status: true, message: 'User unblocked successfully', data: result });
         } catch (error) {
             this.handleError(error, res, 'unblocking user');
+        }
+    }
+
+    // Report a user
+    async reportUser(req: Request, res: Response): Promise<void> {
+        try {
+            const { requesterId, targetUserId, reason } = req.body;
+
+            // Basic validation (or use a Zod Schema like ReportUserSchema if you create one)
+            if (!requesterId || !targetUserId || !reason) {
+                throw new AppError('Missing required parameters (requesterId, targetUserId, reason)', 400, 'Relationship Controller');
+            }
+
+            if (requesterId === targetUserId) {
+                throw new AppError('You cannot report yourself!', 400, 'Relationship Controller');
+            }
+
+            const result = await this.relationshipService.reportUser(requesterId, targetUserId, reason);
+            res.status(200).json({ status: true, message: 'Report submitted successfully', data: result });
+        } catch (error) {
+            this.handleError(error, res, 'reporting user');
         }
     }
 
@@ -180,15 +226,19 @@ export class RelationshipController {
     // Get all relations
     async getAllRelations(req: Request, res: Response): Promise<void> {
         const userId = req.params.userId;
-        const page = parseInt(req.query.page as string, 10) || 1;
-        const limit = parseInt(req.query.limit as string, 10) || 10;
 
         try {
             if (!userId) {
                 throw new AppError('User ID is required', 400, 'Relationship Controller');
             }
-            const result = await this.relationshipService.getAllRelations(userId, page, limit);
-            res.status(200).json({ status: true, message: 'All relations fetched successfully', ...result });
+
+            const result = await this.relationshipService.getAllRelations(userId);
+
+            res.status(200).json({
+                status: true,
+                message: 'All relations fetched successfully',
+                ...result
+            });
         } catch (error) {
             this.handleError(error, res, 'fetching all relations');
         }

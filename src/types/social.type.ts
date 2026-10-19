@@ -47,7 +47,7 @@ export type AuthorRelationship = {
 
 export type AllRelationsType = {
     accountDetails: UserResponseType;
-    relation: 'friend' | 'following' | 'follower';
+    relation: 'friend' | 'following' | 'follower' | 'blocked';
     status: RelationshipStatusEnum;
     type: RelationshipTypeEnum;
     latestMessage?: {

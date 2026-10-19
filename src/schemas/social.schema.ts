@@ -52,8 +52,12 @@ export const FollowRequestSchema = CreateRelationshipSchema.extend({
     type: z.literal(RelationshipTypeEnum.FOLLOW),
 });
 
-export const BlockUserSchema = CreateRelationshipSchema.extend({
-    type: z.literal(RelationshipTypeEnum.BLOCK),
+export const BlockUserSchema = CreateRelationshipSchema.omit({
+    type: true,
+});
+
+export const UnblockUserSchema = CreateRelationshipSchema.omit({
+    type: true,
 });
 
 // ----------------------------------------------------------------------

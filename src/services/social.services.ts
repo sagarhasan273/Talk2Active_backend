@@ -66,26 +66,35 @@ export class RelationshipService {
     }
   }
 
+  async getBlockedUsers(userId: string, page: number = 1, limit: number = 10): Promise<ReturnResponseType> {
+    try {
+      const { relationships, total, totalPages } = await this.relationshipRepository.getBlockedUsers(
+        userId,
+        page,
+        limit
+      );
+
+      return {
+        data: relationships,
+        metaData: { page, limit, total, totalPages, hasNextPage: page < totalPages, hasPrevPage: page > 1 }
+      };
+    } catch (error) {
+      if (error instanceof AppError) throw error;
+      throw new AppError('Failed to get blocked users!', 500, 'Relationship Service');
+    }
+  }
+
   async blockUser(input: BlockUserInput): Promise<void> {
     try {
       const requesterId = input.requester.toString();
       const recipientId = input.recipient.toString();
 
-      // Clear any active follow connections between the two users before blocking
-      await Promise.all([
-        this.relationshipRepository.removeRelationship(
-          requesterId,
-          recipientId,
-          RelationshipTypeEnum.FOLLOW
-        ),
-        this.relationshipRepository.removeRelationship(
-          recipientId,
-          requesterId,
-          RelationshipTypeEnum.FOLLOW
-        ),
-      ]);
+      if (requesterId === recipientId) {
+        throw new AppError('You cannot block yourself', 400, 'Relationship Service');
+      }
 
-      await this.relationshipRepository.createRelationship(input);
+      // Delegate to the optimized DB-level method
+      await this.relationshipRepository.blockUser(requesterId, recipientId);
     } catch (error) {
       if (error instanceof AppError) throw error;
       throw new AppError('Failed to block user!', 500, 'Relationship Service');
@@ -94,15 +103,32 @@ export class RelationshipService {
 
   async unblockUser(input: BlockUserInput): Promise<void> {
     try {
-      const { requester, recipient, type } = input;
-      await this.relationshipRepository.removeRelationship(
-        requester.toString(),
-        recipient.toString(),
-        type
-      );
+      const requesterId = input.requester.toString();
+      const recipientId = input.recipient.toString();
+
+      if (requesterId === recipientId) {
+        throw new AppError('You cannot unblock yourself', 400, 'Relationship Service');
+      }
+
+      // Delegate to the optimized DB-level method
+      await this.relationshipRepository.unblockUser(requesterId, recipientId);
     } catch (error) {
       if (error instanceof AppError) throw error;
       throw new AppError('Failed to unblock user!', 500, 'Relationship Service');
+    }
+  }
+
+  async reportUser(requesterId: string, targetUserId: string, reason: string) {
+    try {
+      if (requesterId === targetUserId) {
+        throw new AppError('You cannot report yourself', 400, 'Relationship Service');
+      }
+
+      const report = await this.relationshipRepository.createReport(requesterId, targetUserId, reason);
+      return report;
+    } catch (error) {
+      if (error instanceof AppError) throw error;
+      throw new AppError('Failed to report user!', 500, 'Relationship Service');
     }
   }
 
@@ -178,24 +204,26 @@ export class RelationshipService {
     }
   }
 
-  async getAllRelations(userId: string, page: number = 1, limit: number = 10): Promise<ReturnResponseType> {
+  async getAllRelations(userId: string): Promise<ReturnResponseType> {
     try {
-      const { relationships, total, totalPages } = await this.relationshipRepository.getAllRelations(
-        userId,
-        page,
-        limit
-      );
+      const { relationships } = await this.relationshipRepository.getAllRelations(userId);
 
-      const metaData = {
-        page,
-        limit,
-        total,
-        totalPages,
-        hasNextPage: page < totalPages,
-        hasPrevPage: page > 1,
+      const total =
+        relationships.friends.length +
+        relationships.followings.length +
+        relationships.blockedUsers.length;
+
+      return {
+        data: relationships,
+        metaData: {
+          page: 1,
+          limit: Math.max(total, 1),
+          total,
+          totalPages: 1,
+          hasNextPage: false,
+          hasPrevPage: false,
+        },
       };
-
-      return { data: relationships, metaData };
     } catch (error) {
       if (error instanceof AppError) throw error;
       throw new AppError('Failed to get all relations!', 500, 'Relationship Service');
