@@ -226,15 +226,19 @@ export class RelationshipController {
     // Get all relations
     async getAllRelations(req: Request, res: Response): Promise<void> {
         const userId = req.params.userId;
-        const page = parseInt(req.query.page as string, 10) || 1;
-        const limit = parseInt(req.query.limit as string, 10) || 10;
 
         try {
             if (!userId) {
                 throw new AppError('User ID is required', 400, 'Relationship Controller');
             }
-            const result = await this.relationshipService.getAllRelations(userId, page, limit);
-            res.status(200).json({ status: true, message: 'All relations fetched successfully', ...result });
+
+            const result = await this.relationshipService.getAllRelations(userId);
+
+            res.status(200).json({
+                status: true,
+                message: 'All relations fetched successfully',
+                ...result
+            });
         } catch (error) {
             this.handleError(error, res, 'fetching all relations');
         }

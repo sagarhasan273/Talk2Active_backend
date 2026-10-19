@@ -204,24 +204,26 @@ export class RelationshipService {
     }
   }
 
-  async getAllRelations(userId: string, page: number = 1, limit: number = 10): Promise<ReturnResponseType> {
+  async getAllRelations(userId: string): Promise<ReturnResponseType> {
     try {
-      const { relationships, total, totalPages } = await this.relationshipRepository.getAllRelations(
-        userId,
-        page,
-        limit
-      );
+      const { relationships } = await this.relationshipRepository.getAllRelations(userId);
 
-      const metaData = {
-        page,
-        limit,
-        total,
-        totalPages,
-        hasNextPage: page < totalPages,
-        hasPrevPage: page > 1,
+      const total =
+        relationships.friends.length +
+        relationships.followings.length +
+        relationships.blockedUsers.length;
+
+      return {
+        data: relationships,
+        metaData: {
+          page: 1,
+          limit: Math.max(total, 1),
+          total,
+          totalPages: 1,
+          hasNextPage: false,
+          hasPrevPage: false,
+        },
       };
-
-      return { data: relationships, metaData };
     } catch (error) {
       if (error instanceof AppError) throw error;
       throw new AppError('Failed to get all relations!', 500, 'Relationship Service');

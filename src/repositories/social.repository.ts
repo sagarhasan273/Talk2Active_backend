@@ -40,7 +40,10 @@ export class RelationshipRepository {
 
         const userId = user._id ? user._id.toString() : user.id ? user.id.toString() : String(user);
         const fullName =
-            user.name || `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.username || 'User';
+            user.name ||
+            `${user.firstName || ''} ${user.lastName || ''}`.trim() ||
+            user.username ||
+            'User';
 
         return {
             userId,
@@ -62,14 +65,19 @@ export class RelationshipRepository {
 
     /**
      * PRODUCTION-GRADE FRIENDS LIST WITH DATABASE-LEVEL BUBBLING
-     * Uses MongoDB aggregation pipeline on MessageModel to fetch friends, 
+     * Uses MongoDB aggregation pipeline on MessageModel to fetch friends,
      * find their latest message timestamps, and sort them instantly at scale.
      */
     public async getFriends(
         userId: string,
         page: number = 1,
         limit: number = 10
-    ): Promise<{ relationships: AllRelationsType[]; total: number; page: number; totalPages: number }> {
+    ): Promise<{
+        relationships: AllRelationsType[];
+        total: number;
+        page: number;
+        totalPages: number;
+    }> {
         try {
             const skip = (page - 1) * limit;
             const userObjId = new ObjectId(userId);
@@ -119,14 +127,11 @@ export class RelationshipRepository {
                         ],
                     },
                 },
-                { $sort: { createdAt: -1 } }, {
+                { $sort: { createdAt: -1 } },
+                {
                     $group: {
                         _id: {
-                            $cond: [
-                                { $eq: ['$authorId', userId] },
-                                '$recipientId',
-                                '$authorId',
-                            ],
+                            $cond: [{ $eq: ['$authorId', userId] }, '$recipientId', '$authorId'],
                         },
                         lastMessageId: { $first: '$_id' },
                         text: { $first: '$text' },
@@ -145,7 +150,9 @@ export class RelationshipRepository {
                 const friendIdStr = friendObj?._id ? friendObj._id.toString() : '';
                 const lastMsg: any = messageMap.get(friendIdStr);
 
-                const isUnread = lastMsg ? String(lastMsg.recipientId) === String(userId) && !lastMsg.isRead : false;
+                const isUnread = lastMsg
+                    ? String(lastMsg.recipientId) === String(userId) && !lastMsg.isRead
+                    : false;
 
                 return {
                     accountDetails: this.formatAccountDetails(friendObj) as any,
@@ -161,7 +168,9 @@ export class RelationshipRepository {
                         }
                         : null,
                     // Store sorting metric explicitly
-                    sortTimestamp: lastMsg ? new Date(lastMsg.createdAt).getTime() : new Date(friendObj?.lastActive || 0).getTime(),
+                    sortTimestamp: lastMsg
+                        ? new Date(lastMsg.createdAt).getTime()
+                        : new Date(friendObj?.lastActive || 0).getTime(),
                 };
             });
 
@@ -169,7 +178,9 @@ export class RelationshipRepository {
             mappedFriends.sort((a, b) => b.sortTimestamp - a.sortTimestamp);
 
             // 5. Apply pagination slice
-            const paginated = mappedFriends.slice(skip, skip + limit).map(({ sortTimestamp, ...rest }) => rest);
+            const paginated = mappedFriends
+                .slice(skip, skip + limit)
+                .map(({ sortTimestamp, ...rest }) => rest);
 
             return {
                 relationships: paginated,
@@ -188,7 +199,11 @@ export class RelationshipRepository {
             const recipientId = relationshipData.recipient.toString();
 
             if (requesterId === recipientId) {
-                throw new AppError('Cannot create a relationship with yourself', 400, 'Relationship Repository');
+                throw new AppError(
+                    'Cannot create a relationship with yourself',
+                    400,
+                    'Relationship Repository'
+                );
             }
 
             const existingRelationship = await RelationshipModel.findOne({
@@ -239,7 +254,10 @@ export class RelationshipRepository {
         return result.deletedCount > 0;
     }
 
-    public async getRelationship(requesterId: string, recipientId: string): Promise<RelationshipResponse | null> {
+    public async getRelationship(
+        requesterId: string,
+        recipientId: string
+    ): Promise<RelationshipResponse | null> {
         return await RelationshipModel.findOne({
             requester: requesterId,
             recipient: recipientId,
@@ -250,7 +268,12 @@ export class RelationshipRepository {
         userId: string,
         page: number = 1,
         limit: number = 10
-    ): Promise<{ relationships: AllRelationsType[]; total: number; page: number; totalPages: number }> {
+    ): Promise<{
+        relationships: AllRelationsType[];
+        total: number;
+        page: number;
+        totalPages: number;
+    }> {
         const skip = (page - 1) * limit;
 
         const query = {
@@ -284,7 +307,12 @@ export class RelationshipRepository {
         userId: string,
         page: number = 1,
         limit: number = 10
-    ): Promise<{ relationships: AllRelationsType[]; total: number; page: number; totalPages: number }> {
+    ): Promise<{
+        relationships: AllRelationsType[];
+        total: number;
+        page: number;
+        totalPages: number;
+    }> {
         const skip = (page - 1) * limit;
 
         const userFollowing = await RelationshipModel.find({
@@ -345,13 +373,14 @@ export class RelationshipRepository {
         return { relationships, page, total, totalPages: Math.ceil(total / limit) };
     }
 
-    public async getAllRelations(
-        userId: string,
-        page: number = 1,
-        limit: number = 10
-    ): Promise<{ relationships: AllRelationsType[]; total: number; page: number; totalPages: number }> {
-        const skip = (page - 1) * limit;
-
+    public async getAllRelations(userId: string): Promise<{
+        relationships: {
+            friends: AllRelationsType[];
+            followings: AllRelationsType[];
+            blockedUsers: AllRelationsType[];
+        };
+    }> {
+        // 1. Get all users the current user is following
         const userFollowing = await RelationshipModel.find({
             requester: userId,
             type: RelationshipTypeEnum.FOLLOW,
@@ -360,57 +389,69 @@ export class RelationshipRepository {
             .select('recipient')
             .lean();
 
-        const followingIds = userFollowing.map((rel) => rel.recipient.toString());
+        const allFollowingIds = userFollowing.map((rel) => rel.recipient.toString());
 
-        if (!followingIds.length) {
-            return { relationships: [], page, total: 0, totalPages: 0 };
-        }
+        // 2. Find mutuals (friends) among those followings
+        const mutuals = await RelationshipModel.find({
+            requester: { $in: allFollowingIds },
+            recipient: userId,
+            type: RelationshipTypeEnum.FOLLOW,
+            status: RelationshipStatusEnum.ACCEPTED,
+        })
+            .select('requester')
+            .lean();
 
-        const [mutuals, followings, total] = await Promise.all([
-            RelationshipModel.find({
-                requester: { $in: followingIds },
-                recipient: userId,
-                type: RelationshipTypeEnum.FOLLOW,
-                status: RelationshipStatusEnum.ACCEPTED,
-            })
-                .select('requester')
-                .lean(),
+        const mutualIdsSet = new Set(mutuals.map((rel) => rel.requester.toString()));
+
+        // 3. Separate into friends and one-way followings, limiting to max 100 each
+        const friendIds = allFollowingIds.filter((id) => mutualIdsSet.has(id)).slice(0, 100);
+        const followingIds = allFollowingIds.filter((id) => !mutualIdsSet.has(id)).slice(0, 100);
+
+        // 4. Fetch the populated account details for all categories in parallel
+        const [friendsData, followingsData, blockedData] = await Promise.all([
             RelationshipModel.find({
                 requester: userId,
+                recipient: { $in: friendIds },
                 type: RelationshipTypeEnum.FOLLOW,
-                status: RelationshipStatusEnum.ACCEPTED,
+            })
+                .populate('recipient', CommonRelationshipPopulateQuery)
+                .lean(),
+
+            RelationshipModel.find({
+                requester: userId,
+                recipient: { $in: followingIds },
+                type: RelationshipTypeEnum.FOLLOW,
+            })
+                .populate('recipient', CommonRelationshipPopulateQuery)
+                .lean(),
+
+            RelationshipModel.find({
+                requester: userId,
+                type: RelationshipTypeEnum.BLOCK,
+                status: RelationshipStatusEnum.BLOCKED,
             })
                 .populate('recipient', CommonRelationshipPopulateQuery)
                 .sort({ createdAt: -1 })
-                .skip(skip)
-                .limit(limit)
+                .limit(100) // Max 100 blocked users
                 .lean(),
-            RelationshipModel.countDocuments({
-                requester: userId,
-                type: RelationshipTypeEnum.FOLLOW,
-                status: RelationshipStatusEnum.ACCEPTED,
-            }),
         ]);
 
-        const mutualIds = new Set(mutuals.map((rel) => rel.requester.toString()));
-
-        const relationships = followings.map((rel: any) => {
-            const recipientId = rel.recipient?._id ? rel.recipient._id.toString() : String(rel.recipient);
-
-            return {
-                accountDetails: this.formatAccountDetails(rel.recipient) as any,
-                type: rel.type,
-                status: rel.status,
-                relation: (mutualIds.has(recipientId) ? 'friend' : 'following') as 'friend' | 'following',
-                latestMessage: null,
-            };
+        // 5. Helper function to format the output
+        const formatRelation = (rel: any, relationType: 'friend' | 'following' | 'blocked') => ({
+            accountDetails: this.formatAccountDetails(rel.recipient) as any,
+            type: rel.type,
+            status: rel.status,
+            relation: relationType,
+            latestMessage: null,
         });
 
+        // 6. Return the perfectly categorized payload
         return {
-            relationships,
-            page,
-            total,
-            totalPages: Math.ceil(total / limit),
+            relationships: {
+                friends: friendsData.map((rel) => formatRelation(rel, 'friend')),
+                followings: followingsData.map((rel) => formatRelation(rel, 'following')),
+                blockedUsers: blockedData.map((rel) => formatRelation(rel, 'blocked')),
+            },
         };
     }
 
@@ -432,10 +473,7 @@ export class RelationshipRepository {
     }
 
     public async updateUserStats(userA: string, userB: string): Promise<void> {
-        await Promise.all([
-            this.syncSingleUserStats(userA),
-            this.syncSingleUserStats(userB),
-        ]);
+        await Promise.all([this.syncSingleUserStats(userA), this.syncSingleUserStats(userB)]);
     }
 
     private async syncSingleUserStats(userId: string): Promise<void> {
@@ -527,8 +565,8 @@ export class RelationshipRepository {
                 $set: {
                     type: RelationshipTypeEnum.BLOCK,
                     status: RelationshipStatusEnum.BLOCKED,
-                    updatedAt: new Date()
-                }
+                    updatedAt: new Date(),
+                },
             },
             { upsert: true, new: true }
         );
@@ -537,7 +575,7 @@ export class RelationshipRepository {
         await RelationshipModel.deleteOne({
             requester: targetId,
             recipient: reqId,
-            type: RelationshipTypeEnum.FOLLOW
+            type: RelationshipTypeEnum.FOLLOW,
         });
 
         await this.updateUserStats(requesterId, targetUserId);
@@ -550,7 +588,7 @@ export class RelationshipRepository {
         const result = await RelationshipModel.deleteOne({
             requester: new ObjectId(requesterId),
             recipient: new ObjectId(targetUserId),
-            type: RelationshipTypeEnum.BLOCK
+            type: RelationshipTypeEnum.BLOCK,
         });
 
         if (result.deletedCount > 0) {
@@ -588,7 +626,7 @@ export class RelationshipRepository {
             relationships: blockedUsers,
             page,
             total,
-            totalPages: Math.ceil(total / limit)
+            totalPages: Math.ceil(total / limit),
         };
     }
 
@@ -597,10 +635,8 @@ export class RelationshipRepository {
             reporter: new ObjectId(requesterId),
             reportedUser: new ObjectId(targetUserId),
             reason: reason,
-            status: 'PENDING'
+            status: 'PENDING',
         });
         return report;
     }
-
-
 }
