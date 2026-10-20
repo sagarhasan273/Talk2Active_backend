@@ -3,65 +3,105 @@ import { redisService } from 'src/services/redis.service';
 import logger from 'src/utils/logger';
 
 export class QueueService {
-    private lobbyQueue: Queue;
-    private lobbyWorker: Worker;
+    // 1. Rename to a generic queue for all delayed background tasks
+    private tasksQueue: Queue;
+    private tasksWorker: Worker;
 
     constructor() {
-        // Retrieve the existing Singleton connection
         const connection = redisService.getClient();
 
-        // Initialize Queue with the shared connection
-        this.lobbyQueue = new Queue('lobby-cleanup', { connection });
+        this.tasksQueue = new Queue('delayed-tasks', { connection });
 
-        // Initialize Worker with the shared connection
-        this.lobbyWorker = new Worker(
-            'lobby-cleanup',
+        this.tasksWorker = new Worker(
+            'delayed-tasks',
             async (job: Job) => {
-                const { roomId } = job.data;
-                logger.info(`[QueueService] Timer hit zero. Executing cleanup for lobby: ${roomId}`);
+                // 2. Route the execution based on the job name
+                switch (job.name) {
+                    case 'delete-room': {
+                        const { roomId } = job.data;
+                        logger.info(`[QueueService] Timer hit zero. Executing cleanup for lobby: ${roomId}`);
+                        // await liveKitService.deleteRoom(roomId);
+                        break;
+                    }
+
+                    case 'update-last-active': {
+                        const { userId } = job.data;
+                        logger.info(`[QueueService] Timer hit zero. Updating lastActive for user: ${userId}`);
+                        // await User.findByIdAndUpdate(userId, { lastActive: new Date(), isOnline: false });
+                        break;
+                    }
+
+                    default:
+                        logger.warn(`[QueueService] Unknown job name: ${job.name}`);
+                }
             },
             { connection }
         );
 
-        // Bind lifecycle events to your central logger
-        this.lobbyWorker.on('completed', (job: Job) => {
-            logger.info(`[QueueService] Job ${job.id} completed successfully`);
+        this.tasksWorker.on('completed', (job: Job) => {
+            logger.info(`[QueueService] Job ${job.name}:${job.id} completed successfully`);
         });
 
-        this.lobbyWorker.on('failed', (job: Job | undefined, err: Error) => {
-            logger.error(`[QueueService] Job ${job?.id} failed`, err);
+        this.tasksWorker.on('failed', (job: Job | undefined, err: Error) => {
+            logger.error(`[QueueService] Job ${job?.name}:${job?.id} failed`, err);
         });
     }
 
-    /**
-     * Schedules a room to be deleted after a specific delay.
-     */
+    // =========================================================================
+    // Lobby Cleanup Methods
+    // =========================================================================
+
     public async scheduleLobbyCleanup(roomId: string, delayMinutes: number = 15): Promise<void> {
         const jobId = `cleanup-${roomId}`;
 
-        await this.lobbyQueue.add(
+        await this.tasksQueue.add(
             'delete-room',
             { roomId },
-            {
-                jobId,
-                delay: delayMinutes * 60 * 1000,
-                removeOnComplete: true
-            }
+            { jobId, delay: delayMinutes * 60 * 1000, removeOnComplete: true }
         );
 
         logger.info(`[QueueService] Scheduled cleanup for lobby ${roomId} in ${delayMinutes} minutes`);
     }
 
-    /**
-     * Cancels a pending deletion if a user re-joins the room.
-     */
     public async cancelLobbyCleanup(roomId: string): Promise<void> {
         const jobId = `cleanup-${roomId}`;
-        const job = await this.lobbyQueue.getJob(jobId);
+        const job = await this.tasksQueue.getJob(jobId);
 
         if (job) {
             await job.remove();
             logger.info(`[QueueService] Cancelled cleanup for lobby ${roomId}`);
+        }
+    }
+
+    // =========================================================================
+    // User Offline Status Methods
+    // =========================================================================
+
+    /**
+     * Call this when the socket disconnects.
+     */
+    public async scheduleUserOfflineUpdate(userId: string, delayMinutes: number = 5): Promise<void> {
+        const jobId = `offline-${userId}`;
+
+        await this.tasksQueue.add(
+            'update-last-active',
+            { userId },
+            { jobId, delay: delayMinutes * 60 * 1000, removeOnComplete: true }
+        );
+
+        logger.info(`[QueueService] Scheduled offline update for user ${userId} in ${delayMinutes} minutes`);
+    }
+
+    /**
+     * Call this if the user reconnects their socket before the 5 minutes is up.
+     */
+    public async cancelUserOfflineUpdate(userId: string): Promise<void> {
+        const jobId = `offline-${userId}`;
+        const job = await this.tasksQueue.getJob(jobId);
+
+        if (job) {
+            await job.remove();
+            logger.info(`[QueueService] Cancelled offline update for user ${userId} (user reconnected)`);
         }
     }
 }
