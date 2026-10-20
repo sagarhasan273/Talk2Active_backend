@@ -118,6 +118,7 @@ export const UpdateUserSchema = UserBaseSchema.pick({
     name: true,
     profilePhoto: true,
     bio: true,
+    lastActive: true
 })
     .partial()
     .extend({

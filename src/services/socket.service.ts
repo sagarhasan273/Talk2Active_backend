@@ -1,16 +1,14 @@
-// src/services/socket.service.ts
-
 import { ObjectId } from 'mongodb';
 import { Server, Socket } from 'socket.io';
 import { RelationshipStatusEnum, RelationshipTypeEnum } from '../enums/social.enum';
 import { RelationshipModel } from '../models/social.model';
-import { UserModel } from '../models/user.model';
 import {
   BroadcastNewRoomData,
   BroadcastUserJoinData,
   BroadcastUserLeaveData,
 } from '../types/socket.type';
 import logger from '../utils/logger';
+import { queueService } from './queue.service';
 
 export interface SocketMessagePayload {
   id: string;
@@ -42,6 +40,8 @@ export class SocketService {
   private userSocketsMap: Map<string, Set<string>> = new Map();
   // Track which room a user is currently active in: Map<userId, roomId>
   private userActiveRoomMap: Map<string, string> = new Map();
+  // Track which socket.id belongs to which userId for clean disconnections
+  private socketToUserMap: Map<string, string> = new Map();
 
   constructor() { }
 
@@ -60,9 +60,6 @@ export class SocketService {
     return this.userActiveRoomMap.has(userId);
   }
 
-  /**
-   * O(K) In-Memory Batch Check: Returns which user IDs from a list are currently in a room
-   */
   /**
    * Returns an object mapping user IDs to their current active room ID ({ [userId]: roomId })
    */
@@ -137,21 +134,27 @@ export class SocketService {
   }
 
   public handleConnection(socket: Socket): void {
-    let currentUserId: string | null = null;
-
     // 1. User connects and registers app session
     socket.on('join_global_chat', (userId: string) => {
       if (!userId) return;
-      currentUserId = String(userId);
+      const currentUserId = String(userId);
+
       socket.join(currentUserId);
 
+      // Map the user to this socket
       if (!this.userSocketsMap.has(currentUserId)) {
         this.userSocketsMap.set(currentUserId, new Set());
       }
       this.userSocketsMap.get(currentUserId)!.add(socket.id);
+
+      // Map this socket back to the user
+      this.socketToUserMap.set(socket.id, currentUserId);
+
+      // If the user reconnected, cancel any pending offline status updates
+      queueService.cancelUserOfflineUpdate(currentUserId);
     });
 
-    // 2. Client requests initial room active status snapshot for loaded friends/relations
+    // 2. Client requests initial room active status snapshot
     socket.on(
       'check_online_users',
       (userIds: string[], callback?: (activeIds: Record<string, string>) => void) => {
@@ -163,39 +166,43 @@ export class SocketService {
         }
       }
     );
+  }
 
-    // 3. User disconnects completely
-    socket.on('disconnect', async () => {
-      if (!currentUserId) return;
+  public async handleDisconnect(socket: Socket): Promise<void> {
+    const currentUserId = this.socketToUserMap.get(socket.id);
 
-      if (this.userSocketsMap.has(currentUserId)) {
-        const userSockets = this.userSocketsMap.get(currentUserId)!;
-        userSockets.delete(socket.id);
+    // If the socket wasn't authenticated/mapped, do nothing
+    if (!currentUserId) return;
 
-        if (userSockets.size === 0) {
-          this.userSocketsMap.delete(currentUserId);
+    // Clean up the reverse map
+    this.socketToUserMap.delete(socket.id);
 
-          // If they were inside a room when disconnecting, clean up and notify peers
-          if (this.userActiveRoomMap.has(currentUserId)) {
-            const activeRoomId = this.userActiveRoomMap.get(currentUserId)!;
-            this.userActiveRoomMap.delete(currentUserId);
+    if (this.userSocketsMap.has(currentUserId)) {
+      const userSockets = this.userSocketsMap.get(currentUserId)!;
+      userSockets.delete(socket.id);
 
-            await UserModel.updateOne(
-              { _id: new ObjectId(currentUserId) },
-              { $set: { lastActive: new Date() } }
-            ).catch(() => { });
+      // If this was the user's last active socket connection
+      if (userSockets.size === 0 && currentUserId) {
+        this.userSocketsMap.delete(currentUserId);
 
-            await this.notifyRoomPresenceToRelations(currentUserId, false, null);
+        // Schedule the offline update in Redis via BullMQ (5 minute delay)
+        queueService.scheduleUserOfflineUpdate({ userId: currentUserId, lastActive: new Date() }, 1);
 
-            // Broadcast leave event to the room participants
-            this.emitBroadcastUserLeave({
-              roomId: activeRoomId,
-              participantId: currentUserId,
-            });
-          }
+        // If they were inside a room when disconnecting, clean up and notify peers
+        if (this.userActiveRoomMap.has(currentUserId)) {
+          const activeRoomId = this.userActiveRoomMap.get(currentUserId)!;
+          this.userActiveRoomMap.delete(currentUserId);
+
+          await this.notifyRoomPresenceToRelations(currentUserId, false, null);
+
+          // Broadcast leave event to the room participants
+          this.emitBroadcastUserLeave({
+            roomId: activeRoomId,
+            participantId: currentUserId,
+          });
         }
       }
-    });
+    }
   }
 
   public emitUpdateSocial(recipientId: string, message: string): void {

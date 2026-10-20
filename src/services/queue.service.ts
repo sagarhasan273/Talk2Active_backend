@@ -1,14 +1,19 @@
 import { Job, Queue, Worker } from 'bullmq';
 import { redisService } from 'src/services/redis.service';
+import { UpdateUserInput } from 'src/types/user.type';
 import logger from 'src/utils/logger';
+import { UserService } from './user.service';
 
 export class QueueService {
     // 1. Rename to a generic queue for all delayed background tasks
     private tasksQueue: Queue;
     private tasksWorker: Worker;
+    private userService: UserService;
 
     constructor() {
         const connection = redisService.getClient();
+
+        this.userService = new UserService();
 
         this.tasksQueue = new Queue('delayed-tasks', { connection });
 
@@ -25,9 +30,9 @@ export class QueueService {
                     }
 
                     case 'update-last-active': {
-                        const { userId } = job.data;
+                        const { userId, lastActive } = job.data;
                         logger.info(`[QueueService] Timer hit zero. Updating lastActive for user: ${userId}`);
-                        // await User.findByIdAndUpdate(userId, { lastActive: new Date(), isOnline: false });
+                        await this.userService.updateUser({ userId, lastActive });
                         break;
                     }
 
@@ -80,12 +85,13 @@ export class QueueService {
     /**
      * Call this when the socket disconnects.
      */
-    public async scheduleUserOfflineUpdate(userId: string, delayMinutes: number = 5): Promise<void> {
+    public async scheduleUserOfflineUpdate(data: UpdateUserInput, delayMinutes: number = 5,): Promise<void> {
+        const { userId } = data;
         const jobId = `offline-${userId}`;
 
         await this.tasksQueue.add(
             'update-last-active',
-            { userId },
+            { ...data },
             { jobId, delay: delayMinutes * 60 * 1000, removeOnComplete: true }
         );
 

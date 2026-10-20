@@ -18,10 +18,17 @@ export const initSocketServer = (httpServer: HttpServer): Server => {
     socketService.setIO(io);
 
     io.on('connection', (socket: Socket) => {
+        // Handle incoming custom events
         socketService.handleConnection(socket);
+
+        // Handle client disconnection
+        socket.on('disconnect', () => {
+            socketService.handleDisconnect(socket);
+        });
     });
 
     return io;
 };
 
 export { socketService };
+
