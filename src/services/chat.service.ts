@@ -1,17 +1,13 @@
 import { ChatRepository } from 'src/repositories/chat.repository';
-import { LiveKitService } from 'src/services/livekit.service';
 import {
 	RoomBase,
 	RoomCreateInput,
 	RoomJoinInput,
 	RoomLeaveInput,
-	RoomParticipantResponse,
 	RoomResponse,
-	RoomUpdateInput,
+	RoomUpdateInput
 } from 'src/types/chat.type';
 import { AppError, DatabaseError } from 'src/utils/errors';
-import { MessageService } from './message.service';
-import { socketService } from './socket.service';
 
 export interface JoinRoomServiceResult {
 	room: RoomResponse;
@@ -20,18 +16,6 @@ export interface JoinRoomServiceResult {
 
 export class ChatService {
 	private chatRepository = new ChatRepository();
-
-	private liveKitService = new LiveKitService();
-	private messageService = new MessageService();
-
-	private extractId(userOrId: any): string | null {
-		if (!userOrId) return null;
-		if (typeof userOrId === 'object') {
-			const rawId = userOrId.userId || userOrId._id || userOrId.id;
-			return rawId ? rawId.toString() : null;
-		}
-		return userOrId.toString();
-	}
 
 	public async createRoom(input: RoomCreateInput): Promise<RoomResponse> {
 		try {
@@ -85,50 +69,9 @@ export class ChatService {
 		}
 	}
 
-	public async joinRoom(input: RoomJoinInput): Promise<JoinRoomServiceResult> {
+	public async joinRoom(input: RoomJoinInput): Promise<void> {
 		try {
-			const room = await this.chatRepository.joinRoom(input);
-			const currentUserId = input.userId.toString();
-
-			const roomResponse = this.toRoomResponse(room);
-
-			const participant = roomResponse.participants.find(
-				(p: any) => this.extractId(p) === currentUserId
-			);
-
-			const participantMetadata = {
-				userId: currentUserId,
-				name: participant?.name || 'Participant',
-				username: participant?.username || '',
-				profilePhoto: participant?.profilePhoto || '',
-				accountType: participant?.accountType || 'member',
-				verified: participant?.verified || false,
-				follower_count: participant?.follower_count,
-				following_count: participant?.following_count,
-				friend_count: participant?.friend_count,
-				bio: participant?.bio,
-				isHost: participant?.isHost,
-				joinedAt: participant?.joinedAt,
-			};
-
-			const token = await this.liveKitService.createJoinToken({
-				userId: currentUserId,
-				roomId: String(roomResponse.roomId),
-				userName: participant?.name,
-				metadata: participantMetadata,
-			});
-
-			socketService.emitBroadcastUserJoin({
-				roomId: String(room.roomId),
-				participant: participant as RoomParticipantResponse,
-			});
-
-			this.messageService.sendSystemMessage(String(roomResponse.roomId), `🎉 ${participantMetadata.name} has joined the room.`, 'success')
-
-			return {
-				room: roomResponse,
-				token,
-			};
+			await this.chatRepository.joinRoom(input);
 		} catch (error) {
 			if (error instanceof AppError) throw error;
 			throw new AppError('Failed to join room!', 500, 'ChatService.joinRoom');
@@ -142,21 +85,7 @@ export class ChatService {
 			throw new AppError('Invalid roomId or userId format', 400, 'ChatRepository.leaveRoom');
 		}
 		try {
-			if (kicked) {
-				await this.liveKitService.evictParticipant(
-					input.roomId.toString(),
-					input.userId.toString()
-				);
-			}
-
-			const user = await this.chatRepository.leaveRoom(input);
-
-			socketService.emitBroadcastUserLeave({
-				roomId: String(roomId),
-				participantId: String(userId),
-			});
-
-			this.messageService.sendSystemMessage(String(input.roomId), `${user?.name} has left the room.`, 'error');
+			await this.chatRepository.leaveRoom(input);
 		} catch (error) {
 			if (error instanceof AppError) throw error;
 

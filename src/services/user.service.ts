@@ -1,5 +1,3 @@
-
-
 import { UserRepository } from 'src/repositories/user.repository';
 import { ReturnResponseType } from 'src/types/base.type';
 import { CreateUserInput, LogInUserInput, UpdateUserInput, UserAccessToken, UserResponseType } from 'src/types/user.type';

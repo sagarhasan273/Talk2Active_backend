@@ -2,19 +2,19 @@ import { IMessageDocument, MessageModel } from 'src/models/message.model';
 import { IReaction } from 'src/types/message.type';
 
 export class MessageRepository {
-    public static async create(payload: Partial<IMessageDocument>): Promise<IMessageDocument> {
+    public async create(payload: Partial<IMessageDocument>): Promise<IMessageDocument> {
         return MessageModel.create(payload);
     }
 
-    public static async findById(id: string): Promise<IMessageDocument | null> {
+    public async findById(id: string): Promise<IMessageDocument | null> {
         return MessageModel.findById(id).exec();
     }
 
-    public static async findByRoom(roomId: string): Promise<IMessageDocument[]> {
+    public async findByRoom(roomId: string): Promise<IMessageDocument[]> {
         return MessageModel.find({ roomId }).sort({ createdAt: 1 }).exec();
     }
 
-    public static async updateText(
+    public async updateText(
         id: string,
         authorId: string,
         text: string
@@ -26,7 +26,7 @@ export class MessageRepository {
         ).exec();
     }
 
-    public static async updateReactions(
+    public async updateReactions(
         id: string,
         reactions: IReaction[]
     ): Promise<IMessageDocument | null> {
@@ -37,14 +37,14 @@ export class MessageRepository {
         ).exec();
     }
 
-    public static async markMessagesAsRead(recipientId: string, authorId: string): Promise<void> {
+    public async markMessagesAsRead(recipientId: string, authorId: string): Promise<void> {
         await MessageModel.updateMany(
             { recipientId, authorId, isRead: false },
             { $set: { isRead: true, readAt: new Date() } }
         ).exec();
     }
 
-    public static async getUnreadCountsBySender(
+    public async getUnreadCountsBySender(
         recipientId: string
     ): Promise<Array<{ _id: string; count: number }>> {
         return MessageModel.aggregate([

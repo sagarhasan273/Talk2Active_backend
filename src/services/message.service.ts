@@ -1,6 +1,6 @@
-import { DataPacket_Kind } from 'livekit-server-sdk';
 import mongoose from 'mongoose';
 import { MessageRepository } from 'src/repositories/message.repository';
+
 import { CreateMessageDto } from 'src/schemas/message.schema';
 import { socketService } from 'src/socket';
 import {
@@ -10,16 +10,15 @@ import {
     IReaction,
     IUnreadSummary,
 } from 'src/types/message.type';
-import { LiveKitService } from './livekit.service';
 
 export class MessageService {
-    private liveKitService = new LiveKitService();
+    private messageRepository = new MessageRepository();
 
-    public static getRoomId(userA: string, userB: string): string {
+    public getRoomId(userA: string, userB: string): string {
         return `chat_${[userA, userB].sort().join('_')}`;
     }
 
-    public static formatMessage(
+    public formatMessage(
         doc: IChatMessageDoc | any,
         viewerUserId: string
     ): IFrontendChatMessage {
@@ -49,16 +48,17 @@ export class MessageService {
         };
     }
 
-    public static async getHistory(
+    public async getHistory(
         currentUserId: string,
         targetUserId: string
     ): Promise<IFrontendChatMessage[]> {
         const roomId = this.getRoomId(currentUserId, targetUserId);
-        const docs = await MessageRepository.findByRoom(roomId);
+        const docs = await this.messageRepository.findByRoom(roomId);
+
         return docs.map((doc) => this.formatMessage(doc, currentUserId));
     }
 
-    public static async saveMessage(
+    public async saveMessage(
         authorId: string,
         authorName: string,
         dto: CreateMessageDto
@@ -66,7 +66,7 @@ export class MessageService {
         const roomId = this.getRoomId(authorId, dto.recipientId);
         const isValidObjectId = Boolean(dto.id && mongoose.Types.ObjectId.isValid(dto.id));
 
-        const doc = await MessageRepository.create({
+        const doc = await this.messageRepository.create({
             ...(isValidObjectId ? { _id: dto.id as any } : {}),
             roomId,
             authorId: dto.isSystem ? undefined : authorId,
@@ -94,16 +94,16 @@ export class MessageService {
         return senderFormatted;
     }
 
-    public static async editMessage(
+    public async editMessage(
         messageId: string,
         userId: string,
         text: string
     ): Promise<IFrontendChatMessage> {
-        const doc = await MessageRepository.findById(messageId);
+        const doc = await this.messageRepository.findById(messageId);
         if (!doc) throw new Error('NOT_FOUND');
         if (String(doc.authorId) !== String(userId)) throw new Error('FORBIDDEN');
 
-        const updated = await MessageRepository.updateText(messageId, userId, text);
+        const updated = await this.messageRepository.updateText(messageId, userId, text);
         const senderFormatted = this.formatMessage(updated, userId);
         const recipientFormatted = this.formatMessage(updated, doc.recipientId);
 
@@ -116,12 +116,12 @@ export class MessageService {
         return senderFormatted;
     }
 
-    public static async toggleReaction(
+    public async toggleReaction(
         messageId: string,
         userId: string,
         emoji: string
     ): Promise<IFrontendChatMessage> {
-        const doc = await MessageRepository.findById(messageId);
+        const doc = await this.messageRepository.findById(messageId);
         if (!doc) throw new Error('NOT_FOUND');
 
         const reactions: IReaction[] = (doc.reactions || []).map((r) => ({
@@ -150,7 +150,7 @@ export class MessageService {
             reactions.push({ emoji, userIds: [userId] });
         }
 
-        const updated = await MessageRepository.updateReactions(messageId, reactions);
+        const updated = await this.messageRepository.updateReactions(messageId, reactions);
 
         // Format for the user who clicked
         const formattedForCaller = this.formatMessage(updated, userId);
@@ -174,9 +174,9 @@ export class MessageService {
         return formattedForCaller;
     }
 
-    public static async markAsRead(currentUserId: string, targetUserId: string): Promise<void> {
+    public async markAsRead(currentUserId: string, targetUserId: string): Promise<void> {
         // currentUserId is the recipient reading messages sent by targetUserId (the author)
-        await MessageRepository.markMessagesAsRead(currentUserId, targetUserId);
+        await this.messageRepository.markMessagesAsRead(currentUserId, targetUserId);
 
         try {
             socketService.emitMessagesRead(targetUserId, currentUserId);
@@ -185,63 +185,8 @@ export class MessageService {
         }
     }
 
-    public async sendSystemMessage(
-        roomName: string,
-        text: string,
-        systemType: 'info' | 'success' | 'warning' | 'error' = 'info',
-        destinationIdentities?: string[]
-    ): Promise<void> {
-        const roomService = this.liveKitService.getRoomServiceClient();
-
-        try {
-            await roomService.createRoom({
-                name: roomName,
-                emptyTimeout: 10 * 60,
-            });
-        } catch {
-            // Room already exists or active
-        }
-
-        const timestamp = new Date().toLocaleTimeString([], {
-            hour: '2-digit',
-            minute: '2-digit',
-        });
-
-        const systemMessagePayload = {
-            type: 'CHAT_MESSAGE',
-            message: {
-                id: `sys-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-                authorId: 'system',
-                authorName: 'System',
-                text,
-                timestamp,
-                isSystem: true,
-                systemType,
-                isSelf: false,
-            },
-        };
-
-        const data = new TextEncoder().encode(JSON.stringify(systemMessagePayload));
-
-        try {
-            await roomService.sendData(roomName, data, DataPacket_Kind.RELIABLE, {
-                topic: 'room_chat',
-                destinationIdentities: destinationIdentities ?? [],
-            });
-        } catch (error: any) {
-            if (error?.status === 404 || error?.code === 'not_found') {
-                console.warn(
-                    `[LiveKit] Room "${roomName}" does not exist or has no active participants. Message skipped.`
-                );
-                return;
-            }
-            console.error('[LiveKit] sendSystemMessage error:', error);
-            throw error;
-        }
-    }
-
-    public static async getUnreadSummary(currentUserId: string): Promise<IUnreadSummary> {
-        const rows = await MessageRepository.getUnreadCountsBySender(currentUserId);
+    public async getUnreadSummary(currentUserId: string): Promise<IUnreadSummary> {
+        const rows = await this.messageRepository.getUnreadCountsBySender(currentUserId);
 
         const unreadBySender: Record<string, number> = {};
         let unreadFriendsCount = 0;

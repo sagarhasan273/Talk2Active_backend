@@ -8,7 +8,9 @@ import { JwtService } from 'src/services/auth/jwt.service';
 import { MessageService } from 'src/services/message.service';
 
 export class MessageController {
-    private static extractUserId(req: Request): string | undefined {
+    private messageService = new MessageService();
+
+    private extractUserId(req: Request): string | undefined {
         if (req.user?.userId) return req.user.userId;
         const token = req.header('Authorization')?.replace('Bearer ', '');
         if (token) {
@@ -22,25 +24,25 @@ export class MessageController {
         return undefined;
     }
 
-    public static async getHistory(req: Request, res: Response): Promise<void> {
+    public async getHistory(req: Request, res: Response): Promise<void> {
         try {
-            const currentUserId = MessageController.extractUserId(req);
+            const currentUserId = this.extractUserId(req);
             if (!currentUserId) {
                 res.status(401).json({ error: 'Unauthorized' });
                 return;
             }
 
             const { targetUserId } = req.params;
-            const messages = await MessageService.getHistory(currentUserId, targetUserId);
+            const messages = await this.messageService.getHistory(currentUserId, targetUserId);
             res.status(200).json({ success: true, data: messages });
         } catch (err: any) {
             res.status(500).json({ error: err.message });
         }
     }
 
-    public static async saveMessage(req: Request, res: Response): Promise<void> {
+    public async saveMessage(req: Request, res: Response): Promise<void> {
         try {
-            const currentUserId = MessageController.extractUserId(req) || req.body?.userId;
+            const currentUserId = this.extractUserId(req) || req.body?.userId;
             if (!currentUserId) {
                 res.status(401).json({ error: 'Unauthorized' });
                 return;
@@ -58,7 +60,7 @@ export class MessageController {
                 parsed.data.authorName ||
                 'User';
 
-            const message = await MessageService.saveMessage(
+            const message = await this.messageService.saveMessage(
                 currentUserId,
                 currentUserName,
                 parsed.data
@@ -69,9 +71,9 @@ export class MessageController {
         }
     }
 
-    public static async updateMessage(req: Request, res: Response): Promise<void> {
+    public async updateMessage(req: Request, res: Response): Promise<void> {
         try {
-            const currentUserId = MessageController.extractUserId(req);
+            const currentUserId = this.extractUserId(req);
             const { messageId } = req.params;
             if (!currentUserId) {
                 res.status(401).json({ error: 'Unauthorized' });
@@ -84,7 +86,7 @@ export class MessageController {
                 return;
             }
 
-            const updated = await MessageService.editMessage(
+            const updated = await this.messageService.editMessage(
                 messageId,
                 currentUserId,
                 parsed.data.text
@@ -97,9 +99,9 @@ export class MessageController {
         }
     }
 
-    public static async toggleReaction(req: Request, res: Response): Promise<void> {
+    public async toggleReaction(req: Request, res: Response): Promise<void> {
         try {
-            const currentUserId = MessageController.extractUserId(req);
+            const currentUserId = this.extractUserId(req);
             const { messageId } = req.params;
             if (!currentUserId) {
                 res.status(401).json({ error: 'Unauthorized' });
@@ -112,7 +114,7 @@ export class MessageController {
                 return;
             }
 
-            const updated = await MessageService.toggleReaction(
+            const updated = await this.messageService.toggleReaction(
                 messageId,
                 currentUserId,
                 parsed.data.emoji
@@ -124,10 +126,10 @@ export class MessageController {
         }
     }
 
-    public static async readMessages(req: Request, res: Response): Promise<void> {
+    public async readMessages(req: Request, res: Response): Promise<void> {
         try {
             const { userId1, userId2 } = req.params;
-            const currentUserId = MessageController.extractUserId(req) || userId1;
+            const currentUserId = this.extractUserId(req) || userId1;
 
             if (!currentUserId) {
                 res.status(401).json({ error: 'Unauthorized' });
@@ -136,7 +138,7 @@ export class MessageController {
 
             const targetUserId = String(currentUserId) === String(userId1) ? userId2 : userId1;
 
-            await MessageService.markAsRead(currentUserId, targetUserId);
+            await this.messageService.markAsRead(currentUserId, targetUserId);
 
             res.status(200).json({
                 success: true,
@@ -148,15 +150,15 @@ export class MessageController {
         }
     }
 
-    public static async getUnreadSummary(req: Request, res: Response): Promise<void> {
+    public async getUnreadSummary(req: Request, res: Response): Promise<void> {
         try {
-            const currentUserId = MessageController.extractUserId(req);
+            const currentUserId = this.extractUserId(req);
             if (!currentUserId) {
                 res.status(401).json({ error: 'Unauthorized' });
                 return;
             }
 
-            const summary = await MessageService.getUnreadSummary(currentUserId);
+            const summary = await this.messageService.getUnreadSummary(currentUserId);
             res.status(200).json({ success: true, data: summary });
         } catch (error: any) {
             res.status(500).json({ error: error.message || 'Internal Server Error' });

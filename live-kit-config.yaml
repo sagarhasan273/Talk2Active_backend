@@ -15,5 +15,5 @@ keys:
 webhook:
   api_key: devkey
   urls:
-    - http://192.168.0.233:2968/webhooks/livekit
+    - http://192.168.0.233:2968/livekit/webhooks
 # docker run --rm -p 7880:7880 -p 7881:7881 -p 7882:7882/udp -v "D:\Workplace\Talk2Active_backend:/config" livekit/livekit-server --config /config/live-kit-config.yaml

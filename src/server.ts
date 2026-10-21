@@ -47,8 +47,8 @@ async function startApp() {
 
     // 2. Start listening
     server.listen(config.port, '0.0.0.0', () => {
-      logger.info(`Server is running at http://${getLocalIp()}:${config.port}`);
-      logger.info('Socket.io server initialized and attached');
+      logger.info(`[Server] Running at http://${getLocalIp()}:${config.port}`);
+      logger.info('[Socket.io] Server initialized and attached');
     });
 
     // 3. Handle graceful shutdown

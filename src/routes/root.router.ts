@@ -2,12 +2,11 @@ import express from "express";
 import { AuthRoutes } from "./auth.router";
 import { ChatRouter } from "./chat.router";
 import { InventoryRouter } from "./inventory.router";
+import { LiveKitRouter } from "./live-kit.router";
 import { MessageRouter } from "./message.router";
 import { PostRoutes } from "./post.router";
-import { RelationshipRouter } from "./social.router";
-
-import { LiveKitRouter } from "./live-kit.router";
 import { RatingRouter } from "./rating.router";
+import { RelationshipRouter } from "./social.router";
 import { UserRoutes } from "./user.router";
 
 const app = express();
@@ -31,7 +30,7 @@ const socialRouters = new RelationshipRouter();
 app.use('/social', socialRouters.router);
 
 const livekitRouters = new LiveKitRouter();
-app.use('/webhooks', livekitRouters.router);
+app.use('/livekit', livekitRouters.router);
 
 const chatRouters = new ChatRouter();
 app.use('/room', chatRouters.router);

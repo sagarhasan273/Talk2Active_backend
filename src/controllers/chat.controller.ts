@@ -92,15 +92,13 @@ export class ChatController {
 
             const validatedInput = RoomJoinSchema.parse({ roomId, userId });
 
-            const { room, token } = await this.chatService.joinRoom(validatedInput);
+            await this.chatService.joinRoom(validatedInput);
 
             res.status(200).json({
                 status: true,
                 message: 'Joined room successfully',
                 data: {
                     roomId: validatedInput.roomId,
-                    token,
-                    room,
                 },
             });
         } catch (error) {
