@@ -22,7 +22,7 @@ export const RoomParticipantBaseSchema = z.object({
 // Populated participant entry (specifically returns ParticipantResponseSchema)
 export const RoomParticipantResponseSchema = ParticipantResponseSchema.extend({
   joinedAt: DatePreprocessor,
-  isHost: z.boolean().default(false),
+  isHost: z.boolean().default(false).optional(),
 });
 
 // ----------------------------------------------------------------------
