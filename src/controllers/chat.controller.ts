@@ -45,22 +45,24 @@ export class ChatController {
 
             const updatedRoom = await this.chatService.updateRoom(validatedInput, currentUserId);
 
+            const result = {
+                roomId: String(updatedRoom.roomId),
+                room_key: updatedRoom?.room_key,
+                topic: updatedRoom?.topic,
+                welcome_message: updatedRoom?.welcome_message,
+                languages: updatedRoom?.languages,
+                level: updatedRoom?.level,
+                max_participants: updatedRoom?.max_participants
+            }
+
             socketService.emitBroadcastRoomUpdate({
-                room: {
-                    roomId: String(updatedRoom.roomId),
-                    room_key: updatedRoom?.room_key,
-                    topic: updatedRoom?.topic,
-                    welcome_message: updatedRoom?.welcome_message,
-                    languages: updatedRoom?.languages,
-                    level: updatedRoom?.level,
-                    max_participants: updatedRoom?.max_participants
-                }
+                room: result
             });
 
             res.status(200).json({
                 status: true,
                 message: 'Room updated successfully',
-                data: updatedRoom,
+                data: result,
             });
         } catch (error) {
             this.handleControllerError(error, res, 'ChatController.updateRoom');
