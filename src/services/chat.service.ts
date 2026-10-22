@@ -31,7 +31,6 @@ export class ChatService {
 		try {
 			const room = await this.chatRepository.updateRoom(input);
 			if (currentUserId) {
-
 				return this.toRoomResponse(room);
 			}
 			return this.toRoomResponse(room);

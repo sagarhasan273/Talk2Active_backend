@@ -11,7 +11,7 @@ import {
 import { AppError, DatabaseError } from 'src/utils/errors';
 import { generateRoomKey } from 'src/utils/generate.room-key';
 
-// Projections matching the User schema properties
+const roomQuery = 'roomId room_key topic max_participants level languages welcome_message'
 const participantQuery =
   'genUserId username name profilePhoto verified accountType following_count follower_count friend_count';
 const hostQuery =
@@ -60,8 +60,7 @@ export class ChatRepository {
         { $set: updateFields },
         { new: true }
       )
-        .populate('host', hostQuery)
-        .populate('participants.user', participantQuery);
+        .select(roomQuery);
 
       if (!room) {
         throw new AppError('Room not found', 404, 'ChatRepository.updateRoom');

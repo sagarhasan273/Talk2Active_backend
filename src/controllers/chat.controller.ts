@@ -44,6 +44,19 @@ export class ChatController {
             });
 
             const updatedRoom = await this.chatService.updateRoom(validatedInput, currentUserId);
+
+            socketService.emitBroadcastRoomUpdate({
+                room: {
+                    roomId: String(updatedRoom.roomId),
+                    room_key: updatedRoom?.room_key,
+                    topic: updatedRoom?.topic,
+                    welcome_message: updatedRoom?.welcome_message,
+                    languages: updatedRoom?.languages,
+                    level: updatedRoom?.level,
+                    max_participants: updatedRoom?.max_participants
+                }
+            });
+
             res.status(200).json({
                 status: true,
                 message: 'Room updated successfully',

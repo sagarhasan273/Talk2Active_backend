@@ -4,6 +4,7 @@ import { RelationshipStatusEnum, RelationshipTypeEnum } from '../enums/social.en
 import { RelationshipModel } from '../models/social.model';
 import {
   BroadcastNewRoomData,
+  BroadcastRoomUpdateData,
   BroadcastUserJoinData,
   BroadcastUserLeaveData,
 } from '../types/socket.type';
@@ -227,6 +228,10 @@ export class SocketService {
 
   public emitBroadcastNewRoom(data: BroadcastNewRoomData): void {
     this.io?.emit('broadcast_new_room', data);
+  }
+
+  public emitBroadcastRoomUpdate(data: BroadcastRoomUpdateData): void {
+    this.io?.emit('broadcast_room_update', data);
   }
 
   public emitBroadcastUserJoin(data: BroadcastUserJoinData): void {
