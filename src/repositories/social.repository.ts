@@ -267,7 +267,8 @@ export class RelationshipRepository {
     public async getFollowers(
         userId: string,
         page: number = 1,
-        limit: number = 10
+        limit: number = 10,
+        search?: string
     ): Promise<{
         relationships: AllRelationsType[];
         total: number;
@@ -276,11 +277,21 @@ export class RelationshipRepository {
     }> {
         const skip = (page - 1) * limit;
 
-        const query = {
+        const query: any = {
             recipient: userId,
             type: RelationshipTypeEnum.FOLLOW,
             status: RelationshipStatusEnum.ACCEPTED,
         };
+
+        if (search && search.trim() !== '') {
+            const matchingUsers = await UserModel.find({
+                name: { $regex: search, $options: 'i' }
+            }).select('_id').lean();
+
+            const matchingUserIds = matchingUsers.map((user: any) => user._id);
+
+            query.requester = { $in: matchingUserIds };
+        }
 
         const [followerships, total] = await Promise.all([
             RelationshipModel.find(query)
@@ -405,7 +416,7 @@ export class RelationshipRepository {
 
         // 3. Separate into friends and one-way followings, limiting to max 100 each
         const friendIds = allFollowingIds.filter((id) => mutualIdsSet.has(id)).slice(0, 100);
-        const followingIds = allFollowingIds.filter((id) => !mutualIdsSet.has(id)).slice(0, 100);
+        const followingIds = allFollowingIds;
 
         // 4. Fetch the populated account details for all categories in parallel
         const [friendsData, followingsData, blockedData] = await Promise.all([

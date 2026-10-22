@@ -15,7 +15,7 @@ export class RelationshipService {
         this.relationshipRepository.getUserStats(input.requester.toString()),
         this.relationshipRepository.getUserStats(input.recipient.toString()),
       ]);
-      socketService.emitUpdateSocial(input.recipient.toString(), "Update social")
+      socketService.emitUpdateSocial(input.recipient.toString(), 'Update social');
       return result;
     } catch (error) {
       if (error instanceof AppError) throw error;
@@ -68,17 +68,25 @@ export class RelationshipService {
     }
   }
 
-  async getBlockedUsers(userId: string, page: number = 1, limit: number = 10): Promise<ReturnResponseType> {
+  async getBlockedUsers(
+    userId: string,
+    page: number = 1,
+    limit: number = 10
+  ): Promise<ReturnResponseType> {
     try {
-      const { relationships, total, totalPages } = await this.relationshipRepository.getBlockedUsers(
-        userId,
-        page,
-        limit
-      );
+      const { relationships, total, totalPages } =
+        await this.relationshipRepository.getBlockedUsers(userId, page, limit);
 
       return {
         data: relationships,
-        metaData: { page, limit, total, totalPages, hasNextPage: page < totalPages, hasPrevPage: page > 1 }
+        metaData: {
+          page,
+          limit,
+          total,
+          totalPages,
+          hasNextPage: page < totalPages,
+          hasPrevPage: page > 1,
+        },
       };
     } catch (error) {
       if (error instanceof AppError) throw error;
@@ -126,7 +134,11 @@ export class RelationshipService {
         throw new AppError('You cannot report yourself', 400, 'Relationship Service');
       }
 
-      const report = await this.relationshipRepository.createReport(requesterId, targetUserId, reason);
+      const report = await this.relationshipRepository.createReport(
+        requesterId,
+        targetUserId,
+        reason
+      );
       return report;
     } catch (error) {
       if (error instanceof AppError) throw error;
@@ -134,12 +146,18 @@ export class RelationshipService {
     }
   }
 
-  async getFollowers(userId: string, page: number = 1, limit: number = 10): Promise<ReturnResponseType> {
+  async getFollowers(
+    userId: string,
+    page: number = 1,
+    limit: number = 10,
+    search?: string
+  ): Promise<ReturnResponseType> {
     try {
       const { relationships, total, totalPages } = await this.relationshipRepository.getFollowers(
         userId,
         page,
-        limit
+        limit,
+        search
       );
 
       const metaData = {
@@ -158,7 +176,11 @@ export class RelationshipService {
     }
   }
 
-  async getFollowing(userId: string, page: number = 1, limit: number = 10): Promise<ReturnResponseType> {
+  async getFollowing(
+    userId: string,
+    page: number = 1,
+    limit: number = 10
+  ): Promise<ReturnResponseType> {
     try {
       const { relationships, total, totalPages } = await this.relationshipRepository.getFollowing(
         userId,
@@ -182,7 +204,11 @@ export class RelationshipService {
     }
   }
 
-  async getFriends(userId: string, page: number = 1, limit: number = 10): Promise<ReturnResponseType> {
+  async getFriends(
+    userId: string,
+    page: number = 1,
+    limit: number = 10
+  ): Promise<ReturnResponseType> {
     try {
       const { relationships, total, totalPages } = await this.relationshipRepository.getFriends(
         userId,

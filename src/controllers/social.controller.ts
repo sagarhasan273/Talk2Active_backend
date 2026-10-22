@@ -177,12 +177,14 @@ export class RelationshipController {
         const userId = req.params.userId;
         const page = parseInt(req.query.page as string, 10) || 1;
         const limit = parseInt(req.query.limit as string, 10) || 10;
+        const search = req.query.search as string | undefined; // <--- Extract search
 
         try {
             if (!userId) {
                 throw new AppError('User ID is required', 400, 'Relationship Controller');
             }
-            const result = await this.relationshipService.getFollowers(userId, page, limit);
+            // Pass search to service
+            const result = await this.relationshipService.getFollowers(userId, page, limit, search);
             res.status(200).json({ status: true, message: 'Followers fetched successfully', ...result });
         } catch (error) {
             this.handleError(error, res, 'fetching followers');

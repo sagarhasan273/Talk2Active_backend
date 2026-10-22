@@ -26,22 +26,10 @@ export class LiveKitService {
   private client: RoomServiceClient | null = null;
   private receiver: WebhookReceiver | null = null;
 
-  // 1. O(1) In-Memory Lookup: userId -> roomId
   private userRoomMap = new Map<string, string>();
 
-  // 2. Lazy getters to prevent circular dependency stack overflows
-  private _userService?: UserService;
-  private _chatService?: ChatService;
-
-  private get userService(): UserService {
-    if (!this._userService) this._userService = new UserService();
-    return this._userService;
-  }
-
-  private get chatService(): ChatService {
-    if (!this._chatService) this._chatService = new ChatService();
-    return this._chatService;
-  }
+  private userService = new UserService();
+  private chatService = new ChatService();
 
   private getCredentials() {
     const apiKey = process.env.LIVEKIT_API_KEY;
@@ -241,6 +229,8 @@ export class LiveKitService {
             userId: userId!,
             kicked: false,
           });
+
+          await this.userService.updateUser({ userId: userId!, lastActive: new Date() })
 
           if (this.getUserActiveRoom(userId) === roomId) {
             this.setUserActiveRoom(userId, null);
