@@ -10,6 +10,7 @@ import {
     IReaction,
     IUnreadSummary,
 } from 'src/types/message.type';
+import logger from 'src/utils/logger';
 
 export class MessageService {
     private messageRepository = new MessageRepository();
@@ -152,10 +153,8 @@ export class MessageService {
 
         const updated = await this.messageRepository.updateReactions(messageId, reactions);
 
-        // Format for the user who clicked
         const formattedForCaller = this.formatMessage(updated, userId);
 
-        // Determine the other participant in the 1-on-1 chat to notify via Socket
         const otherParticipantId =
             String(userId) === String(doc.authorId) ? doc.recipientId : doc.authorId;
 
@@ -175,7 +174,6 @@ export class MessageService {
     }
 
     public async markAsRead(currentUserId: string, targetUserId: string): Promise<void> {
-        // currentUserId is the recipient reading messages sent by targetUserId (the author)
         await this.messageRepository.markMessagesAsRead(currentUserId, targetUserId);
 
         try {
@@ -205,5 +203,16 @@ export class MessageService {
             unreadFriendsCount,
             totalUnreadMessages,
         };
+    }
+
+    public async clearAllMessages(currentUserId: string, targetUserId: string): Promise<void> {
+        const roomId = this.getRoomId(currentUserId, targetUserId);
+
+        try {
+            await this.messageRepository.deleteByRoom(roomId);
+
+        } catch (socketError) {
+            logger.error('Failed to clear message');
+        }
     }
 }

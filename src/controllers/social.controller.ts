@@ -1,11 +1,13 @@
 import { Request, Response } from 'express';
 import { BlockUserSchema, FollowRequestSchema, UnblockUserSchema } from 'src/schemas/social.schema';
+import { MessageService } from 'src/services/message.service';
 import { RelationshipService } from 'src/services/social.services';
 import { AppError } from 'src/utils/errors';
 import logger from 'src/utils/logger';
 
 export class RelationshipController {
     private relationshipService = new RelationshipService();
+    private messageService = new MessageService();
 
     // Follow a user
     async followUser(req: Request, res: Response): Promise<void> {
@@ -28,6 +30,7 @@ export class RelationshipController {
 
         try {
             const result = await this.relationshipService.followUser(validatedInput);
+
             res.status(200).json({ status: true, message: 'User followed successfully', data: result });
         } catch (error) {
             this.handleError(error, res, 'following user');
@@ -55,6 +58,9 @@ export class RelationshipController {
 
         try {
             const result = await this.relationshipService.unfollowUser(validatedInput);
+
+            await this.messageService.clearAllMessages(String(validatedInput.recipient), String(validatedInput.requester));
+
             res.status(200).json({ status: true, message: 'User unfollowed successfully', data: result });
         } catch (error) {
             this.handleError(error, res, 'unfollowing user');
@@ -74,6 +80,9 @@ export class RelationshipController {
 
         try {
             await this.relationshipService.removeFriend(validatedInput);
+
+            await this.messageService.clearAllMessages(String(validatedInput.recipient), String(validatedInput.requester));
+
             res.status(200).json({ status: true, message: 'Friend removed successfully' });
         } catch (error) {
             this.handleError(error, res, 'removing friend');
@@ -118,6 +127,9 @@ export class RelationshipController {
 
         try {
             const result = await this.relationshipService.blockUser(validatedInput);
+
+            await this.messageService.clearAllMessages(String(validatedInput.recipient), String(validatedInput.requester));
+
             res.status(200).json({ status: true, message: 'User blocked successfully', data: result });
         } catch (error) {
             this.handleError(error, res, 'blocking user');

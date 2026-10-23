@@ -64,4 +64,8 @@ export class MessageRepository {
             },
         ]).exec();
     }
+
+    public async deleteByRoom(roomId: string): Promise<void> {
+        await MessageModel.deleteMany({ roomId });
+    }
 }
