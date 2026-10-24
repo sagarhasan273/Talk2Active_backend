@@ -1,5 +1,5 @@
 import { FeedbackController } from '../controllers/feedback.controller';
-import { authMiddleware } from '../middlewares/auth.middleware';
+import { authMiddleware, isAdmin } from '../middlewares/auth.middleware';
 import { BaseRouter } from './base.router';
 
 export class FeedbackRoutes extends BaseRouter {
@@ -11,5 +11,6 @@ export class FeedbackRoutes extends BaseRouter {
         this.router.get('/get', (req, res) => this.controller.getFeedbacks(req, res));
         this.router.put('/:feedbackId/react', (req, res) => this.controller.toggleReaction(req, res));
         this.router.delete('/:id', (req, res) => this.controller.deleteFeedback(req, res));
+        this.router.patch('/:id/status', isAdmin, (req, res) => this.controller.updateStatus(req, res));
     }
 }

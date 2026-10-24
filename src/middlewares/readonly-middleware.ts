@@ -1,17 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import { JwtService } from 'src/services/auth/jwt.service';
 
-declare global {
-  namespace Express {
-    interface Request {
-      user: {
-        userId: string,
-        email: string
-      } | null;
-    }
-  }
-}
-
 export const ReadOnlyMiddleware = (req: Request, res: Response, next: NextFunction) => {
   try {
     req.user = null;

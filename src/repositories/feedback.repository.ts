@@ -83,6 +83,14 @@ export class FeedbackRepository {
         }
     }
 
+    public async updateStatus(feedbackId: string, status: 'PENDING' | 'VIEWED_BY_ADMIN' | 'RESOLVED') {
+        return await FeedbackModel.findByIdAndUpdate(
+            feedbackId,
+            { status },
+            { new: true }
+        ).lean();
+    }
+
     public async deleteFeedbackTransaction(feedbackId: string) {
         const session = await mongoose.startSession();
         session.startTransaction();

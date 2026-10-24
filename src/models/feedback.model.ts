@@ -16,6 +16,7 @@ export interface IFeedback extends Document {
   referenceUrl?: string;
   likeCount: number;
   dislikeCount: number;
+  status: 'PENDING' | 'VIEWED_BY_ADMIN' | 'RESOLVED';
   createdAt: Date;
 }
 
@@ -43,6 +44,11 @@ const FeedbackSchema = new Schema(
     referenceUrl: { type: String, match: [/^(https?|ftp):\/\/[^\s/$.?#].[^\s]*$/i, 'Invalid URL'] },
     likeCount: { type: Number, default: 0 },
     dislikeCount: { type: Number, default: 0 },
+    status: {
+      type: String,
+      enum: ['PENDING', 'VIEWED_BY_ADMIN', 'RESOLVED'],
+      default: 'PENDING'
+    },
   },
   {
     timestamps: true,

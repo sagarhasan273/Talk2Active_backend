@@ -6,13 +6,14 @@ declare global {
     interface Request {
       user: {
         userId: string,
-        email: string
+        email: string,
+        accountType?: string;
       } | null;
     }
   }
 }
 
-export const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
+export const authMiddleware = (req: Request, res: Response, next: NextFunction): void => {
   try {
     const token = req.header('Authorization')?.replace('Bearer ', '');
 
@@ -27,4 +28,12 @@ export const authMiddleware = (req: Request, res: Response, next: NextFunction) 
   } catch (error) {
     res.status(401).json({ error: 'Authentication required' });
   }
+};
+
+export const isAdmin = (req: Request, res: Response, next: NextFunction): void => {
+  if (!req.user || req.user.accountType !== 'ADMIN') {
+    res.status(403).json({ status: false, message: 'Forbidden: Admin access required.' });
+    return;
+  }
+  next();
 };

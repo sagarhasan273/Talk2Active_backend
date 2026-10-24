@@ -42,6 +42,22 @@ export class FeedbackService {
     return await this.feedbackRepository.toggleReactionTransaction(feedbackId, userId, action);
   }
 
+  public async updateFeedbackStatus(feedbackId: string, status: string) {
+    const validStatuses = ['PENDING', 'VIEWED_BY_ADMIN', 'RESOLVED'];
+
+    if (!validStatuses.includes(status)) {
+      throw new AppError('Invalid status value provided', 400, 'Feedback Service');
+    }
+
+    const updatedFeedback = await this.feedbackRepository.updateStatus(feedbackId, status as any);
+
+    if (!updatedFeedback) {
+      throw new AppError('Feedback not found', 404, 'Feedback Service');
+    }
+
+    return updatedFeedback;
+  }
+
   public async deleteFeedback(feedbackId: string, userId: string) {
     const feedback = await this.feedbackRepository.findById(feedbackId);
 

@@ -5,7 +5,8 @@ import { UserBaseType } from 'src/types/user.type';
 type ReturnType = {
   userId: string,
   email: string,
-  isValid: boolean
+  isValid: boolean,
+  role?: string;
 }
 
 export class JwtService {

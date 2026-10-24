@@ -54,9 +54,10 @@ const UserModalSchema = new Schema<UserBaseType & Document>({
   lastActive: { type: Date, default: Date.now },
 
   verified: { type: Boolean, default: false },
+
   accountType: {
     type: String,
-    enum: ['admin', 'supporter', 'member'],
+    enum: ['ADMIN', 'SUPPORTER', 'MEMBER'],
     default: 'member'
   },
 

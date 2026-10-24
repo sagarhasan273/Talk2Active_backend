@@ -57,6 +57,28 @@ export class FeedbackController {
         res.status(500).json({ message: `An error occurred while ${action}!`, status: false });
     }
 
+    public updateStatus = async (req: Request, res: Response) => {
+        try {
+            const { id } = req.params;
+            const { status } = req.body;
+
+            // Note: You should ensure an admin authorization middleware runs before this controller
+            const updatedFeedback = await this.feedbackService.updateFeedbackStatus(id, status);
+
+            res.status(200).json({
+                status: true,
+                message: 'Feedback status updated successfully',
+                data: { feedback: updatedFeedback }
+            });
+        } catch (error: any) {
+            console.error('[Feedback Update Status Error]:', error);
+            res.status(error.statusCode || 500).json({
+                status: false,
+                message: error.message || 'Failed to update feedback status'
+            });
+        }
+    };
+
     public deleteFeedback = async (req: Request, res: Response) => {
         try {
             const { id } = req.params;
