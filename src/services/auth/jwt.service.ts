@@ -6,7 +6,7 @@ type ReturnType = {
   userId: string,
   email: string,
   isValid: boolean,
-  role?: string;
+  accountType?: string;
 }
 
 export class JwtService {
@@ -14,7 +14,7 @@ export class JwtService {
   private static readonly EXPIRES_IN = '7d';
 
   public static generateToken(user: UserBaseType): string {
-    const payload = { userId: user.userId, email: user.email };
+    const payload = { userId: user.userId, email: user.email, accountType: user.accountType };
     return jwt.sign(payload, this.SECRET, { expiresIn: this.EXPIRES_IN });
   }
 
@@ -37,7 +37,8 @@ export class JwtService {
     return {
       isValid: true,
       userId: verify.userId,
-      email: verify.email
+      email: verify.email,
+      accountType: verify.accountType
     }
   }
 
@@ -60,7 +61,8 @@ export class JwtService {
     return {
       isValid: true,
       userId: decoded.userId,
-      email: decoded.email
+      email: decoded.email,
+      accountType: decoded.accountType
     };
   }
 }

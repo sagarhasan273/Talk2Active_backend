@@ -102,7 +102,7 @@ export class AuthController {
     }
 
     const userData = user.toJSON();
-    const resolvedUserId = (userData.userId || userData._id)?.toString();
+    const resolvedUserId = (userData.userId || userData.id)?.toString();
 
     const accessToken = JwtService.generateToken({
       ...userData,

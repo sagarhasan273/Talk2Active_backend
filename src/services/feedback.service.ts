@@ -8,6 +8,20 @@ export class FeedbackService {
     return await this.feedbackRepository.create({ ...data, user: userId });
   }
 
+  public async updateFeedback(feedbackId: string, userId: string, updateData: any) {
+    const feedback = await this.feedbackRepository.findById(feedbackId);
+
+    if (!feedback) {
+      throw new AppError('Feedback not found', 404, 'Feedback Service');
+    }
+
+    if (feedback.user.toString() !== userId) {
+      throw new AppError('You are not authorized to update this feedback', 403, 'Feedback Service');
+    }
+
+    return await this.feedbackRepository.updateFeedback(feedbackId, updateData);
+  }
+
   public async getFeedbacks(page: number, limit: number, currentUserId?: string) {
     const skip = (page - 1) * limit;
     const { data, total } = await this.feedbackRepository.findPaginated(skip, limit);
@@ -39,7 +53,7 @@ export class FeedbackService {
   }
 
   public async toggleReaction(feedbackId: string, userId: string, action: 'LIKE' | 'DISLIKE') {
-    return await this.feedbackRepository.toggleReactionTransaction(feedbackId, userId, action);
+    return await this.feedbackRepository.toggleReaction(feedbackId, userId, action);
   }
 
   public async updateFeedbackStatus(feedbackId: string, status: string) {

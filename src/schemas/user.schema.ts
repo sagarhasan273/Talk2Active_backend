@@ -66,7 +66,7 @@ export const UserBaseSchema = zod.object({
         .optional(),
     lastActive: DatePreprocessor.optional().default(() => new Date()),
     verified: zod.boolean().default(false),
-    accountType: zod.enum(['admin', 'supporter', 'vip', 'moderator', 'member']).default('member'),
+    accountType: zod.enum(['ADMIN', 'SUPPORTER', 'VIP', 'MEMBER']).default('MEMBER'),
     follower_count: zod.number().int().nonnegative().default(0),
     following_count: zod.number().int().nonnegative().default(0),
     friend_count: zod.number().int().nonnegative().default(0),

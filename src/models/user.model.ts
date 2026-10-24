@@ -58,7 +58,7 @@ const UserModalSchema = new Schema<UserBaseType & Document>({
   accountType: {
     type: String,
     enum: ['ADMIN', 'SUPPORTER', 'MEMBER'],
-    default: 'member'
+    default: 'MEMBER'
   },
 
   follower_count: {
