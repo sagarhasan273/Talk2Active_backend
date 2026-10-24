@@ -1,23 +1,33 @@
 import { FeedbackRepository } from '../repositories/feedback.repository';
-import { AppError } from '../utils/errors';
 
 export class FeedbackService {
     private feedbackRepository = new FeedbackRepository();
 
     public async createFeedback(userId: string, data: any) {
-        const feedback = await this.feedbackRepository.create({
-            ...data,
-            user: userId,
-        });
-        return feedback;
+        return await this.feedbackRepository.create({ ...data, user: userId });
     }
 
-    public async getFeedbacks(page: number, limit: number) {
+    public async getFeedbacks(page: number, limit: number, currentUserId?: string) {
         const skip = (page - 1) * limit;
         const { data, total } = await this.feedbackRepository.findPaginated(skip, limit);
 
+        let populatedData = data as any[];
+
+        if (currentUserId && data.length > 0) {
+            const feedbackIds = data.map((fb) => fb._id.toString());
+            const userReactions = await this.feedbackRepository.findUserReactions(feedbackIds, currentUserId);
+
+            populatedData = data.map((fb) => {
+                const reaction = userReactions.find((r) => r.feedback.toString() === fb._id.toString());
+                return {
+                    ...fb,
+                    currentUserReaction: reaction ? reaction.action : null,
+                };
+            });
+        }
+
         return {
-            feedbacks: data,
+            feedbacks: populatedData,
             pagination: {
                 total,
                 page,
@@ -28,20 +38,7 @@ export class FeedbackService {
     }
 
     public async toggleReaction(feedbackId: string, userId: string, action: 'LIKE' | 'DISLIKE') {
-        const feedback = await this.feedbackRepository.findById(feedbackId);
-        if (!feedback) throw new AppError('Feedback not found', 404, "Feedback Repository");
-
-        // Remove user from both arrays to prevent duplicate voting
-        feedback.likes = feedback.likes.filter((id) => id.toString() !== userId);
-        feedback.dislikes = feedback.dislikes.filter((id) => id.toString() !== userId);
-
-        // Apply new action
-        if (action === 'LIKE') {
-            feedback.likes.push(userId as any);
-        } else if (action === 'DISLIKE') {
-            feedback.dislikes.push(userId as any);
-        }
-
-        return await this.feedbackRepository.update(feedback);
+        // Strictly delegating database operations to the repository
+        return await this.feedbackRepository.toggleReactionTransaction(feedbackId, userId, action);
     }
 }
