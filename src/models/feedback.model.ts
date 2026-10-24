@@ -8,7 +8,6 @@ export interface IFeedbackReaction extends Document {
   createdAt: Date;
 }
 
-
 export interface IFeedback extends Document {
   user: mongoose.Types.ObjectId;
   type: 'BUG' | 'FEATURE' | 'GENERAL';
@@ -20,6 +19,21 @@ export interface IFeedback extends Document {
   createdAt: Date;
 }
 
+function arrayLimit(val: string[]) {
+  return val.length <= 3;
+}
+
+// Reusable transform function for both schemas
+const transformOptions = {
+  transform: function (doc: any, ret: any) {
+    if (ret._id) {
+      ret.id = ret._id.toString();
+      delete ret._id;
+    }
+    if ('__v' in ret) delete ret.__v;
+  }
+};
+
 const FeedbackSchema = new Schema(
   {
     user: { type: Schema.Types.ObjectId, ref: 'users', required: true },
@@ -30,12 +44,12 @@ const FeedbackSchema = new Schema(
     likeCount: { type: Number, default: 0 },
     dislikeCount: { type: Number, default: 0 },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    toJSON: transformOptions,
+    toObject: transformOptions
+  }
 );
-
-function arrayLimit(val: string[]) {
-  return val.length <= 3;
-}
 
 const FeedbackReactionSchema = new Schema(
   {
@@ -43,9 +57,12 @@ const FeedbackReactionSchema = new Schema(
     feedback: { type: Schema.Types.ObjectId, ref: 'feedback', required: true },
     action: { type: String, enum: ['LIKE', 'DISLIKE'], required: true },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    toJSON: transformOptions,
+    toObject: transformOptions
+  }
 );
-
 
 FeedbackReactionSchema.index({ user: 1, feedback: 1 }, { unique: true });
 

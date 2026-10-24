@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { FeedbackModel,FeedbackReactionModel, IFeedback } from '../models/feedback.model';
+import { FeedbackModel, FeedbackReactionModel, IFeedback } from '../models/feedback.model';
 
 export class FeedbackRepository {
     public async create(data: Partial<IFeedback>) {
@@ -9,11 +9,10 @@ export class FeedbackRepository {
     public async findPaginated(skip: number, limit: number) {
         const [data, total] = await Promise.all([
             FeedbackModel.find()
-                .populate('user', 'name profilePhoto')
+                .populate('user', 'name genUserId profilePhoto')
                 .sort({ createdAt: -1 })
                 .skip(skip)
-                .limit(limit)
-                .lean(),
+                .limit(limit),
             FeedbackModel.countDocuments(),
         ]);
         return { data, total };
