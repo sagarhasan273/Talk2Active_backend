@@ -1,6 +1,7 @@
 import express from "express";
 import { AuthRoutes } from "./auth.router";
 import { ChatRouter } from "./chat.router";
+import { FeedbackRoutes } from './feedback.router';
 import { InventoryRouter } from "./inventory.router";
 import { LiveKitRouter } from "./live-kit.router";
 import { MessageRouter } from "./message.router";
@@ -25,6 +26,9 @@ app.use('/inventory', inventoryRouters.router);
 
 const postRouters = new PostRoutes();
 app.use('/post', postRouters.router);
+
+const feedbackRouters = new FeedbackRoutes();
+app.use('/feedback', feedbackRouters.router);
 
 const socialRouters = new RelationshipRouter();
 app.use('/social', socialRouters.router);
