@@ -2,6 +2,10 @@ import mongoose from 'mongoose';
 import { FeedbackModel, FeedbackReactionModel, IFeedback } from '../models/feedback.model';
 
 export class FeedbackRepository {
+    public async findById(feedbackId: string) {
+        return await FeedbackModel.findById(feedbackId).lean();
+    }
+
     public async create(data: Partial<IFeedback>) {
         return await FeedbackModel.create(data);
     }
@@ -71,6 +75,27 @@ export class FeedbackRepository {
                 ...updatedFeedback,
                 currentUserReaction: likeInc === 1 || dislikeInc === -1 ? 'LIKE' : (dislikeInc === 1 || likeInc === -1 ? 'DISLIKE' : null)
             };
+        } catch (error) {
+            await session.abortTransaction();
+            throw error;
+        } finally {
+            session.endSession();
+        }
+    }
+
+    public async deleteFeedbackTransaction(feedbackId: string) {
+        const session = await mongoose.startSession();
+        session.startTransaction();
+
+        try {
+            // Delete the main feedback document
+            const deletedFeedback = await FeedbackModel.findByIdAndDelete(feedbackId).session(session);
+
+            // Clean up orphaned reactions in the secondary collection
+            await FeedbackReactionModel.deleteMany({ feedback: feedbackId }).session(session);
+
+            await session.commitTransaction();
+            return deletedFeedback;
         } catch (error) {
             await session.abortTransaction();
             throw error;

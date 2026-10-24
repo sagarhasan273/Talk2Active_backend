@@ -1,3 +1,4 @@
+import { AppError } from 'src/utils/errors';
 import { FeedbackRepository } from '../repositories/feedback.repository';
 
 export class FeedbackService {
@@ -39,5 +40,20 @@ export class FeedbackService {
 
   public async toggleReaction(feedbackId: string, userId: string, action: 'LIKE' | 'DISLIKE') {
     return await this.feedbackRepository.toggleReactionTransaction(feedbackId, userId, action);
+  }
+
+  public async deleteFeedback(feedbackId: string, userId: string) {
+    const feedback = await this.feedbackRepository.findById(feedbackId);
+
+    if (!feedback) {
+      throw new AppError('Feedback not found', 404, "Feedback Service");
+    }
+
+    // Verify ownership before deleting
+    if (feedback.user.toString() !== userId) {
+      throw new AppError('You are not authorized to delete this feedback', 403, "Feedback Service");
+    }
+
+    return await this.feedbackRepository.deleteFeedbackTransaction(feedbackId);
   }
 }

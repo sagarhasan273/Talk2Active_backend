@@ -56,4 +56,24 @@ export class FeedbackController {
         logger.error(`An error occurred while ${action}!`);
         res.status(500).json({ message: `An error occurred while ${action}!`, status: false });
     }
+
+    public deleteFeedback = async (req: Request, res: Response) => {
+        try {
+            const { id } = req.params;
+            const userId = req.user?.userId || req.body.userId;;
+
+            await this.feedbackService.deleteFeedback(id, userId);
+
+            res.status(200).json({
+                status: true,
+                message: 'Feedback deleted successfully'
+            });
+        } catch (error: any) {
+            logger.error('[Feedback DELETE Error]:', error);
+            res.status(error.statusCode || 500).json({
+                status: false,
+                message: error.message || 'Failed to delete feedback'
+            });
+        }
+    };
 }
