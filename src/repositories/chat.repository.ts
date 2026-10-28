@@ -111,21 +111,21 @@ export class ChatRepository {
       const userObjectId = new ObjectId(userId);
       const roomObjectId = new ObjectId(roomId);
 
-      // 1. Verify eligibility (room existence, bans/kicks)
       const existingRoom = await RoomModel.findById(roomObjectId, {
         host: 1,
         participants: 1,
         max_participants: 1,
-        kickedUserIds: 1,
+        kickedUsers: 1,
       }).lean();
 
       if (!existingRoom) {
         throw new AppError('Room not found', 404, 'ChatRepository.joinRoom');
       }
 
-      const isKicked = (existingRoom.kickedUserIds || []).some(
-        (kickedId) => kickedId.toString() === userId.toString()
+      const isKicked = (existingRoom.kickedUsers || []).some(
+        (kickedUser) => kickedUser.user.toString() === userId.toString()
       );
+
       if (isKicked) {
         throw new AppError('You have been removed from this room', 403, 'ChatRepository.joinRoom');
       }
@@ -134,7 +134,6 @@ export class ChatRepository {
         (p) => p.user.toString() === userId.toString()
       );
 
-      // 2. Atomic join if not enrolled
       if (!isAlreadyParticipant) {
         if (existingRoom.participants.length >= existingRoom.max_participants) {
           throw new AppError('Room is full', 400, 'ChatRepository.joinRoom');
@@ -246,5 +245,30 @@ export class ChatRepository {
       if (error instanceof AppError) throw error;
       throw new DatabaseError(error, 'ChatRepository.leaveRoom');
     }
+  }
+
+  public async kickUserFromRoom(
+    roomId: string,
+    userIdToKick: string,
+    kickData: { reason?: string; ip?: string; deviceId?: string }
+  ) {
+    return RoomModel.findByIdAndUpdate(
+      roomId,
+      {
+        $pull: {
+          participants: { user: new ObjectId(userIdToKick) }
+        },
+        $addToSet: {
+          kickedUsers: {
+            user: new ObjectId(userIdToKick),
+            reason: kickData.reason,
+            ip: kickData.ip,
+            deviceId: kickData.deviceId,
+            kickedAt: new Date()
+          }
+        }
+      },
+      { new: true }
+    );
   }
 }

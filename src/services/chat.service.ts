@@ -78,7 +78,7 @@ export class ChatService {
 	}
 
 	public async leaveRoom(input: RoomLeaveInput): Promise<void> {
-		const { roomId, userId, kicked } = input;
+		const { roomId, userId } = input;
 
 		if (!roomId || !userId) {
 			throw new AppError('Invalid roomId or userId format', 400, 'ChatRepository.leaveRoom');
@@ -95,6 +95,37 @@ export class ChatService {
 
 			throw new AppError(message, 500, 'ChatService.leaveRoom');
 		}
+	}
+
+	async kickParticipant(
+		roomId: string,
+		hostId: string,
+		userIdToKick: string,
+		kickDetails: { reason?: string; ip?: string; deviceId?: string }
+	) {
+		const room = await this.chatRepository.getRoomById(roomId);
+
+		if (!room) {
+			throw new Error('Room not found');
+		}
+
+		// Verify that the requester is the host of the room
+		if (room.host.toString() !== hostId) {
+			throw new Error('Unauthorized: Only the host can kick participants');
+		}
+
+		// Prevent host from kicking themselves
+		if (hostId === userIdToKick) {
+			throw new Error('Host cannot kick themselves');
+		}
+
+		const updatedRoom = await this.chatRepository.kickUserFromRoom(
+			roomId,
+			userIdToKick,
+			kickDetails
+		);
+
+		return updatedRoom;
 	}
 
 	public toRoomResponse = (
@@ -119,7 +150,7 @@ export class ChatService {
 				this.toParticipantResponse(p, String(hostData.userId))
 			),
 			isActive: room.isActive,
-			kickedUserIds: room.kickedUserIds,
+			kickedUsers: room.kickedUsers,
 			createdAt: room.createdAt,
 			updatedAt: room.updatedAt,
 		};

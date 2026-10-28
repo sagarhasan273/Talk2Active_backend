@@ -58,12 +58,20 @@ const RoomSchema: Schema = new Schema<RoomBase & Document>({
         type: Boolean,
         default: true
     },
-    kickedUserIds: [
-        {
+    kickedUsers: [{
+        user: {
             type: Schema.Types.ObjectId,
-            ref: 'users'
+            ref: 'users',
+            required: true
+        },
+        reason: { type: String },
+        ip: { type: String },
+        deviceId: { type: String },
+        kickedAt: {
+            type: Date,
+            default: Date.now
         }
-    ]
+    }]
 }, {
     timestamps: true,
     toJSON: {

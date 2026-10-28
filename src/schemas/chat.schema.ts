@@ -29,6 +29,14 @@ export const RoomParticipantResponseSchema = ParticipantResponseSchema.extend({
 // Room Schemas
 // ----------------------------------------------------------------------
 
+export const KickedUserSchema = z.object({
+  user: objectIdSchema,
+  reason: z.string().optional(),
+  ip: z.string().optional(),
+  deviceId: z.string().optional(),
+  kickedAt: z.date().optional(),
+});
+
 export const RoomBaseSchema = z.object({
   roomId: objectIdSchema,
   room_key: z.string().regex(/^RM[A-F0-9]{10}$/, {
@@ -42,7 +50,7 @@ export const RoomBaseSchema = z.object({
   host: z.union([objectIdSchema, HostResponseSchema]),
   participants: z.array(RoomParticipantBaseSchema).default([]),
   isActive: z.boolean().optional().default(true),
-  kickedUserIds: z.array(objectIdSchema),
+  kickedUsers: z.array(KickedUserSchema).default([]),
 
   createdAt: z.date().optional(),
   updatedAt: z.date().optional(),
