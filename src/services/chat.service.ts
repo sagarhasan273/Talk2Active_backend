@@ -101,7 +101,7 @@ export class ChatService {
 		roomId: string,
 		hostId: string,
 		userIdToKick: string,
-		kickDetails: { reason?: string; ip?: string; deviceId?: string }
+		kickDetails: { reason?: string; ip?: string }
 	) {
 		const room = await this.chatRepository.getRoomById(roomId);
 
@@ -109,12 +109,14 @@ export class ChatService {
 			throw new Error('Room not found');
 		}
 
-		// Verify that the requester is the host of the room
-		if (room.host.toString() !== hostId) {
+		const roomHostId =
+			typeof room.host === 'object' && room.host !== null && 'userId' in room.host
+				? room.host.userId.toString()
+				: room.host?.toString();
+		if (roomHostId !== hostId) {
 			throw new Error('Unauthorized: Only the host can kick participants');
 		}
 
-		// Prevent host from kicking themselves
 		if (hostId === userIdToKick) {
 			throw new Error('Host cannot kick themselves');
 		}

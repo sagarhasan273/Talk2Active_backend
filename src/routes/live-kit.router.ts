@@ -11,6 +11,9 @@ export class LiveKitRouter extends BaseRouter {
         this.router.post('/:roomId/join-request', authMiddleware, (req, res) =>
             this.liveKitController.joinRoomRequest(req, res)
         );
+        this.router.post('/:roomId/kick', authMiddleware, (req, res) =>
+            this.liveKitController.kickUser(req, res)
+        );
         this.router.post(
             '/webhooks',
             express.raw({ type: 'application/webhook+json' }),

@@ -6,7 +6,7 @@ rtc:
   tcp_port: 7881
   port_range_start: 50000
   port_range_end: 60000
-  node_ip: '192.168.0.233'
+  node_ip: '172.26.208.1'
   # use_external_ip: true
 
 keys:
@@ -15,5 +15,5 @@ keys:
 webhook:
   api_key: devkey
   urls:
-    - http://192.168.0.233:2968/livekit/webhooks
+    - http://172.26.208.1:2968/livekit/webhooks
 # docker run --rm -p 7880:7880 -p 7881:7881 -p 7882:7882/udp -v "D:\Workplace\Talk2Active_backend:/config" livekit/livekit-server --config /config/live-kit-config.yaml

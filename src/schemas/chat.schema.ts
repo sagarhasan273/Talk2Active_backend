@@ -33,7 +33,6 @@ export const KickedUserSchema = z.object({
   user: objectIdSchema,
   reason: z.string().optional(),
   ip: z.string().optional(),
-  deviceId: z.string().optional(),
   kickedAt: z.date().optional(),
 });
 

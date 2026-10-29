@@ -143,42 +143,6 @@ export class ChatController {
         }
     };
 
-    public kickUser = async (req: Request, res: Response): Promise<void> => {
-        try {
-            const { roomId } = req.params;
-            const { targetUserId, reason } = req.body;
-
-            const hostId = req.user?.userId;
-
-            if (!hostId || !targetUserId) {
-                res.status(400).json({ status: false, message: 'Missing required user IDs' });
-                return;
-            }
-
-            const ip = req.ip || req.socket.remoteAddress;
-            const deviceId = req.headers['x-device-id'] as string;
-
-            const updatedRoom = await this.chatService.kickParticipant(
-                roomId,
-                hostId,
-                targetUserId,
-                { reason, ip, deviceId }
-            );
-
-            res.status(200).json({
-                status: true,
-                message: 'Participant successfully kicked from the room',
-                data: updatedRoom
-            });
-        } catch (error: any) {
-            const statusCode = error.message.includes('Unauthorized') ? 403 : 400;
-            res.status(statusCode).json({
-                status: false,
-                message: error.message || 'Failed to kick participant'
-            });
-        }
-    }
-
     // ── Centralized Error Dispatcher ─────────────────────────────────────────
     private handleControllerError(error: unknown, res: Response, source: string): void {
         if (error instanceof AppError) {

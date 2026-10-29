@@ -30,9 +30,5 @@ export class ChatRouter extends BaseRouter {
         this.router.post('/:roomId/leave', authMiddleware, (req, res) =>
             this.chatController.leaveRoom(req, res)
         );
-
-        this.router.post('/:roomId/kick', authMiddleware, (req, res) =>
-            this.chatController.kickUser(req, res)
-        );
     }
 }

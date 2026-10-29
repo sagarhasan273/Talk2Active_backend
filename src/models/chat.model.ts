@@ -66,7 +66,6 @@ const RoomSchema: Schema = new Schema<RoomBase & Document>({
         },
         reason: { type: String },
         ip: { type: String },
-        deviceId: { type: String },
         kickedAt: {
             type: Date,
             default: Date.now

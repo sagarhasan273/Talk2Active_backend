@@ -250,7 +250,7 @@ export class ChatRepository {
   public async kickUserFromRoom(
     roomId: string,
     userIdToKick: string,
-    kickData: { reason?: string; ip?: string; deviceId?: string }
+    kickData: { reason?: string; ip?: string; }
   ) {
     return RoomModel.findByIdAndUpdate(
       roomId,
@@ -263,7 +263,6 @@ export class ChatRepository {
             user: new ObjectId(userIdToKick),
             reason: kickData.reason,
             ip: kickData.ip,
-            deviceId: kickData.deviceId,
             kickedAt: new Date()
           }
         }
